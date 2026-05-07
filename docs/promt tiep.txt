@@ -1,0 +1,186 @@
+"Tiếp tục công việc từ task trước. Đọc file clinic_saas_report.md và code hiện tại trong project hospital-management để biết tiến độ. Nhiệm vụ tiếp theo là: [Mình sẽ gom bối cảnh từ các file trong repo trước, rồi thử đọc hai board Figma qua link bạn đưa. Phần GitNexus trong AGENTS.md yêu cầu MCP tools riêng, nhưng phiên này không có namespace GitNexus, nên nếu chỉ sửa tài liệu/config mình sẽ ghi rõ giới hạn đó thay vì giả vờ đã chạy được.
+
+
+Ran 4 commands
+Hai link Figma không đọc được qua browser tool (Failed to fetch), và trong phiên này chưa có Figma MCP tool được expose trực tiếp cho mình dù server đã được thêm vào Codex config. Mình sẽ tiếp tục cập nhật tài liệu dựa trên các file repo hiện có và sẽ ghi phần Figma là “đã cấu hình MCP, cần mở lại phiên/tool để trích xuất chi tiết board”.
+
+
+Ran 4 commands
+Các file gốc đang có nhiều nội dung copy từ project cũ: tên ez-sales-bot, kết nối database production cũ, rule cũ “không unit tests”, và một số tiếng Việt bị lỗi encoding trong architech.txt/CLAUDE.md. Mình sẽ sửa theo hướng biến repo này thành “Clinic SaaS / hospital-management” và giữ tương thích cả Codex lẫn Claude Code.
+
+
+Ran 8 commands
+Repo gần như chỉ còn “vỏ”: backend/ và frontend/ trống, src/ chỉ có compose. Vì vậy task hợp lý nhất lúc này là chuẩn hoá tài liệu điều phối, source-of-truth, MCP placeholder và current-task handoff; chưa đụng code runtime.
+
+
+Ran 4 commands
+Mình sẽ chỉnh trực tiếp các file tài liệu/config, không sửa symbol code nên không có GitNexus impact target để chạy. Các thay đổi chính: bỏ dấu vết ez-sales-bot, bỏ connection cũ, thêm Figma MCP cho Claude/Codex, viết lại quy trình agent/handoff và report tiếng Việt sạch.
+
+
+Created 3 files, deleted 3 files
+Đã thay AGENTS.md, CLAUDE.md, và .mcp.json: hiện không còn connection cũ trong MCP project, và cả Codex/Claude đều được hướng về Clinic SaaS + Figma MCP. Tiếp theo mình sẽ viết lại report tiếng Việt và current-task để người/agent sau mở lên đọc được ngay.
+
+
+Created 4 files, deleted 3 files
+Report và handoff đã sạch, nhưng vẫn còn một vài file kế hoạch/compose copy từ project cũ. Mình sẽ chuyển chúng thành placeholder Clinic SaaS để không agent nào chạy nhầm service EzSalesBot hoặc DB cũ.
+
+
+Created 9 files, deleted 9 files, ran 5 commands
+Mình cũng sẽ xử lý ý “cài extension xem md rõ ràng”: kiểm tra máy có VS Code CLI không, nếu có thì cài extension Markdown preview phù hợp.
+
+
+Ran 3 commands
+Extension Markdown Preview Enhanced đã được cài cho VS Code. Giờ mình quét lại các chuỗi cũ để bắt phần nào còn sót từ project copy.
+
+
+Ran 7 commands
+Quét lần 2 cho thấy còn old content trong docs/code-review-2026-04-13.md và rules/*.md. Mình sẽ không xóa lịch sử file, nhưng sẽ đổi chúng thành nội dung Clinic SaaS/generic để tránh nhầm.
+
+
+Created 4 files, deleted 4 files, ran 3 commands
++1113
+-3377
+Undo
+Review
+
+AGENTS.md
+AGENTS.md
+CLAUDE.md
+CLAUDE.md
+.mcp.json
+.mcp.json
+clinic_saas_report_vi.md
+clinic_saas_report_vi.md
+clinic_saas_report.md
+clinic_saas_report.md
+architech.txt
+architech.txt
+current-task.md
+docker-compose.yml
+docker-compose.yml
+docker-compose.prod.yml
+docker-compose.prod.yml
+plan.md
+plan.md
+todo-refactor.md
+todo-refactor.md
+plan.md
+plan.md
+coding.md
+coding.md
+db-migrate.md
+db-migrate.md
+test-api.md
+test-api.md
+deploy.md
+deploy.md
+coding-rules.md
+coding-rules.md
+backend-coding-rules.md
+backend-coding-rules.md
+backend-testing-rules.md
+backend-testing-rules.md
+code-review-2026-04-13.md
+code-review-2026-04-13.md
+
+AGENTS.md
+Document · MD
+
+Open
+
+
+CLAUDE.md
+Document · MD
+
+Open
+
+
+clinic_saas_report_vi.md
+Document · MD
+
+Open
+
+
+clinic_saas_report.md
+Document · MD
+
+Open
+
+
+current-task.md
+Document · MD
+
+Open
+
+
+plan.md
+Document · MD
+
+Open
+
+
+todo-refactor.md
+Document · MD
+
+Open
+
+
+plan.md
+Document · MD
+
+Open
+
+
+coding.md
+Document · MD
+
+Open
+
+
+db-migrate.md
+Document · MD
+
+Open
+
+
+test-api.md
+Document · MD
+
+Open
+
+
+deploy.md
+Document · MD
+
+Open
+
+
+coding-rules.md
+Document · MD
+
+Open
+
+
+backend-coding-rules.md
+Document · MD
+
+Open
+
+
+backend-testing-rules.md
+Document · MD
+
+Open
+
+
+code-review-2026-04-13.md
+Document · MD
+
+Open
+
+"
+
+. đầu tiên là t cần m cập nhập nghĩa là dựa trên những thứ đang có sửa lại và thêm cho đúng chứ không phải replate hết những fila caude hay agent đang thấy xóa hết cái cũ đi đó sửa lại đi ví dụ như mấy cái # ⚠️ BẮT BUỘC ĐỌC TRƯỚC KHI VIẾT CODE.
+2. không cần phải viết kiểu này Old copied project names such as ez-sales-bot, EzSalesBot, merchant chatbot, Telegram bot, knowledge upload, and old production
+3. thực hiện đọc lại figma và cập nhập lại 
+và file báo cáo md đâu

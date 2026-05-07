@@ -1,0 +1,38 @@
+# Production compose placeholder for Clinic SaaS.
+#
+# Do not deploy this file as-is. Real server, image registry, domain, SSL,
+# secrets, and network details must be supplied by the owner first.
+
+name: clinic-saas-prod
+
+services:
+  api-gateway:
+    image: ${REGISTRY:-registry.example.com}/clinic-saas/api-gateway:${TAG:-latest}
+    restart: unless-stopped
+    environment:
+      ASPNETCORE_ENVIRONMENT: Production
+      ASPNETCORE_URLS: http://+:8080
+    networks:
+      - clinic_internal
+
+  owner-admin:
+    image: ${REGISTRY:-registry.example.com}/clinic-saas/owner-admin:${TAG:-latest}
+    restart: unless-stopped
+    networks:
+      - clinic_internal
+
+  clinic-admin:
+    image: ${REGISTRY:-registry.example.com}/clinic-saas/clinic-admin:${TAG:-latest}
+    restart: unless-stopped
+    networks:
+      - clinic_internal
+
+  public-web:
+    image: ${REGISTRY:-registry.example.com}/clinic-saas/public-web:${TAG:-latest}
+    restart: unless-stopped
+    networks:
+      - clinic_internal
+
+networks:
+  clinic_internal:
+    name: clinic_internal

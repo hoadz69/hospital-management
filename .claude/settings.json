@@ -1,0 +1,14 @@
+{
+  "hooks": {
+    "UserPromptSubmit": [
+      {
+        "matcher": "",
+        "hooks": [{
+          "type": "command",
+          "command": "bash ~/.claude/hooks/channel-slash.sh",
+          "timeout": 10
+        }]
+      }
+    ]
+  }
+}

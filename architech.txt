@@ -1,0 +1,72 @@
+Clinic SaaS / Hospital Management Architecture Notes
+
+This file replaces copied project notes from the old codebase. Treat this as a short architecture index. The detailed report is in clinic_saas_report_vi.md.
+
+1. Product
+
+- Multi-tenant Clinic SaaS platform.
+- Owner Super Admin manages tenants, plans, domains, templates, publishing, reports.
+- Clinic Admin manages one clinic tenant.
+- Public Website renders tenant-specific content and booking flow.
+
+2. Frontend
+
+- Vue 3 + Vite + TypeScript.
+- Apps:
+  - apps/public-web
+  - apps/clinic-admin
+  - apps/owner-admin
+- Shared packages:
+  - packages/ui
+  - packages/design-tokens
+  - packages/api-client
+  - packages/shared-types
+- UI source of truth is Figma/FigJam through MCP when available.
+
+3. Backend
+
+- API Gateway/BFF in front of services.
+- Services:
+  - identity-service
+  - tenant-service
+  - website-cms-service
+  - template-service
+  - domain-service
+  - booking-service
+  - catalog-service
+  - customer-service
+  - billing-service
+  - report-service
+  - notification-service
+  - realtime-gateway
+- Each service follows Clean Architecture:
+  - Api
+  - Application
+  - Domain
+  - Infrastructure
+
+4. Data
+
+- PostgreSQL: relational and transactional data.
+- MongoDB: CMS/page/template/layout JSON.
+- Redis: cache, tenant config, domain mapping, rate limit, slot lock.
+- Kafka/Event Bus: async domain events.
+- SignalR/WebSocket: future realtime gateway.
+
+5. Multi-Tenant Mandatory Rules
+
+- Every tenant-owned command/query must have tenant context.
+- Clinic Admin can access only one tenant.
+- Owner Super Admin can cross tenant boundaries.
+- Public Website tenant is resolved by domain/subdomain.
+
+6. Figma Boards
+
+- Architecture Source of Truth:
+  https://www.figma.com/board/Cw0evT4maoKnQX5G23tJpT/Clinic-SaaS-Architecture---Source-of-Truth?node-id=0-1&p=f&t=QK2zZcH4us1dCsN3-0
+- Technical Architecture:
+  https://www.figma.com/board/Fwpls2wzNxzGdpDuGGYSxi/Clinic-SaaS-Technical-Architecture---Microservices-Clean-Architecture?node-id=0-1&p=f&t=apHcjCTAhX1BfVlv-0
+
+7. Current Caveat
+
+The active agent session could not directly extract board contents because Figma MCP tools are not exposed until the session is restarted. Codex global MCP and project .mcp.json are configured for Figma remote MCP.
