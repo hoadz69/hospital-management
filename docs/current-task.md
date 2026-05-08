@@ -1,125 +1,66 @@
-# Current Task - Shared Backend Primitives
+# Current Task - Cập Nhật Plan Phase 2 Tenant MVP Backend
 
-Last updated: 2026-05-09
+Ngày cập nhật: 2026-05-09
 
-## Trang Thai
+## Trạng Thái
 
-Owner da duyet Backend Phase 1 .NET Skeleton va yeu cau tao shared backend primitives trong `backend/shared`, ap dung toi thieu vao 3 service phase 1.
+🟡 Plan Updated - Awaiting Owner Approval
 
-Da hoan thanh trong scope:
+## Yêu Cầu Của Owner
 
-- `backend/shared/building-blocks`
-- `backend/shared/contracts`
-- `backend/shared/observability`
-- `backend/services/api-gateway`
-- `backend/services/identity-service`
+Cập nhật lại Phase 2 plan trước khi implement theo quyết định kiến trúc mới của owner.
+
+## Phase Hiện Tại
+
+Phase 2 - Tenant MVP Backend.
+
+Phase 1.3 API Boundary Standardization đã Done và đã verify. Phase 2 implementation chưa bắt đầu.
+
+## Plan Đã Cập Nhật
+
+Plan hiện tại nằm ở:
+
+- `temp/plan.md`
+
+Các điểm đã cập nhật:
+
+- Không dùng EF Core.
+- Tenant Service persistence dùng Dapper + Npgsql.
+- Migration dùng SQL migration files; khuyến nghị DbUp nếu cần runner, chưa implement runner nếu chưa cần.
+- Runtime production-safe đề xuất là .NET 10 LTS; giữ net9.0 tạm nếu cần build local và chưa có task upgrade riêng.
+- API Gateway Phase 2 dùng typed HttpClient forwarding; YARP để phase gateway hardening sau.
+- TenantStatus chốt: Draft, Active, Suspended, Archived.
+- TenantModule dùng string module_code; chưa implement billing/plan logic thật.
+
+## Scope Triển Khai Sau Khi Owner Duyệt
+
 - `backend/services/tenant-service`
+- `backend/services/api-gateway`
+- `backend/shared/contracts`
+- `infrastructure/postgres`
+- `docs/current-task.md`
+- `docs/roadmap/clinic-saas-roadmap.md`
 
-Khong sua frontend, khong implement business logic sau, khong connect PostgreSQL that, khong them secret, khong tao Figma file moi, khong commit.
+## Ngoài Scope Cho Tới Khi Có Duyệt Riêng
 
-## Runtime Note
+- Không implementation trước khi owner duyệt lại plan.
+- Không frontend changes.
+- Không real auth/JWT provider integration.
+- Không billing implementation.
+- Không domain verification hoặc SSL flow.
+- Không template/CMS implementation.
+- Không Figma file creation.
+- Không commit.
 
-- Giu target framework hien tai: `net9.0`.
-- SDK build dung duoc nam o `C:\Program Files\dotnet\dotnet.exe`.
-- Local x64 SDK hien co: .NET SDK `9.0.304`.
+## Cần Owner Duyệt
 
-## Da Hoan Thanh
+Chỉ được implement sau khi owner duyệt rõ bằng câu như:
 
-### Shared Projects
+- "Tôi duyệt plan"
+- "Duyệt, làm tiếp"
+- "Bắt đầu implement"
+- "Quất theo plan"
 
-- Tao `backend/shared/building-blocks/ClinicSaaS.BuildingBlocks.csproj`.
-- Tao `backend/shared/contracts/ClinicSaaS.Contracts.csproj`.
-- Tao `backend/shared/observability/ClinicSaaS.Observability.csproj`.
-- Them 3 shared projects vao `backend/ClinicSaaS.Backend.sln`.
-- Them 3 shared projects vao service solutions:
-  - `backend/services/api-gateway/ApiGateway.sln`
-  - `backend/services/identity-service/IdentityService.sln`
-  - `backend/services/tenant-service/TenantService.sln`
+## Bước Tiếp Theo
 
-### BuildingBlocks Primitives
-
-- `Tenancy/TenantContext`
-- `Tenancy/ITenantContextAccessor`
-- `Tenancy/TenantContextAccessor`
-- `Tenancy/TenantResolutionResult`
-- `Results/Error`
-- `Results/Result`
-- `Results/Result<T>`
-- `Validation/Guard`
-- `Options/OptionsSectionNames`
-- `Options/PostgreSqlOptions`
-
-### Contracts Primitives
-
-- `Tenancy/TenantReference`
-- `Security/UserContext`
-- `Authorization/RoleNames`
-- `Authorization/PermissionCodes`
-- `Authorization/AuthRbacRequirement`
-- `Events/IDomainEvent`
-- `Events/DomainEventBase`
-- `Events/TenantCreatedEvent`
-
-### Observability Primitives
-
-- `Logging/LoggingPropertyNames`
-- `Correlation/CorrelationIdMiddleware`
-- `Tracing/TraceContext`
-- `Health/HealthCheckTags`
-
-## Service References Applied
-
-Ap dung cho 3 service phase 1:
-
-- `api-gateway`
-- `identity-service`
-- `tenant-service`
-
-Reference pattern:
-
-- Api projects reference:
-  - `ClinicSaaS.BuildingBlocks`
-  - `ClinicSaaS.Contracts`
-  - `ClinicSaaS.Observability`
-- Application projects reference:
-  - `ClinicSaaS.BuildingBlocks`
-  - `ClinicSaaS.Contracts`
-- Infrastructure projects reference:
-  - `ClinicSaaS.BuildingBlocks`
-- Tests projects reference:
-  - `ClinicSaaS.BuildingBlocks`
-
-Da thay local duplicate placeholders trong 3 services:
-
-- tenant context/accessor local -> `ClinicSaaS.BuildingBlocks.Tenancy`
-- RBAC constants local -> `ClinicSaaS.Contracts.Authorization`
-- PostgreSQL options local -> `ClinicSaaS.BuildingBlocks.Options`
-- them `CorrelationIdMiddleware` tu `ClinicSaaS.Observability.Correlation`
-
-## Verify Da Chay
-
-```powershell
-& 'C:\Program Files\dotnet\dotnet.exe' restore backend/ClinicSaaS.Backend.sln
-& 'C:\Program Files\dotnet\dotnet.exe' build backend/ClinicSaaS.Backend.sln --no-restore
-```
-
-Ket qua:
-
-- Restore pass cho `backend/ClinicSaaS.Backend.sln`.
-- Build pass cho `backend/ClinicSaaS.Backend.sln`.
-- Build root solution: 0 warnings, 0 errors.
-
-## Con Chua Lam / Ngoai Scope
-
-- Chua implement auth provider/JWT validation thật.
-- Chua implement RBAC enforcement thật.
-- Chua connect PostgreSQL/Npgsql/EF Core/Dapper.
-- Chua implement tenant CRUD hoặc business use cases.
-- Chua tao migrations.
-- Chua sua frontend routing/layout.
-
-## Buoc Tiep Theo De Xuat
-
-1. Consolidate tenant middleware vao shared package neu muon dung mot middleware chung cho tat ca service.
-2. Them OpenAPI package/cau hinh that cho 3 Api projects.
-3. Phase tiep theo: implement auth/RBAC contract enforcement placeholder ro hon o API boundary, van chua can connect DB.
+Owner review lại `temp/plan.md`. Nếu duyệt, implement Phase 2 đúng scope và đúng quyết định kiến trúc đã chốt.

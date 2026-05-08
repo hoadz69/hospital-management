@@ -2,6 +2,8 @@ using ApiGateway.Api.Endpoints;
 using ApiGateway.Api.Middleware;
 using ApiGateway.Application;
 using ApiGateway.Infrastructure;
+using ClinicSaaS.BuildingBlocks.OpenApi;
+using ClinicSaaS.BuildingBlocks.Tenancy;
 using ClinicSaaS.Observability.Correlation;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -10,16 +12,21 @@ builder.Services.AddApiGatewayApplication();
 builder.Services.AddApiGatewayInfrastructure(builder.Configuration);
 builder.Services.AddAuthorization();
 builder.Services.AddHealthChecks();
+builder.Services.AddClinicSaaSOpenApi("api-gateway", "API Gateway");
 builder.Services.AddProblemDetails();
 
 var app = builder.Build();
 
 app.UseMiddleware<CorrelationIdMiddleware>();
-app.UseMiddleware<TenantContextMiddleware>();
+app.UseRouting();
+app.UseMiddleware<ApiGateway.Api.Middleware.TenantContextMiddleware>();
 app.UseMiddleware<AuthRbacPlaceholderMiddleware>();
 app.UseAuthorization();
 
-app.MapHealthChecks("/health");
+app.MapHealthChecks("/health")
+    .AllowPlatformScope()
+    .WithTags("System");
+app.UseClinicSaaSOpenApi("API Gateway");
 app.MapSystemEndpoints("api-gateway");
 
 app.Run();

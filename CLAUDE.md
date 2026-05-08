@@ -23,6 +23,12 @@ Claude Code phải tuân thủ cùng luật dự án với Codex. File này là 
 - Không dùng server/database/token/SSH thật khi owner chưa cung cấp trong phiên hiện tại.
 - Sau mỗi lần làm xong phải report lại cho owner: đã làm gì, sửa file nào, kiểm tra gì, còn thiếu/bị chặn gì, bước tiếp theo là gì. Không được im lặng sau khi chạy tool hoặc sửa file.
 
+## Language Rule
+
+- Mọi câu trả lời cho owner, plan, report, handoff, roadmap update và tài liệu hướng dẫn agent phải viết bằng tiếng Việt.
+- Chỉ dùng tiếng Anh khi đó là tên code, tên file, API endpoint, command, log/error gốc, keyword kỹ thuật chuẩn, hoặc nội dung trích nguyên văn cần giữ nguyên.
+- Nếu tạo/cập nhật `temp/plan.md`, `docs/current-task.md`, `docs/roadmap/clinic-saas-roadmap.md` hoặc command docs, phần mô tả phải ưu tiên tiếng Việt; không viết plan/report chính bằng tiếng Anh.
+
 ## Coding Discipline Từ Tài Liệu Cũ
 
 - Think before coding: nêu assumptions, ambiguity và tradeoff cho task lớn. Nếu có nhiều cách hiểu, trình bày ra; không tự chọn im lặng. Nếu không rõ, dừng lại và hỏi.

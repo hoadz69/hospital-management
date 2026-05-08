@@ -1,0 +1,54 @@
+# Command: Review Changes
+
+## Nhiệm vụ
+
+Review toàn bộ changes hiện tại trước khi owner commit hoặc chuyển phase.
+
+## Luôn đọc trước
+
+- docs/current-task.md
+- docs/roadmap/clinic-saas-roadmap.md
+- temp/plan.md nếu có
+
+## Quy trình
+
+1. Chạy:
+```powershell
+git status --short
+git diff --stat
+git diff --name-only
+```
+
+2. Nếu có staged files, chạy:
+```powershell
+git diff --cached --stat
+git diff --cached --name-only
+```
+
+3. Kiểm tra scope:
+   - File thay đổi có đúng phase không?
+   - Có sửa ngoài scope không?
+   - Có tạo file Figma không?
+   - Có sửa frontend/backend ngoài yêu cầu không?
+
+4. Kiểm tra secret:
+```powershell
+git diff | Select-String -Pattern "sk-|api_key|password|connectionString|ConnectionStrings|secret|token"
+git diff --cached | Select-String -Pattern "sk-|api_key|password|connectionString|ConnectionStrings|secret|token"
+```
+
+5. Kiểm tra build/verify nếu phase yêu cầu.
+
+6. Report:
+   - Changes hợp lệ
+   - File đáng nghi
+   - Có secret không
+   - Có vượt scope không
+   - Có nên commit checkpoint không
+   - Commit message đề xuất nếu owner muốn commit
+
+## Luật
+
+- Không code thêm.
+- Không commit.
+- Không tự sửa file nếu chưa được yêu cầu.

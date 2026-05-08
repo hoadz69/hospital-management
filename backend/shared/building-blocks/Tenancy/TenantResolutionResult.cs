@@ -7,6 +7,11 @@ public sealed record TenantResolutionResult(bool IsResolved, TenantContext Tenan
         return new(true, new TenantContext(tenantId, source), null);
     }
 
+    public static TenantResolutionResult Unresolved()
+    {
+        return new(false, TenantContext.Empty, null);
+    }
+
     public static TenantResolutionResult NotResolved(string reason)
     {
         return new(false, TenantContext.Empty, reason);

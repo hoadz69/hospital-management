@@ -15,6 +15,7 @@ Tài liệu này dùng chung cho Codex, Claude Code và các agent khác. Claude
 - Sau mỗi lần làm xong, phải report lại cho owner: đã làm gì, sửa file nào, kiểm tra gì, còn thiếu/bị chặn gì, bước tiếp theo là gì.
 - Khi kế thừa tài liệu cũ, chỉ giữ rule/kỹ thuật còn phù hợp; không giữ domain, endpoint, credentials hoặc service name không còn thuộc Clinic SaaS.
 - Với task nhiều bước, phải biến request thành success criteria rõ ràng và nêu cách verify từng bước trước khi implement.
+- Mọi câu trả lời cho owner, plan, report, handoff, roadmap update và tài liệu hướng dẫn agent phải viết bằng tiếng Việt. Chỉ dùng tiếng Anh cho tên code, tên file, API endpoint, command, log/error gốc, keyword kỹ thuật chuẩn, hoặc nội dung trích nguyên văn cần giữ nguyên.
 
 ## Architect Agent
 

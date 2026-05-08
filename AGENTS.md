@@ -14,6 +14,46 @@ File này là hướng dẫn chung cho Codex, Claude Code và các coding agent 
 8. Không đưa secret, IP server thật, chuỗi kết nối database thật, token, SSH key vào repo.
 9. Sau mỗi lần làm xong phải report lại cho owner: đã làm gì, sửa file nào, kiểm tra gì, còn thiếu/bị chặn gì, bước tiếp theo là gì. Không được im lặng sau khi chạy tool hoặc sửa file.
 
+## Command Execution Rule
+
+1. Khi owner yêu cầu chạy lead-plan hoặc tạo plan:
+   - Làm ngay.
+   - Không hỏi lại.
+   - Không chỉ xác nhận đã hiểu.
+   - Được phép cập nhật:
+     - `temp/plan.md`
+     - `docs/current-task.md`
+     - `docs/roadmap/clinic-saas-roadmap.md`
+   - Không code implementation.
+   - Sau khi tạo plan xong mới dừng lại để owner duyệt action/implementation.
+
+2. Khi owner yêu cầu verify/review/update-roadmap:
+   - Làm ngay.
+   - Không hỏi lại.
+   - Không code implementation.
+   - Không commit.
+
+3. Khi owner yêu cầu implement/action/code:
+   - Chỉ làm nếu plan đã được owner duyệt.
+   - Nếu chưa có plan, tự chạy lead-plan trước rồi dừng lại chờ owner duyệt.
+   - Không tự implement khi chưa có câu duyệt rõ như:
+     - "Tôi duyệt plan"
+     - "Duyệt, làm tiếp"
+     - "Bắt đầu implement"
+     - "Quất theo plan"
+
+4. Không commit trừ khi owner yêu cầu rõ.
+5. Không tạo Figma file mới trừ khi owner yêu cầu rõ.
+6. Sau mỗi phase/task lớn phải cập nhật:
+   - `docs/current-task.md`
+   - `docs/roadmap/clinic-saas-roadmap.md`
+
+## Language Rule
+
+- Mọi câu trả lời cho owner, plan, report, handoff, roadmap update và tài liệu hướng dẫn agent phải viết bằng tiếng Việt.
+- Chỉ dùng tiếng Anh khi đó là tên code, tên file, API endpoint, command, log/error gốc, keyword kỹ thuật chuẩn, hoặc nội dung trích nguyên văn cần giữ nguyên.
+- Nếu tạo/cập nhật `temp/plan.md`, `docs/current-task.md`, `docs/roadmap/clinic-saas-roadmap.md` hoặc command docs, phần mô tả phải ưu tiên tiếng Việt; không viết plan/report chính bằng tiếng Anh.
+
 ## Source Of Truth
 
 - Báo cáo sản phẩm/kiến trúc chính: `clinic_saas_report.md`

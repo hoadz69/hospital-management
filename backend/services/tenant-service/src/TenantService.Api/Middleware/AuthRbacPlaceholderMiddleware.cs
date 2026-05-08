@@ -1,10 +1,6 @@
 namespace TenantService.Api.Middleware;
 
-public sealed class AuthRbacPlaceholderMiddleware(RequestDelegate next)
+public sealed class AuthRbacPlaceholderMiddleware(RequestDelegate next) :
+    ClinicSaaS.BuildingBlocks.Authorization.AuthRbacPlaceholderMiddleware(next)
 {
-    public Task InvokeAsync(HttpContext context)
-    {
-        context.Items["AuthRbacPlaceholder"] = "Auth/RBAC integration is intentionally not wired in this skeleton.";
-        return next(context);
-    }
 }
