@@ -1,13 +1,13 @@
 ---
 name: deploy
-description: Prepare Clinic SaaS deployment steps after server details are provided.
+description: Chuẩn bị deployment Clinic SaaS sau khi owner cung cấp server details.
 user_invocable: true
 allowed-tools: Bash, Read, Glob
 ---
 
-Do not deploy yet. The owner has not provided current server, registry, domain, SSH, or database details.
+Không deploy nếu owner chưa cung cấp server, registry, domain, SSH và database details hiện tại.
 
-Before any deploy:
+Trước mọi deploy:
 
 1. Confirm target environment: dev, staging, or production.
 2. Confirm services to deploy.
@@ -15,6 +15,7 @@ Before any deploy:
 4. Confirm server path, SSH method, network, domain, SSL flow.
 5. Check git status and ask before commit/push.
 6. Use Clinic SaaS service names only.
+7. Không commit/push nếu owner chưa yêu cầu.
 
 Expected future services:
 
@@ -35,10 +36,10 @@ Expected future services:
 - notification-service
 - realtime-gateway
 
-Request:
+Yêu cầu:
 
 ```txt
 $ARGUMENTS
 ```
 
-If server information is missing, create a deployment checklist instead of running commands.
+Nếu thiếu server information, tạo deployment checklist thay vì chạy lệnh.

@@ -1,14 +1,14 @@
 ---
 name: test-api
-description: Test Clinic SaaS API flows after services exist.
+description: Test API flows của Clinic SaaS sau khi services tồn tại.
 effort: high
 user_invocable: true
 allowed-tools: Read, Bash, Glob, Grep
 ---
 
-The repo currently has no real Clinic SaaS backend services. Do not use old copied JWT tokens, ports, or `EzSalesBot` paths.
+Nếu repo chưa có backend services thật, không tự chế token/port/path. Hãy báo API testing chưa áp dụng.
 
-When services exist, test:
+Khi services tồn tại, test:
 
 1. Health endpoint for API Gateway/BFF.
 2. Tenant resolution by domain/subdomain/header/JWT.
@@ -18,11 +18,13 @@ When services exist, test:
 6. Booking flow.
 7. Template apply mode.
 8. Domain verification flow.
+9. Security context missing/invalid.
+10. Forbidden cross-tenant access.
 
-Request:
+Yêu cầu:
 
 ```txt
 $ARGUMENTS
 ```
 
-If services do not exist yet, report that API testing is not applicable and update `docs/current-task.md` if needed.
+Nếu services chưa tồn tại, report rằng API testing chưa áp dụng và cập nhật `docs/current-task.md` nếu cần.

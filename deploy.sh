@@ -1,91 +1,39 @@
 #!/bin/bash
-set -e
+set -euo pipefail
 
-DEPLOY_DIR="/opt/services/ez-sales-bot"
-REPO_URL="https://github.com/LQT1102/ez-sales-bot.git"
-BRANCH="develop"
-CONFIG_DIR="$DEPLOY_DIR/backend/config"
-REQUIRED_CONFIGS=(
-    "appsettings.shared.json"
-    "appsettings.Production.shared.json"
-)
+# Clinic SaaS deployment helper.
+# File này giữ vai trò deploy script như tài liệu cũ, nhưng hiện chỉ là checklist an toàn.
+# Không deploy thật cho đến khi owner cung cấp server, registry, domain, SSH và database details.
 
-# Valid services
-VALID_SERVICES="management-api fileprocessing-api webhook-api frontend-app"
+VALID_SERVICES="api-gateway owner-admin clinic-admin public-web identity-service tenant-service website-cms-service template-service domain-service booking-service catalog-service customer-service billing-service report-service notification-service realtime-gateway"
 
 usage() {
     echo "Usage: bash deploy.sh [service...]"
     echo ""
-    echo "  No args          Deploy tất cả services"
-    echo "  service...       Deploy 1 hoặc nhiều service cụ thể"
+    echo "  No args          In checklist deploy toàn hệ thống"
+    echo "  service...       In checklist deploy service cụ thể"
     echo ""
-    echo "Services: $VALID_SERVICES"
+    echo "Services dự kiến: $VALID_SERVICES"
     echo ""
-    echo "Examples:"
-    echo "  bash deploy.sh                        # deploy tất cả"
-    echo "  bash deploy.sh management-api         # chỉ management"
-    echo "  bash deploy.sh management-api frontend-app  # 2 services"
+    echo "Script này chưa deploy thật vì production config chưa được owner cung cấp."
     exit 0
 }
 
-[ "$1" = "-h" ] || [ "$1" = "--help" ] && usage
+[ "${1:-}" = "-h" ] || [ "${1:-}" = "--help" ] && usage
 
-SERVICES="$@"
+SERVICES="$*"
 
-echo "==> Deploying ez-sales-bot"
+echo "==> Clinic SaaS deployment checklist"
 [ -n "$SERVICES" ] && echo "==> Services: $SERVICES" || echo "==> Services: all"
-
-# Clone or pull
-if [ -d "$DEPLOY_DIR/.git" ]; then
-    echo "==> Pulling latest code from $BRANCH..."
-    cd "$DEPLOY_DIR"
-    git fetch origin
-    git checkout "$BRANCH"
-    git pull origin "$BRANCH"
-else
-    echo "==> Cloning repository..."
-    git clone -b "$BRANCH" "$REPO_URL" "$DEPLOY_DIR"
-    cd "$DEPLOY_DIR"
-fi
-
-# Check required config files (gitignored, must be present manually)
-echo "==> Checking config files..."
-MISSING=0
-for cfg in "${REQUIRED_CONFIGS[@]}"; do
-    if [ ! -f "$CONFIG_DIR/$cfg" ]; then
-        echo "  [MISSING] $CONFIG_DIR/$cfg"
-        MISSING=1
-    else
-        echo "  [OK] $cfg"
-    fi
-done
-if [ "$MISSING" -eq 1 ]; then
-    echo ""
-    echo "ERROR: Missing config files above. Copy them to $CONFIG_DIR and re-run."
-    exit 1
-fi
-
-cd "$DEPLOY_DIR"
-
-# Build
-echo "==> Building..."
-if [ -n "$SERVICES" ]; then
-    docker compose -f docker-compose.prod.yml build --no-cache $SERVICES
-else
-    docker compose -f docker-compose.prod.yml build --no-cache
-fi
-
-# Start
-echo "==> Starting..."
-if [ -n "$SERVICES" ]; then
-    docker compose -f docker-compose.prod.yml up -d $SERVICES
-else
-    docker compose -f docker-compose.prod.yml up -d
-fi
-
-# Reload nginx
-echo "==> Reloading nginx..."
-docker exec nginx nginx -s reload
-
 echo ""
-echo "==> Done! Access: http://103.75.182.103"
+echo "Cần owner xác nhận trước khi deploy thật:"
+echo "1. Target environment: dev/staging/production"
+echo "2. Git branch/tag"
+echo "3. Image registry và tag"
+echo "4. Server path và SSH method"
+echo "5. Domain/subdomain platform"
+echo "6. SSL/domain verification flow"
+echo "7. Database/server secrets qua kênh an toàn"
+echo "8. Migration strategy và rollback"
+echo ""
+echo "Không có lệnh deploy nào được chạy trong placeholder này."

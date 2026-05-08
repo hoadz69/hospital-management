@@ -1,13 +1,13 @@
 Clinic SaaS / Hospital Management Architecture Notes
 
-This file replaces copied project notes from the old codebase. Treat this as a short architecture index. The detailed report is in clinic_saas_report_vi.md.
+File này là index kiến trúc ngắn. Báo cáo đầy đủ nằm trong `clinic_saas_report.md`.
 
-1. Product
+1. Sản phẩm
 
-- Multi-tenant Clinic SaaS platform.
-- Owner Super Admin manages tenants, plans, domains, templates, publishing, reports.
-- Clinic Admin manages one clinic tenant.
-- Public Website renders tenant-specific content and booking flow.
+- Nền tảng Clinic SaaS multi-tenant.
+- Owner Super Admin quản lý tenants, plans, domains, templates, publishing, reports.
+- Clinic Admin quản lý một tenant/phòng khám.
+- Public Website render content và booking flow theo tenant.
 
 2. Frontend
 
@@ -21,11 +21,11 @@ This file replaces copied project notes from the old codebase. Treat this as a s
   - packages/design-tokens
   - packages/api-client
   - packages/shared-types
-- UI source of truth is Figma/FigJam through MCP when available.
+- UI source of truth là Figma/FigJam qua MCP khi tool có sẵn.
 
 3. Backend
 
-- API Gateway/BFF in front of services.
+- API Gateway/BFF đứng trước services.
 - Services:
   - identity-service
   - tenant-service
@@ -39,7 +39,7 @@ This file replaces copied project notes from the old codebase. Treat this as a s
   - report-service
   - notification-service
   - realtime-gateway
-- Each service follows Clean Architecture:
+- Mỗi service theo Clean Architecture:
   - Api
   - Application
   - Domain
@@ -47,18 +47,18 @@ This file replaces copied project notes from the old codebase. Treat this as a s
 
 4. Data
 
-- PostgreSQL: relational and transactional data.
+- PostgreSQL: relational và transactional data.
 - MongoDB: CMS/page/template/layout JSON.
 - Redis: cache, tenant config, domain mapping, rate limit, slot lock.
 - Kafka/Event Bus: async domain events.
-- SignalR/WebSocket: future realtime gateway.
+- SignalR/WebSocket: realtime gateway về sau.
 
 5. Multi-Tenant Mandatory Rules
 
-- Every tenant-owned command/query must have tenant context.
-- Clinic Admin can access only one tenant.
-- Owner Super Admin can cross tenant boundaries.
-- Public Website tenant is resolved by domain/subdomain.
+- Mọi tenant-owned command/query phải có tenant context.
+- Clinic Admin chỉ truy cập tenant của mình.
+- Owner Super Admin mới được cross-tenant.
+- Public Website resolve tenant bằng domain/subdomain.
 
 6. Figma Boards
 
@@ -66,7 +66,21 @@ This file replaces copied project notes from the old codebase. Treat this as a s
   https://www.figma.com/board/Cw0evT4maoKnQX5G23tJpT/Clinic-SaaS-Architecture---Source-of-Truth?node-id=0-1&p=f&t=QK2zZcH4us1dCsN3-0
 - Technical Architecture:
   https://www.figma.com/board/Fwpls2wzNxzGdpDuGGYSxi/Clinic-SaaS-Technical-Architecture---Microservices-Clean-Architecture?node-id=0-1&p=f&t=apHcjCTAhX1BfVlv-0
+- PDF exports đã đọc:
+  - Clinic SaaS Architecture - Source of Truth.pdf
+  - Clinic SaaS Technical Architecture - Microservices Clean Architecture.pdf
 
-7. Current Caveat
+7. Nội Dung Đã Xác Nhận Từ PDF
 
-The active agent session could not directly extract board contents because Figma MCP tools are not exposed until the session is restarted. Codex global MCP and project .mcp.json are configured for Figma remote MCP.
+- Source of Truth PDF xác nhận product map: Owner Super Admin, Clinic Tenant, Clinic Admin, Public Website, Create Clinic Flow, Domain Management, Tenant Management, Global Template Library, Template Config, Plan and Billing.
+- Create Clinic Flow: input clinic info, choose package, create default subdomain, choose template, publish and send login.
+- Domain Management: default subdomain, custom domain, DNS verification, SSL certificate, publish website.
+- Clinic Admin modules: dashboard, appointments, homepage slider, website settings, staff/schedule, services/pricing, payments/reports, customers/records.
+- Public Website modules: homepage, booking flow, contact/map, staff pages, service pages, mobile website.
+- Technical PDF xác nhận flow: Users -> CDN/Edge/WAF -> Frontend Apps -> API Gateway/BFF -> services -> PostgreSQL/MongoDB/Redis/Kafka.
+- Clean Architecture trong mỗi .NET service: API Layer, Application Layer, Domain Layer, Infrastructure Layer.
+- Realtime Gateway là socket future cho live booking, notifications, dashboards.
+
+8. Ghi Chú Phiên Hiện Tại
+
+Codex Figma MCP đã cài và OAuth thành công, nhưng Figma MCP đang bị quota Starter plan. PDF export đã được dùng làm nguồn thay thế để cập nhật báo cáo. Khi quota có lại, đọc trực tiếp board để đối chiếu.

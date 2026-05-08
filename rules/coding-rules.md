@@ -1,63 +1,125 @@
 # Coding Rules - Clinic SaaS
 
-These rules apply when writing real code for the Clinic SaaS / Hospital Management platform.
+## ⚠️ BẮT BUỘC ĐỌC TRƯỚC KHI VIẾT CODE
 
-## General
+- Đọc `AGENTS.md`, `CLAUDE.md`, `clinic_saas_report.md`, `architech.txt` và `docs/current-task.md`.
+- Với implementation task, làm việc từ `temp/plan.md` đã được owner duyệt.
+- Với task nhiều bước, plan phải nêu success criteria và verify check cho từng bước.
+- Giữ thay đổi đúng phạm vi task.
+- Không thêm secret, IP server thật, database password, token hoặc SSH key vào repo.
+- Nếu gặp file chưa đúng hướng Clinic SaaS, cập nhật nội dung thay vì xóa trắng nếu owner chưa yêu cầu.
 
-- Read `AGENTS.md`, `CLAUDE.md`, `clinic_saas_report_vi.md`, and `docs/current-task.md` first.
-- Work from an approved `temp/plan.md` for implementation tasks.
-- Keep changes scoped to the approved feature.
-- Do not add real secrets, server IPs, database passwords, or tokens to the repo.
-- Do not use copied project names or paths from the old codebase.
+## Kiến Trúc
 
-## Architecture
-
-- Use Clean Architecture per backend service:
+- Ưu tiên composition hơn inheritance.
+- Hàm nhỏ, đơn nhiệm.
+- Rõ ràng hơn là ẩn ý.
+- Không dùng magic number; đặt tên hằng số có nghĩa.
+- Không để TODO không có giải thích.
+- Không thêm feature ngoài yêu cầu.
+- Không thêm abstraction/configurability cho single-use code.
+- Nếu code có thể viết đơn giản hơn đáng kể, phải simplify trước khi submit.
+- Backend service dùng Clean Architecture:
   - Api
   - Application
   - Domain
   - Infrastructure
-- Keep business logic out of controllers.
-- Keep infrastructure dependencies out of Domain.
-- Application layer owns use cases, commands, queries, validation, and transaction boundaries.
-- Infrastructure layer owns persistence, cache, event bus, external providers.
+- Business logic không nằm trong controller.
+- Domain không phụ thuộc infrastructure.
+- Application layer sở hữu use case, command/query, validation và transaction boundary.
+- Infrastructure layer sở hữu persistence, cache, event bus, external providers.
 
-## Multi-Tenant Rules
+## Clean Architecture Anti-Patterns Cần Tránh
 
-- Tenant-owned data access must require tenant context.
-- Tenant-owned PostgreSQL tables must include `tenant_id` and indexes.
-- Tenant-owned MongoDB documents must include `tenant_id` and indexes.
-- Clinic Admin cannot access another tenant.
-- Owner Super Admin is the only cross-tenant role.
-- Public website tenant should resolve from domain/subdomain.
+### 1. Cross-Service Infrastructure Injection
+
+Không inject repository/infrastructure của service A vào service B. Nếu hai service cần cùng dữ liệu, mỗi service sở hữu repository/contract riêng đúng boundary. Nếu cần logic service khác, gọi qua API/event/contract.
+
+### 2. Fire-And-Forget Background Work
+
+Không dùng `Task.Run` tùy tiện trong request handler. Long-running work phải đi qua queue/channel/background service hoặc event bus.
+
+### 3. Transaction Và Rethrow
+
+Nếu cần persist trạng thái lỗi trước khi trả failure, không rethrow làm rollback mất trạng thái đã set. Transaction boundary phải được thiết kế rõ ở Application layer.
+
+### 4. Transactional Command
+
+Command ghi nhiều DB operations cần transaction boundary rõ ràng. Có thể dùng marker/interface tương đương `ITransactionalCommand` nếu project chọn CQRS pipeline.
+
+### 5. Security Context
+
+TenantId/UserId thiếu hoặc invalid phải fail rõ ràng. Không fallback sang hardcoded dev tenant/user.
+
+### 6. Null Check
+
+Data từ request, webhook, JSON, provider ngoài hoặc API response phải check null trước khi đọc property.
+
+### 7. Exception Handling
+
+Không catch-all trong handler nếu global middleware đã xử lý. Chỉ catch khi cần cleanup, map lỗi domain cụ thể hoặc persist trạng thái cụ thể.
+
+## Multi-Tenant
+
+- Tenant-owned data access phải có tenant context.
+- Tenant-owned PostgreSQL table phải có `tenant_id` và index phù hợp.
+- Tenant-owned MongoDB document phải có `tenant_id` và index phù hợp.
+- Clinic Admin không được truy cập tenant khác.
+- Owner Super Admin là role cross-tenant duy nhất.
+- Public website resolve tenant từ domain/subdomain.
 
 ## Frontend
 
-- Use Vue 3 + Vite + TypeScript.
-- Use shared UI components and design tokens.
-- Keep UI aligned with Figma.
-- Do not invent layouts when Figma source exists.
-- Keep tenant context in the API client/request layer.
+- Dùng Vue 3 + Vite + TypeScript.
+- Dùng shared UI components và design tokens.
+- UI phải bám Figma khi Figma source có sẵn.
+- Không tự invent layout nếu Figma đã định nghĩa.
+- Tenant context nằm ở API client/request layer.
 
 ## Backend
 
-- Use async APIs for I/O.
-- Validate external input before domain/application operations.
-- Prefer explicit use cases over large generic services.
-- Use structured errors and logging.
-- Do not catch and swallow exceptions that should rollback a transaction.
-- Do not fallback to hardcoded tenant/user/security context.
+- Dùng async API cho I/O.
+- Validate input ở application boundary.
+- Ưu tiên explicit use case thay vì service quá lớn.
+- Dùng structured errors và logging.
+- Không catch rồi nuốt exception làm mất rollback.
+- Không fallback sang tenant/user/security context hardcoded.
+- Startup/config phải fail-fast nếu thiếu config bắt buộc; không chạy tiếp với placeholder.
+- Không hardcode absolute path hoặc environment-specific path.
+- Không expose stack trace ra client ngoài Development.
+- Không để public endpoint throw `NotImplementedException`.
+
+## Database Naming
+
+- Table name: lowercase `snake_case`, số nhiều khi phù hợp.
+- Column name: lowercase `snake_case`.
+- Primary key: `pk_<table>`.
+- Foreign key: `fk_<table>_<ref_or_column>`.
+- Index: `idx_<table>_<columns>`.
+- Unique index: `ux_<table>_<columns>`.
+- Tránh quoted PascalCase trong SQL.
 
 ## Database
 
-- PostgreSQL: relational and transactional data.
+- PostgreSQL: dữ liệu quan hệ và transactional.
 - MongoDB: CMS, page JSON, template config, layout data.
 - Redis: cache, tenant config, domain mapping, rate limit, temporary locks.
 - Kafka/Event Bus: async domain events.
 
 ## Verification
 
-- Verify with focused manual/API checks until test structure exists.
-- For tenant features, verify both allowed and forbidden tenant access.
-- For UI features, verify desktop and mobile layout.
-- Update `docs/current-task.md` if work stops before completion.
+- Trước khi implement, biến yêu cầu thành mục tiêu kiểm chứng được.
+- Ví dụ: "add validation" phải xác định input invalid nào bị chặn; "fix bug" phải xác định cách reproduce và cách xác nhận đã hết lỗi.
+- Với task nhiều bước, mỗi bước cần có verify check tương ứng.
+- Nếu chưa có test structure, verify bằng manual/API check đúng phạm vi.
+- Với tenant feature, phải kiểm cả case được phép và bị cấm.
+- Với UI feature, kiểm desktop và mobile.
+- Với API, health-check trước khi test flow.
+- Ghi rõ port/environment/mode trong report test.
+- Nếu dừng giữa chừng, cập nhật `docs/current-task.md`.
+
+## Code Review Notes
+
+- Không tự tạo hoặc cập nhật file review archive sau mỗi lần review nếu owner chưa yêu cầu.
+- Kết quả review mặc định report trực tiếp cho owner: findings, file/line, severity, test gap.
+- Nếu owner muốn lưu review lâu dài, tạo file mới theo yêu cầu rõ, ví dụ `docs/reviews/YYYY-MM-DD-topic.md`.

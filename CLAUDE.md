@@ -1,61 +1,114 @@
 # CLAUDE.md - Clinic SaaS / Hospital Management
 
-Claude Code must follow the same project rules as Codex. The repo was copied from another project, so do not trust old `ez-sales-bot` instructions, connection strings, service names, or task plans.
+Claude Code phải tuân thủ cùng luật dự án với Codex. File này là entrypoint riêng cho Claude, còn luật chung nằm trong `AGENTS.md`.
 
-## Read First
+## ⚠️ BẮT BUỘC ĐỌC TRƯỚC KHI VIẾT CODE
 
 1. `AGENTS.md`
-2. `clinic_saas_report_vi.md`
-3. `docs/current-task.md`
-4. Relevant files under `rules/` only when writing real code
+2. `clinic_saas_report.md`
+3. `architech.txt`
+4. `docs/current-task.md`
+5. `docs/agent-playbook.md`
+6. `docs/session-continuity.md`
+7. `docs/owner-code-notes.md`
+8. Các file trong `rules/` khi bắt đầu viết code thật
 
-## Before Coding
+## Quy Trình Trước Khi Code
 
-- For code implementation, create or update `temp/plan.md` and wait for owner approval unless the owner explicitly says to proceed.
-- For documentation/config cleanup requested directly by the owner, keep changes scoped and report exactly what changed.
-- Do not run build/test/start commands unless needed for the task or explicitly requested.
-- Do not commit unless explicitly requested.
-- Do not use old production database, SSH, Telegram, or `ez-sales-bot` connection details.
+- Với implementation task, tạo/cập nhật `temp/plan.md` và chờ owner duyệt, trừ khi owner nói rõ là triển khai ngay.
+- Khi owner chỉ hỏi/phân tích, không tự code.
+- Với task dọn tài liệu/config do owner yêu cầu trực tiếp, được sửa ngay nhưng phải giữ scope nhỏ.
+- Không chạy build/test/start nếu task không cần.
+- Không commit nếu owner chưa yêu cầu.
+- Không dùng server/database/token/SSH thật khi owner chưa cung cấp trong phiên hiện tại.
+- Sau mỗi lần làm xong phải report lại cho owner: đã làm gì, sửa file nào, kiểm tra gì, còn thiếu/bị chặn gì, bước tiếp theo là gì. Không được im lặng sau khi chạy tool hoặc sửa file.
 
-## Project Direction
+## Coding Discipline Từ Tài Liệu Cũ
 
-The target product is a multi-tenant Clinic SaaS platform:
+- Think before coding: nêu assumptions, ambiguity và tradeoff cho task lớn. Nếu có nhiều cách hiểu, trình bày ra; không tự chọn im lặng. Nếu không rõ, dừng lại và hỏi.
+- Simplicity first: không thêm feature, abstraction hoặc configurability ngoài yêu cầu.
+- Surgical changes: chỉ sửa những gì trace trực tiếp về yêu cầu. Mỗi dòng thay đổi phải trace được về request của owner.
+- Goal-driven execution: với task nhiều bước, nêu success criteria và cách verify cho từng bước trước khi làm hoặc trong `temp/plan.md`.
+- Đọc code hiện có trước khi viết mới.
+- Không xóa file hoặc dead code ngoài scope nếu owner chưa yêu cầu.
+- Nếu thay đổi của mình tạo import/variable/function unused, phải dọn phần unused do chính mình tạo.
+- Security/tenant context thiếu hoặc invalid thì throw/fail rõ, không fallback hardcoded.
+- External data phải null-check trước khi đọc property.
+- Background work dùng queue/background service, không fire-and-forget tùy tiện.
+- Transaction boundary phải rõ với command ghi nhiều DB operations.
 
-- Public Website for patients.
-- Clinic Admin Portal for each clinic tenant.
-- Owner Super Admin Portal for platform owner operations.
-- API Gateway/BFF in front of microservices.
-- Clean Architecture inside each backend service.
-- Tenant isolation is mandatory in every tenant-owned query and command.
+## Hướng Dự Án
 
-## Target Stack
+Sản phẩm đích là nền tảng Clinic SaaS multi-tenant:
 
-- Frontend: Vue 3, Vite, TypeScript, Pinia, Vue Router, shared UI components, Figma design tokens.
-- Backend: .NET service architecture, Clean Architecture, CQRS/use-case pattern where useful.
+- Public Website cho bệnh nhân.
+- Clinic Admin Portal cho từng tenant/phòng khám.
+- Owner Super Admin Portal cho chủ platform.
+- API Gateway/BFF đứng trước các service.
+- Backend service dùng Clean Architecture.
+- Tenant isolation là yêu cầu bắt buộc trong mọi query/command liên quan dữ liệu tenant.
+
+## Stack Định Hướng
+
+- Frontend: Vue 3, Vite, TypeScript, Pinia, Vue Router, shared UI components, design tokens từ Figma.
+- Backend: .NET service architecture, ASP.NET Core, Clean Architecture, CQRS/use-case pattern khi có lợi.
 - Data: PostgreSQL, MongoDB, Redis.
-- Async/realtime: Kafka/Event Bus and future SignalR/WebSocket gateway.
+- Async/realtime: Kafka/Event Bus và SignalR/WebSocket gateway về sau.
 
-The `.NET 11` target in reports is a project direction, not a verified stable runtime decision. Before implementation, verify the current stable/LTS .NET version and document the final choice.
+Ghi chú version: `.NET 11` trong báo cáo là định hướng ban đầu. Trước khi implementation thật, phải kiểm tra bản .NET stable/LTS hiện tại và ghi rõ quyết định.
 
 ## Figma
 
-Figma/FigJam are source of truth:
+Figma/FigJam là source of truth cho UI, module map, service map và data flow:
 
+- PDF export đã đọc:
+  - `Clinic SaaS Architecture - Source of Truth.pdf`
+  - `Clinic SaaS Technical Architecture - Microservices Clean Architecture.pdf`
+- Figma Design UI:
+  `https://www.figma.com/design/Mz2oB5doTl6alla1KwTUWL`
 - Architecture Source of Truth:
   `https://www.figma.com/board/Cw0evT4maoKnQX5G23tJpT/Clinic-SaaS-Architecture---Source-of-Truth`
 - Technical Architecture:
   `https://www.figma.com/board/Fwpls2wzNxzGdpDuGGYSxi/Clinic-SaaS-Technical-Architecture---Microservices-Clean-Architecture`
 
-Use Figma MCP when available. If MCP tools are not visible, restart Claude Code/Codex after MCP config changes.
+Dùng Figma MCP khi tool có sẵn. Nếu MCP chưa hiện, restart Claude Code/Codex sau khi cấu hình MCP.
 
-## Handoff Rule
+## Claude Agents
 
-If work stops mid-task, update `docs/current-task.md` with:
+Các định nghĩa agent dành cho Claude Code nằm trong `.claude/agents/`. Khi cần chia vai, dùng đúng agent theo domain:
 
-- status,
-- completed work,
-- blocked items,
-- exact next commands/actions,
-- files changed.
+- `architect-agent`
+- `figma-ui-agent`
+- `frontend-agent`
+- `backend-agent`
+- `database-agent`
+- `devops-agent`
+- `qa-agent`
+- `documentation-agent`
 
-This is mandatory so Codex and Claude Code can continue each other's work without losing context.
+## Codex Compatibility
+
+Codex không dùng trực tiếp `.claude/agents/*.md`. Để giữ đồng bộ với Codex:
+
+- Luật chung nằm trong `AGENTS.md`.
+- Vai trò agent dùng chung nằm trong `docs/agent-playbook.md`.
+- Setup Codex/Figma MCP nằm trong `docs/codex-setup.md`.
+- Khi cập nhật rule cho Claude, phải cập nhật phần tương ứng trong `AGENTS.md` hoặc `docs/agent-playbook.md` nếu rule đó cũng áp dụng cho Codex.
+
+## Handoff Bắt Buộc
+
+Cuối mỗi lượt làm việc, Claude Code phải trả lời owner bằng báo cáo ngắn:
+
+- đã hoàn thành gì,
+- file đã sửa/tạo,
+- đã kiểm tra bằng lệnh gì hoặc vì sao chưa kiểm tra,
+- việc còn thiếu/bị chặn,
+- bước tiếp theo đề xuất.
+
+Nếu dừng giữa chừng, cập nhật `docs/current-task.md` với:
+
+- trạng thái hiện tại,
+- việc đã xong,
+- việc bị chặn,
+- lệnh/hành động tiếp theo,
+- file đã thay đổi.
