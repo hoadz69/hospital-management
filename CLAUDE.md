@@ -65,11 +65,11 @@ Figma/FigJam là source of truth cho UI, module map, service map và data flow:
   - `Clinic SaaS Architecture - Source of Truth.pdf`
   - `Clinic SaaS Technical Architecture - Microservices Clean Architecture.pdf`
 - Figma Design UI:
-  `https://www.figma.com/design/Mz2oB5doTl6alla1KwTUWL`
+  `https://www.figma.com/design/1nbJ5XkrlDgQ3BmzpXzhCC/Clinic-Website-UI-Kit---Client---Admin?t=L0tWxOID86LOXPh0-0`
 - Architecture Source of Truth:
-  `https://www.figma.com/board/Cw0evT4maoKnQX5G23tJpT/Clinic-SaaS-Architecture---Source-of-Truth`
+  `https://www.figma.com/board/zVIS2cgoNqwC21lZbpApjp/Clinic-SaaS-Architecture---Source-of-Truth?t=L0tWxOID86LOXPh0-0`
 - Technical Architecture:
-  `https://www.figma.com/board/Fwpls2wzNxzGdpDuGGYSxi/Clinic-SaaS-Technical-Architecture---Microservices-Clean-Architecture`
+  `https://www.figma.com/board/j4vDRWSIRSckcAYvXHocMc/Clinic-SaaS-Technical-Architecture---Microservices-Clean-Architecture?t=L0tWxOID86LOXPh0-0`
 
 Dùng Figma MCP khi tool có sẵn. Nếu MCP chưa hiện, restart Claude Code/Codex sau khi cấu hình MCP.
 

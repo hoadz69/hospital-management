@@ -63,9 +63,11 @@ File này là index kiến trúc ngắn. Báo cáo đầy đủ nằm trong `cli
 6. Figma Boards
 
 - Architecture Source of Truth:
-  https://www.figma.com/board/Cw0evT4maoKnQX5G23tJpT/Clinic-SaaS-Architecture---Source-of-Truth?node-id=0-1&p=f&t=QK2zZcH4us1dCsN3-0
+  https://www.figma.com/board/zVIS2cgoNqwC21lZbpApjp/Clinic-SaaS-Architecture---Source-of-Truth?t=L0tWxOID86LOXPh0-0
 - Technical Architecture:
-  https://www.figma.com/board/Fwpls2wzNxzGdpDuGGYSxi/Clinic-SaaS-Technical-Architecture---Microservices-Clean-Architecture?node-id=0-1&p=f&t=apHcjCTAhX1BfVlv-0
+  https://www.figma.com/board/j4vDRWSIRSckcAYvXHocMc/Clinic-SaaS-Technical-Architecture---Microservices-Clean-Architecture?t=L0tWxOID86LOXPh0-0
+- Figma Design UI:
+  https://www.figma.com/design/1nbJ5XkrlDgQ3BmzpXzhCC/Clinic-Website-UI-Kit---Client---Admin?t=L0tWxOID86LOXPh0-0
 - PDF exports đã đọc:
   - Clinic SaaS Architecture - Source of Truth.pdf
   - Clinic SaaS Technical Architecture - Microservices Clean Architecture.pdf
@@ -83,4 +85,4 @@ File này là index kiến trúc ngắn. Báo cáo đầy đủ nằm trong `cli
 
 8. Ghi Chú Phiên Hiện Tại
 
-Codex Figma MCP đã cài và OAuth thành công, nhưng Figma MCP đang bị quota Starter plan. PDF export đã được dùng làm nguồn thay thế để cập nhật báo cáo. Khi quota có lại, đọc trực tiếp board để đối chiếu.
+Codex Figma MCP đã cài và OAuth thành công. Ngày 2026-05-08, sau khi owner đổi tài khoản/link Figma, phiên Codex hiện tại đã đọc được metadata UI Design và cả hai FigJam board mới bằng Figma MCP. PDF export vẫn là snapshot tham chiếu; khi làm UI/architecture phải ưu tiên link Figma/FigJam mới nếu MCP đọc được.

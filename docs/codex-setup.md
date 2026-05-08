@@ -37,18 +37,19 @@ Trạng thái hiện tại:
 
 ## Figma Board Status
 
-Đã thử đọc hai board bằng process Codex mới sau khi cài MCP:
+Đã kiểm tra lại bằng Figma MCP ngày 2026-05-08 sau khi owner đổi tài khoản/link Figma:
 
-- `https://www.figma.com/board/Cw0evT4maoKnQX5G23tJpT/Clinic-SaaS-Architecture---Source-of-Truth`
-- `https://www.figma.com/board/Fwpls2wzNxzGdpDuGGYSxi/Clinic-SaaS-Technical-Architecture---Microservices-Clean-Architecture`
+- UI Design: `https://www.figma.com/design/1nbJ5XkrlDgQ3BmzpXzhCC/Clinic-Website-UI-Kit---Client---Admin?t=L0tWxOID86LOXPh0-0`
+- Architecture Source of Truth: `https://www.figma.com/board/zVIS2cgoNqwC21lZbpApjp/Clinic-SaaS-Architecture---Source-of-Truth?t=L0tWxOID86LOXPh0-0`
+- Technical Architecture: `https://www.figma.com/board/j4vDRWSIRSckcAYvXHocMc/Clinic-SaaS-Technical-Architecture---Microservices-Clean-Architecture?t=L0tWxOID86LOXPh0-0`
 
-Kết quả: Figma MCP hoạt động nhưng Figma trả lỗi quota:
+Kết quả: cả 3 link đều đọc được trong phiên hiện tại.
 
-```txt
-You've reached the Figma MCP tool call limit on the Starter plan.
-```
+- UI Design file key `1nbJ5XkrlDgQ3BmzpXzhCC` trả metadata canvas `Clinic Website UI Kit`.
+- Architecture Source of Truth board key `zVIS2cgoNqwC21lZbpApjp` trả FigJam canvas.
+- Technical Architecture board key `j4vDRWSIRSckcAYvXHocMc` trả FigJam canvas.
 
-Vì vậy hiện chưa trích xuất được nội dung thật của board. Không được tự bịa section/node/data-flow.
+Không được tự bịa section/node/data-flow nếu phiên sau không đọc được Figma MCP.
 
 Owner đã export hai board thành PDF trong repo:
 
@@ -57,7 +58,7 @@ Owner đã export hai board thành PDF trong repo:
 
 Hai PDF này đã được đọc bằng text extraction/screenshot ngày 2026-05-08 và đã được dùng để cập nhật `clinic_saas_report.md`, `architech.txt`.
 
-## Cách Tiếp Tục Khi Quota Có Lại
+## Cách Tiếp Tục Khi Cần Đọc Figma
 
 1. Mở phiên Codex mới để MCP tool được load.
 2. Chạy lại kiểm tra:

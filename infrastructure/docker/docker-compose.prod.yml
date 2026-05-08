@@ -1,0 +1,11 @@
+name: clinic-saas-prod-placeholder
+
+services:
+  reverse-proxy:
+    image: nginx:1.27-alpine
+    container_name: clinic-saas-prod-reverse-proxy-placeholder
+    ports:
+      - "8080:80"
+    volumes:
+      - ./nginx/default.conf:/etc/nginx/conf.d/default.conf:ro
+

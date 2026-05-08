@@ -1,0 +1,64 @@
+name: clinic-saas-dev
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: clinic-saas-postgres
+    environment:
+      POSTGRES_DB: clinic_saas_dev
+      POSTGRES_USER: clinic_dev
+      POSTGRES_PASSWORD: clinic_dev_password
+    ports:
+      - "5432:5432"
+    volumes:
+      - clinic_saas_postgres:/var/lib/postgresql/data
+      - ../postgres/init.sql:/docker-entrypoint-initdb.d/001-init.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U clinic_dev -d clinic_saas_dev"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  mongodb:
+    image: mongo:7
+    container_name: clinic-saas-mongodb
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: clinic_dev
+      MONGO_INITDB_ROOT_PASSWORD: clinic_dev_password
+      MONGO_INITDB_DATABASE: clinic_saas_cms_dev
+    ports:
+      - "27017:27017"
+    volumes:
+      - clinic_saas_mongodb:/data/db
+      - ../mongodb/init.js:/docker-entrypoint-initdb.d/001-init.js:ro
+
+  redis:
+    image: redis:7-alpine
+    container_name: clinic-saas-redis
+    command: ["redis-server", "/usr/local/etc/redis/redis.conf"]
+    ports:
+      - "6379:6379"
+    volumes:
+      - ../redis/redis.conf:/usr/local/etc/redis/redis.conf:ro
+
+  kafka:
+    image: bitnami/kafka:3.7
+    container_name: clinic-saas-kafka
+    environment:
+      KAFKA_CFG_NODE_ID: 1
+      KAFKA_CFG_PROCESS_ROLES: controller,broker
+      KAFKA_CFG_CONTROLLER_QUORUM_VOTERS: 1@kafka:9093
+      KAFKA_CFG_LISTENERS: PLAINTEXT://:9092,CONTROLLER://:9093
+      KAFKA_CFG_ADVERTISED_LISTENERS: PLAINTEXT://localhost:9092
+      KAFKA_CFG_CONTROLLER_LISTENER_NAMES: CONTROLLER
+      KAFKA_CFG_AUTO_CREATE_TOPICS_ENABLE: "false"
+      ALLOW_PLAINTEXT_LISTENER: "yes"
+    ports:
+      - "9092:9092"
+    volumes:
+      - clinic_saas_kafka:/bitnami/kafka
+
+volumes:
+  clinic_saas_postgres:
+  clinic_saas_mongodb:
+  clinic_saas_kafka:

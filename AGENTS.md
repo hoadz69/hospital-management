@@ -27,11 +27,11 @@ File này là hướng dẫn chung cho Codex, Claude Code và các coding agent 
 - PDF export đã đọc từ FigJam:
   - `Clinic SaaS Architecture - Source of Truth.pdf`
   - `Clinic SaaS Technical Architecture - Microservices Clean Architecture.pdf`
-- Figma Design UI từ tài liệu cũ:
-  - `https://www.figma.com/design/Mz2oB5doTl6alla1KwTUWL`
+- Figma Design UI:
+  - `https://www.figma.com/design/1nbJ5XkrlDgQ3BmzpXzhCC/Clinic-Website-UI-Kit---Client---Admin?t=L0tWxOID86LOXPh0-0`
 - System architecture source of truth:
-  - `https://www.figma.com/board/Cw0evT4maoKnQX5G23tJpT/Clinic-SaaS-Architecture---Source-of-Truth`
-  - `https://www.figma.com/board/Fwpls2wzNxzGdpDuGGYSxi/Clinic-SaaS-Technical-Architecture---Microservices-Clean-Architecture`
+  - `https://www.figma.com/board/zVIS2cgoNqwC21lZbpApjp/Clinic-SaaS-Architecture---Source-of-Truth?t=L0tWxOID86LOXPh0-0`
+  - `https://www.figma.com/board/j4vDRWSIRSckcAYvXHocMc/Clinic-SaaS-Technical-Architecture---Microservices-Clean-Architecture?t=L0tWxOID86LOXPh0-0`
 
 ## Nhận Diện Dự Án Hiện Tại
 
@@ -131,8 +131,9 @@ Nếu cần tách việc theo agent trong Codex, chỉ dùng khi owner yêu cầ
 - `.mcp.json` trong repo dùng cho Claude-style project MCP config.
 - Nếu Figma MCP tools không hiện trong phiên làm việc, restart Codex/Claude Code để MCP config được load lại.
 - Nếu không đọc được Figma trong phiên hiện tại, phải ghi rõ giới hạn vào `docs/current-task.md` và không tự bịa nội dung board.
-- Ngày 2026-05-08 đã chạy `codex mcp add figma --url https://mcp.figma.com/mcp` và OAuth thành công. Process Codex mới gọi được MCP nhưng Figma trả lỗi quota Starter plan, nên chưa trích xuất được board.
-- Hai PDF export trong repo đã được đọc và dùng làm nguồn thay thế cho đến khi MCP quota có lại.
+- Ngày 2026-05-08 đã chạy `codex mcp add figma --url https://mcp.figma.com/mcp` và OAuth thành công.
+- Ngày 2026-05-08, sau khi owner đổi tài khoản/link Figma, phiên Codex hiện tại đã đọc được metadata UI Design và cả hai FigJam board mới bằng Figma MCP.
+- Hai PDF export trong repo vẫn là snapshot tham chiếu, nhưng khi làm UI/architecture phải ưu tiên link Figma/FigJam mới nếu MCP đọc được.
 
 ## GitNexus
 

@@ -1,6 +1,9 @@
-temp/
-
-logs/
-
-*/logs/
-.gitnexus
+node_modules/
+dist/
+.vite/
+.turbo/
+.DS_Store
+*.user
+*.suo
+bin/
+obj/

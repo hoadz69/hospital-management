@@ -1,0 +1,17 @@
+{
+  "name": "@clinic-saas/clinic-admin",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite --host 0.0.0.0 --port 5174",
+    "build": "vue-tsc -b --noEmit && vite build",
+    "typecheck": "vue-tsc -b --noEmit"
+  },
+  "dependencies": {
+    "@clinic-saas/api-client": "0.0.0",
+    "@clinic-saas/design-tokens": "0.0.0",
+    "@clinic-saas/shared-types": "0.0.0",
+    "@clinic-saas/ui": "0.0.0"
+  }
+}

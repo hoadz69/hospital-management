@@ -1,0 +1,28 @@
+{
+  "name": "@clinic-saas/frontend",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "dev:public": "npm --workspace @clinic-saas/public-web run dev",
+    "dev:clinic": "npm --workspace @clinic-saas/clinic-admin run dev",
+    "dev:owner": "npm --workspace @clinic-saas/owner-admin run dev",
+    "build": "npm run build --workspaces --if-present",
+    "typecheck": "npm run typecheck --workspaces --if-present"
+  },
+  "devDependencies": {
+    "@vitejs/plugin-vue": "^5.2.4",
+    "typescript": "^5.8.3",
+    "vite": "^6.3.5",
+    "vue": "^3.5.13",
+    "vue-tsc": "^2.2.10"
+  },
+  "dependencies": {
+    "pinia": "^3.0.2",
+    "vue-router": "^4.5.1"
+  }
+}
