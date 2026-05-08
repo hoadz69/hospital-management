@@ -2,34 +2,46 @@
 
 ## Pha Hiện Tại
 
-Chuẩn hóa tài liệu, rule, script và scaffold để toàn bộ repo đi theo hướng Clinic SaaS / Hospital Management.
+Đồng bộ tài liệu, rule và prompt theo structure scaffold hiện tại:
 
-## Đã Hoàn Thành
+```txt
+frontend/
+  apps/
+  packages/
+
+backend/
+  services/
+  shared/
+
+infrastructure/
+docs/
+temp/
+```
+
+## Đã Hoàn Thành Trước Đó
 
 - Xác định project identity: Clinic SaaS / Hospital Management Platform.
 - Bổ sung luật chung cho Codex/Claude trong `AGENTS.md`.
 - Bổ sung entrypoint cho Claude Code trong `CLAUDE.md`.
 - Cấu hình Figma MCP trong `.mcp.json`.
 - Tạo/cập nhật báo cáo kiến trúc tiếng Việt.
-- Chuẩn hóa Docker Compose local cho PostgreSQL, MongoDB, Redis, Kafka.
+- Scaffold skeleton theo `frontend/`, `backend/`, `infrastructure/`, `docs/`, `temp/`.
 
-## Đang Làm
+## Đã Hoàn Thành Trong Task Này
 
-- Khôi phục các rule bắt buộc kiểu “BẮT BUỘC ĐỌC TRƯỚC KHI VIẾT CODE”.
-- Chuyển các file còn lệch domain sang nội dung Clinic SaaS bằng tiếng Việt.
-- Ghi rõ giới hạn Figma MCP của phiên hiện tại.
+- Đồng bộ source-of-truth/rules/prompt còn nhắc root-level `apps/`, `packages/`, `services/`.
+- Đồng bộ legacy report path, legacy lead-agent file reference và FigJam link cũ sang source hiện tại.
+- Ghi nhận Figma/FigJam không còn text structure cũ và đã thêm note structure hiện tại vào Technical Architecture FigJam.
 
 ## Pha Tiếp Theo
 
-1. Restart Codex/Claude Code để Figma MCP tools hiện ra.
-2. Đọc hai board Figma/FigJam bằng MCP.
-3. Cập nhật `clinic_saas_report.md` bằng nội dung board thật.
-4. Tạo `temp/plan.md` cho bước implementation đầu tiên.
-5. Chờ owner duyệt trước khi scaffold frontend/backend.
+1. Tạo .NET project files thực tế cho phase 1 backend: `api-gateway`, `identity-service`, `tenant-service`.
+2. Mở rộng frontend routing/layout placeholder theo Figma cho 3 apps.
+3. Thêm smoke tests/checklists cho tenant isolation, routing và compose config.
 
 ## Không Được Làm Khi Chưa Có Duyệt
 
 - Không tạo connection thật tới server/database.
 - Không commit.
 - Không xóa file lịch sử nếu owner chưa yêu cầu.
-- Không triển khai code runtime khi chưa có `temp/plan.md` được duyệt.
+- Không triển khai business logic ngoài scope.

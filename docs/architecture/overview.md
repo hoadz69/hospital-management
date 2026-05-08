@@ -4,8 +4,26 @@ Clinic SaaS is a multi-tenant platform with three frontend apps, an API Gateway/
 
 Current approved source structure:
 
-- `frontend/`
-- `backend/`
-- `infrastructure/`
-- `docs/`
-- `temp/`
+```txt
+frontend/
+  apps/
+    public-web/
+    clinic-admin/
+    owner-admin/
+  packages/
+    ui/
+    design-tokens/
+    api-client/
+    shared-types/
+    config/
+
+backend/
+  services/
+  shared/
+
+infrastructure/
+docs/
+temp/
+```
+
+Do not add root-level `apps/`, `packages/`, or `services/` directories. Frontend app/package work belongs under `frontend/`; backend service/shared work belongs under `backend/`.

@@ -5,7 +5,7 @@ Tài liệu này dùng chung cho Codex, Claude Code và các agent khác. Claude
 ## Luật Chung Cho Mọi Agent
 
 - Đọc `AGENTS.md`, `clinic_saas_report.md`, `architech.txt`, `docs/current-task.md` trước khi đổi hướng kỹ thuật.
-- Khi cần đối chiếu Figma/FigJam, ưu tiên PDF export trong repo:
+- Khi cần đối chiếu Figma/FigJam, ưu tiên Figma MCP nếu đọc được. PDF export trong repo chỉ là snapshot tham chiếu:
   - `Clinic SaaS Architecture - Source of Truth.pdf`
   - `Clinic SaaS Technical Architecture - Microservices Clean Architecture.pdf`
 - Với implementation task, tạo/cập nhật `temp/plan.md` và chờ owner duyệt.
@@ -58,16 +58,16 @@ Create reusable components for sidebar, topbar, table, cards, buttons, form fiel
 
 Nhiệm vụ:
 
-- Tạo `public-web`, `clinic-admin`, `owner-admin`.
+- Tạo `frontend/apps/public-web`, `frontend/apps/clinic-admin`, `frontend/apps/owner-admin`.
 - Tạo routing, layout, guards, auth state.
 - Tạo API client có tenant context.
-- Dùng shared UI package và design tokens.
+- Dùng shared UI package và design tokens trong `frontend/packages/`.
 
 Prompt nền:
 
 ```txt
 You are the Frontend Agent.
-Create Vue 3 + Vite + TypeScript apps for public website, clinic admin, and owner admin.
+Create Vue 3 + Vite + TypeScript apps under frontend/apps for public website, clinic admin, and owner admin.
 Use shared UI components and design tokens from Figma.
 Implement routing, layouts, guards, API client, tenant context, auth state, and placeholder pages matching Figma screens.
 ```

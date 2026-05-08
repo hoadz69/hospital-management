@@ -13,20 +13,21 @@ File này là index kiến trúc ngắn. Báo cáo đầy đủ nằm trong `cli
 
 - Vue 3 + Vite + TypeScript.
 - Apps:
-  - apps/public-web
-  - apps/clinic-admin
-  - apps/owner-admin
+  - frontend/apps/public-web
+  - frontend/apps/clinic-admin
+  - frontend/apps/owner-admin
 - Shared packages:
-  - packages/ui
-  - packages/design-tokens
-  - packages/api-client
-  - packages/shared-types
+  - frontend/packages/ui
+  - frontend/packages/design-tokens
+  - frontend/packages/api-client
+  - frontend/packages/shared-types
+  - frontend/packages/config
 - UI source of truth là Figma/FigJam qua MCP khi tool có sẵn.
 
 3. Backend
 
 - API Gateway/BFF đứng trước services.
-- Services:
+- Services nằm trong backend/services/:
   - identity-service
   - tenant-service
   - website-cms-service
@@ -44,6 +45,10 @@ File này là index kiến trúc ngắn. Báo cáo đầy đủ nằm trong `cli
   - Application
   - Domain
   - Infrastructure
+- Backend shared nằm trong backend/shared/:
+  - building-blocks
+  - contracts
+  - observability
 
 4. Data
 

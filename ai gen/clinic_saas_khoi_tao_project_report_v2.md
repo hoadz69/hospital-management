@@ -61,7 +61,8 @@ Design system:
 Architecture FigJam đang dùng:
 
 ```txt
-https://www.figma.com/board/Cw0evT4maoKnQX5G23tJpT
+https://www.figma.com/board/zVIS2cgoNqwC21lZbpApjp/Clinic-SaaS-Architecture---Source-of-Truth?t=L0tWxOID86LOXPh0-0
+https://www.figma.com/board/j4vDRWSIRSckcAYvXHocMc/Clinic-SaaS-Technical-Architecture---Microservices-Clean-Architecture?t=L0tWxOID86LOXPh0-0
 ```
 
 ---
@@ -127,12 +128,12 @@ Documentation Agent
 
 ---
 
-## 4. File nên thêm vào repo
+## 4. File support đang dùng trong repo
 
-### 4.1 `LEAD_AGENT.md`
+### 4.1 `docs/agent-playbook.md`
 
 ```md
-# Lead / Orchestrator Agent - Clinic SaaS
+# Agent Playbook / Orchestrator Checklist - Clinic SaaS
 
 Bạn là Lead Agent cho project Clinic SaaS Multi Tenant.
 
@@ -142,7 +143,8 @@ Bạn không phải agent code chính. Bạn là người điều phối toàn b
 
 Bạn phải:
 - Đọc AGENTS.md
-- Đọc docs/clinic_saas_report_vi.md
+- Đọc clinic_saas_report.md
+- Đọc architech.txt
 - Đọc docs/current-task.md nếu có
 - Đọc Figma UI/FigJam/PDF export nếu task liên quan UI/architecture
 - Biến yêu cầu owner thành success criteria rõ ràng
@@ -231,19 +233,22 @@ Tạo structure frontend apps, shared packages, backend services, infrastructure
 
 ## Source of Truth
 - UI Figma: https://www.figma.com/design/1nbJ5XkrlDgQ3BmzpXzhCC/Clinic-Website-UI-Kit---Client---Admin?node-id=0-1&p=f&t=5lnVCBz1BThNHg48-0
-- Architecture FigJam: https://www.figma.com/board/Cw0evT4maoKnQX5G23tJpT
-- Report: docs/clinic_saas_report_vi.md
-- Agent rules: AGENTS.md, LEAD_AGENT.md
+- Architecture FigJam: https://www.figma.com/board/zVIS2cgoNqwC21lZbpApjp/Clinic-SaaS-Architecture---Source-of-Truth?t=L0tWxOID86LOXPh0-0
+- Technical Architecture FigJam: https://www.figma.com/board/j4vDRWSIRSckcAYvXHocMc/Clinic-SaaS-Technical-Architecture---Microservices-Clean-Architecture?t=L0tWxOID86LOXPh0-0
+- Report: clinic_saas_report.md
+- Agent rules: AGENTS.md, docs/agent-playbook.md
 
 ## Success Criteria
-- Có apps/public-web
-- Có apps/clinic-admin
-- Có apps/owner-admin
-- Có packages/ui
-- Có packages/design-tokens
-- Có packages/api-client
-- Có packages/shared-types
-- Có services skeleton
+- Có frontend/apps/public-web
+- Có frontend/apps/clinic-admin
+- Có frontend/apps/owner-admin
+- Có frontend/packages/ui
+- Có frontend/packages/design-tokens
+- Có frontend/packages/api-client
+- Có frontend/packages/shared-types
+- Có frontend/packages/config
+- Có backend/services skeleton
+- Có backend/shared skeleton
 - Có infrastructure/docker
 - Có docker-compose cơ bản
 - Có README chạy local
@@ -327,32 +332,37 @@ Lý do:
 ## 7. Monorepo structure đề xuất
 
 ```txt
-apps/
-  public-web/
-  clinic-admin/
-  owner-admin/
+frontend/
+  apps/
+    public-web/
+    clinic-admin/
+    owner-admin/
+  packages/
+    ui/
+    design-tokens/
+    api-client/
+    shared-types/
+    config/
 
-packages/
-  ui/
-  design-tokens/
-  api-client/
-  shared-types/
-  config/
-
-services/
-  api-gateway/
-  identity-service/
-  tenant-service/
-  website-cms-service/
-  template-service/
-  domain-service/
-  booking-service/
-  catalog-service/
-  customer-service/
-  billing-service/
-  report-service/
-  notification-service/
-  realtime-gateway/
+backend/
+  services/
+    api-gateway/
+    identity-service/
+    tenant-service/
+    website-cms-service/
+    template-service/
+    domain-service/
+    booking-service/
+    catalog-service/
+    customer-service/
+    billing-service/
+    report-service/
+    notification-service/
+    realtime-gateway/
+  shared/
+    building-blocks/
+    contracts/
+    observability/
 
 infrastructure/
   docker/
@@ -390,7 +400,7 @@ Tenant-aware API client
 
 Backend:
 ```txt
-.NET target 11 theo định hướng project
+.NET service architecture; kiểm tra stable/LTS runtime tại thời điểm implementation thật
 Microservices
 Clean Architecture trong từng service
 API Gateway/BFF
@@ -469,15 +479,15 @@ tenant:{tenantId}:booking-slots:{date}
 
 ---
 
-## 11. Việc cần làm ngay
+## 11. Việc cần làm tiếp
 
 ```txt
-1. Đưa file này vào docs/clinic_saas_khoi_tao_project_report.md
-2. Đưa prompt file vào docs/codex_prompts_clinic_saas.md
-3. Tạo LEAD_AGENT.md
-4. Tạo docs/current-task.md
-5. Cho Codex chạy Lead Agent prompt
-6. Chờ Codex tạo plan
-7. Duyệt plan
-8. Bắt đầu skeleton monorepo
+1. Giữ file này và prompt file đồng bộ với `clinic_saas_report.md`.
+2. Không tạo thêm root-level `apps/`, `packages/`, `services/`.
+3. Dùng `docs/agent-playbook.md` làm checklist agent chung
+4. Cập nhật docs/current-task.md
+5. Cho Codex chạy prompt theo AGENTS.md và docs/agent-playbook.md
+6. Chờ Codex tạo/cập nhật temp/plan.md khi là implementation task
+7. Duyệt plan nếu task cần duyệt
+8. Bắt đầu bước implementation tiếp theo trong structure hiện tại
 ```

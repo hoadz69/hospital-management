@@ -15,7 +15,7 @@
 Mỗi service theo cấu trúc Clean Architecture:
 
 ```txt
-ServiceName/
+backend/services/service-name/
   src/
     ServiceName.Api/
     ServiceName.Application/
@@ -58,6 +58,8 @@ Rules:
 
 ## 3. Shared Projects Convention
 
+Backend shared code đặt dưới `backend/shared/`.
+
 Nếu tạo shared projects, dùng hướng sau:
 
 ```txt
@@ -90,9 +92,9 @@ Rules:
 
 - Không để service chạy với connection string/config placeholder kiểu `${...}`.
 - Startup phải resolve config rõ ràng hoặc fail-fast với lỗi dễ hiểu trước khi khởi tạo DB/cache/message bus.
-- Shared config nếu dùng thì đặt thống nhất trong `backend/config/`:
-  - `backend/config/appsettings.shared.json`
-  - `backend/config/appsettings.{Environment}.shared.json`
+- Shared config nếu dùng thì đặt thống nhất dưới `backend/shared/config/` hoặc một package shared đã được owner duyệt:
+  - `backend/shared/config/appsettings.shared.json`
+  - `backend/shared/config/appsettings.{Environment}.shared.json`
 - Không hardcode absolute path trong `Program.cs` hoặc startup.
 - Ưu tiên resolve path từ `builder.Environment.ContentRootPath` + `Path.GetFullPath(...)`.
 - Config extension phải dùng tên Clinic SaaS, ví dụ `AddClinicSaaSConfig(...)`, không dùng tên project cũ.

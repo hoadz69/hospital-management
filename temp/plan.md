@@ -1,8 +1,8 @@
-# Plan - Scaffold Skeleton Clinic SaaS
+# Plan - Clinic SaaS Current Task
 
 Ngay: 2026-05-09
-Trang thai: Scaffold skeleton/placeholder da thuc hien
-Pham vi: Tao skeleton theo structure da duyet, khong implement business logic sau
+Trang thai: Da dong bo tai lieu/rules/prompt theo structure hien tai
+Pham vi: Docs/rules/prompt/FigJam note, khong implement business logic sau
 
 ## 1. Structure Da Scaffold
 
@@ -142,9 +142,145 @@ Ket qua:
 - `temp/plan.md` co the bi git ignore theo cau hinh hien tai nen can kiem tra rieng neu can track.
 - Cac file modified co san tu truoc nhu `AGENTS.md`, `CLAUDE.md`, `architech.txt`, `clinic_saas_report.md`, `docs/codex-setup.md` khong duoc sua trong buoc scaffold nay.
 
-## 9. Buoc Tiep Theo De Xuat
+## 9. Docs Sync Da Hoan Thanh
 
-1. Dong bo cac file source-of-truth/rules/prompt con nhac structure cu sang structure moi.
-2. Tao .NET project files thuc te cho phase 1: `api-gateway`, `identity-service`, `tenant-service`.
-3. Mo rong frontend routing/layout placeholder theo Figma cho 3 apps.
-4. Them test/checklist tenant isolation va routing smoke test.
+Muc tieu:
+
+- Doi cac reference root-level `apps/`, `packages/`, `services/` sang `frontend/apps/`, `frontend/packages/`, `backend/services/`.
+- Doi legacy report path, legacy lead-agent file reference va link FigJam cu sang source hien tai.
+- Giu nguyen Clinic SaaS Multi Tenant va tech stack da chot.
+- Khong sua code skeleton, khong tao Figma file moi, khong implement business logic, khong commit.
+
+Figma/FigJam:
+
+- Da search 2 FigJam board va UI design file bang MCP; khong thay text node con chua structure cu.
+- Da them note `Current Repo Structure - Clinic SaaS` vao Technical Architecture FigJam de dong nhat structure hien tai.
+
+Verify:
+
+- Legacy report/playbook/link cu: khong con match.
+- Structure scan: chi con match trong tree hop le, full path hien tai, route public `/services/:slug`, hoac rule cam root-level structure.
+- Khong chay build/typecheck vi task chi sua docs/rules/prompt.
+
+## 10. Buoc Tiep Theo De Xuat
+
+1. Tao .NET project files thuc te cho phase 1: `api-gateway`, `identity-service`, `tenant-service`.
+2. Mo rong frontend routing/layout placeholder theo Figma cho 3 apps.
+3. Them test/checklist tenant isolation va routing smoke test.
+
+## 11. Backend Phase 1 Plan
+
+Ngay: 2026-05-09
+Trang thai: Da hoan thanh backend phase 1 skeleton
+Pham vi: chi tao .NET solution/project skeleton that cho:
+
+- `backend/services/api-gateway`
+- `backend/services/identity-service`
+- `backend/services/tenant-service`
+
+Success criteria:
+
+- Moi service co solution file rieng va cac project:
+  - `src/<Service>.Api`
+  - `src/<Service>.Application`
+  - `src/<Service>.Domain`
+  - `src/<Service>.Infrastructure`
+  - `tests/<Service>.Tests`
+- Project references dung Clean Architecture:
+  - Api -> Application, Infrastructure
+  - Infrastructure -> Application
+  - Application -> Domain
+  - Tests -> Domain/Application
+- Api co placeholder cho tenant context middleware, auth/RBAC, OpenAPI, health check.
+- Infrastructure co PostgreSQL config placeholder, khong tao connection that.
+- Khong secret, khong Figma file moi, khong commit, khong sua frontend routing/layout.
+
+Runtime note:
+
+- Tai lieu cu co nhac `.NET 11` la dinh huong ban dau, nhung local x64 SDK hien co la .NET SDK 9.0.304.
+- De restore/build duoc tren may hien tai, skeleton phase 1 dung `net9.0`.
+- Khi owner cai SDK .NET LTS moi hon, co the nang `TargetFramework` sau bang mot task rieng.
+
+Verify du kien:
+
+```powershell
+& 'C:\Program Files\dotnet\dotnet.exe' restore backend/services/api-gateway/ApiGateway.sln
+& 'C:\Program Files\dotnet\dotnet.exe' build backend/services/api-gateway/ApiGateway.sln --no-restore
+& 'C:\Program Files\dotnet\dotnet.exe' restore backend/services/identity-service/IdentityService.sln
+& 'C:\Program Files\dotnet\dotnet.exe' build backend/services/identity-service/IdentityService.sln --no-restore
+& 'C:\Program Files\dotnet\dotnet.exe' restore backend/services/tenant-service/TenantService.sln
+& 'C:\Program Files\dotnet\dotnet.exe' build backend/services/tenant-service/TenantService.sln --no-restore
+```
+
+Verify da chay them:
+
+```powershell
+& 'C:\Program Files\dotnet\dotnet.exe' restore backend/ClinicSaaS.Backend.sln
+& 'C:\Program Files\dotnet\dotnet.exe' build backend/ClinicSaaS.Backend.sln --no-restore
+```
+
+Ket qua:
+
+- Restore/build pass cho 3 service solutions.
+- Restore/build pass cho `backend/ClinicSaaS.Backend.sln`.
+- Build root solution: 0 warnings, 0 errors.
+
+## 12. Shared Backend Primitives Plan
+
+Ngay: 2026-05-09
+Trang thai: Owner yeu cau tao shared backend primitives va ap dung toi thieu vao phase 1 services
+Pham vi:
+
+- `backend/shared/building-blocks`
+- `backend/shared/contracts`
+- `backend/shared/observability`
+- `backend/services/api-gateway`
+- `backend/services/identity-service`
+- `backend/services/tenant-service`
+
+Success criteria:
+
+- Tao project `ClinicSaaS.BuildingBlocks`, `ClinicSaaS.Contracts`, `ClinicSaaS.Observability`, target `net9.0`.
+- BuildingBlocks co placeholder:
+  - tenant context/accessor
+  - tenant resolution result
+  - Result/Error model
+  - guard/validation helper
+  - options pattern placeholder
+- Contracts co placeholder:
+  - TenantReference DTO
+  - UserContext DTO
+  - role/permission constants
+  - domain event base
+  - TenantCreated event
+  - auth/RBAC contract
+- Observability co placeholder:
+  - logging constants
+  - correlation id middleware
+  - trace context
+  - health check tag constants
+- 3 phase 1 services reference shared projects where hop ly.
+- Khong implement business logic sau, khong connect PostgreSQL that, khong secret, khong frontend, khong Figma, khong commit.
+
+Verify du kien:
+
+```powershell
+& 'C:\Program Files\dotnet\dotnet.exe' restore backend/ClinicSaaS.Backend.sln
+& 'C:\Program Files\dotnet\dotnet.exe' build backend/ClinicSaaS.Backend.sln --no-restore
+```
+
+Verify da chay:
+
+- Restore pass cho `backend/ClinicSaaS.Backend.sln`.
+- Build pass cho `backend/ClinicSaaS.Backend.sln`.
+- Build result: 0 warnings, 0 errors.
+
+Ket qua implementation:
+
+- Tao `ClinicSaaS.BuildingBlocks`, `ClinicSaaS.Contracts`, `ClinicSaaS.Observability`.
+- 3 service phase 1 da reference shared projects:
+  - Api -> BuildingBlocks, Contracts, Observability
+  - Application -> BuildingBlocks, Contracts
+  - Infrastructure -> BuildingBlocks
+  - Tests -> BuildingBlocks
+- Local duplicate tenant context/RBAC/PostgreSQL options placeholders trong 3 services da thay bang shared types.

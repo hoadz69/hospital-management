@@ -48,6 +48,24 @@ Sản phẩm đích là nền tảng Clinic SaaS multi-tenant:
 - Backend service dùng Clean Architecture.
 - Tenant isolation là yêu cầu bắt buộc trong mọi query/command liên quan dữ liệu tenant.
 
+Structure project hiện tại:
+
+```txt
+frontend/
+  apps/
+  packages/
+
+backend/
+  services/
+  shared/
+
+infrastructure/
+docs/
+temp/
+```
+
+Không tạo source mới ở root-level `apps/`, `packages/`, hoặc `services/`.
+
 ## Stack Định Hướng
 
 - Frontend: Vue 3, Vite, TypeScript, Pinia, Vue Router, shared UI components, design tokens từ Figma.

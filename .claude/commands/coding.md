@@ -9,7 +9,7 @@ allowed-tools: Read, Write, Glob, Grep, Bash
 Trước khi code:
 
 1. Read `/temp/plan.md`.
-2. Read `AGENTS.md`, `CLAUDE.md`, `clinic_saas_report.md`, `clinic_saas_report_vi.md`, and `rules/coding-rules.md`.
+2. Read `AGENTS.md`, `CLAUDE.md`, `clinic_saas_report.md`, `architech.txt`, `docs/current-task.md`, and `rules/coding-rules.md`.
 3. Confirm owner đã duyệt plan.
 
 Luật implementation:

@@ -1,6 +1,6 @@
 # Service Boundaries
 
-Backend services live under `backend/services/`.
+Backend services live under `backend/services/`. Shared backend building blocks, contracts, and observability helpers live under `backend/shared/`.
 
 - `api-gateway`: Gateway/BFF.
 - `identity-service`: Auth, RBAC, tenant claims.

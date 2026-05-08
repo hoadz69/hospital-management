@@ -11,7 +11,7 @@ allowed-tools: Read, Glob, Grep, Write
 1. `AGENTS.md`
 2. `CLAUDE.md`
 3. `clinic_saas_report.md`
-4. `clinic_saas_report_vi.md`
+4. `architech.txt`
 5. `docs/current-task.md`
 6. `docs/agent-playbook.md`
 

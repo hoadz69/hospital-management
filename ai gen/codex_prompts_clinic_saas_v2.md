@@ -5,10 +5,11 @@ Dùng cùng với:
 ```txt
 UI Figma: https://www.figma.com/design/1nbJ5XkrlDgQ3BmzpXzhCC/Clinic-Website-UI-Kit---Client---Admin?node-id=0-1&p=f&t=5lnVCBz1BThNHg48-0
 UI Figma short: https://www.figma.com/design/1nbJ5XkrlDgQ3BmzpXzhCC
-Architecture FigJam: https://www.figma.com/board/Cw0evT4maoKnQX5G23tJpT
-Report: docs/clinic_saas_report_vi.md
+Architecture FigJam: https://www.figma.com/board/zVIS2cgoNqwC21lZbpApjp/Clinic-SaaS-Architecture---Source-of-Truth?t=L0tWxOID86LOXPh0-0
+Technical Architecture FigJam: https://www.figma.com/board/j4vDRWSIRSckcAYvXHocMc/Clinic-SaaS-Technical-Architecture---Microservices-Clean-Architecture?t=L0tWxOID86LOXPh0-0
+Report: clinic_saas_report.md
 Agent rules: AGENTS.md
-Lead rules: LEAD_AGENT.md
+Agent playbook: docs/agent-playbook.md
 ```
 
 ---
@@ -42,11 +43,12 @@ Bạn là Lead / Orchestrator Agent của project Clinic SaaS Multi Tenant.
 
 Đọc các source of truth:
 - AGENTS.md
-- LEAD_AGENT.md
-- docs/clinic_saas_report_vi.md
+- docs/agent-playbook.md
+- clinic_saas_report.md
 - docs/current-task.md nếu có
 - UI Figma: https://www.figma.com/design/1nbJ5XkrlDgQ3BmzpXzhCC/Clinic-Website-UI-Kit---Client---Admin?node-id=0-1&p=f&t=5lnVCBz1BThNHg48-0
-- Architecture FigJam: https://www.figma.com/board/Cw0evT4maoKnQX5G23tJpT
+- Architecture FigJam: https://www.figma.com/board/zVIS2cgoNqwC21lZbpApjp/Clinic-SaaS-Architecture---Source-of-Truth?t=L0tWxOID86LOXPh0-0
+- Technical Architecture FigJam: https://www.figma.com/board/j4vDRWSIRSckcAYvXHocMc/Clinic-SaaS-Technical-Architecture---Microservices-Clean-Architecture?t=L0tWxOID86LOXPh0-0
 
 Nhiệm vụ hiện tại:
 Khởi tạo project skeleton theo architecture và UI đã thiết kế.
@@ -76,9 +78,9 @@ Không đổi architecture nếu chưa ghi rõ trong plan.
 Hãy đọc:
 - Figma UI Design
 - FigJam Architecture
-- docs/clinic_saas_report_vi.md
+- clinic_saas_report.md
 - AGENTS.md
-- LEAD_AGENT.md
+- docs/agent-playbook.md
 
 Sau đó tóm tắt lại project theo các mục:
 1. Mục tiêu sản phẩm
@@ -103,32 +105,37 @@ Duyệt plan. Bắt đầu tạo monorepo skeleton cho Clinic SaaS.
 
 Yêu cầu structure:
 
-apps/
-  public-web/
-  clinic-admin/
-  owner-admin/
+frontend/
+  apps/
+    public-web/
+    clinic-admin/
+    owner-admin/
+  packages/
+    ui/
+    design-tokens/
+    api-client/
+    shared-types/
+    config/
 
-packages/
-  ui/
-  design-tokens/
-  api-client/
-  shared-types/
-  config/
-
-services/
-  api-gateway/
-  identity-service/
-  tenant-service/
-  website-cms-service/
-  template-service/
-  domain-service/
-  booking-service/
-  catalog-service/
-  customer-service/
-  billing-service/
-  report-service/
-  notification-service/
-  realtime-gateway/
+backend/
+  services/
+    api-gateway/
+    identity-service/
+    tenant-service/
+    website-cms-service/
+    template-service/
+    domain-service/
+    booking-service/
+    catalog-service/
+    customer-service/
+    billing-service/
+    report-service/
+    notification-service/
+    realtime-gateway/
+  shared/
+    building-blocks/
+    contracts/
+    observability/
 
 infrastructure/
   docker/
@@ -157,7 +164,7 @@ Sau khi làm xong, report file đã tạo/sửa và cách verify.
 ## 4. Tạo design tokens
 
 ```txt
-Tạo package packages/design-tokens dựa trên Figma UI Design.
+Tạo package `frontend/packages/design-tokens` dựa trên Figma UI Design.
 
 Cần có:
 - colors
@@ -184,7 +191,7 @@ Không hard-code token trong từng component.
 ## 5. Tạo shared UI components
 
 ```txt
-Tạo package packages/ui cho Vue 3.
+Tạo package `frontend/packages/ui` cho Vue 3.
 
 Dựa trên Figma, tạo component dùng chung:
 - AppButton
@@ -216,7 +223,7 @@ Yêu cầu:
 ## 6. Owner Super Admin app
 
 ```txt
-Implement Owner Super Admin app shell trong apps/owner-admin.
+Implement Owner Super Admin app shell trong `frontend/apps/owner-admin`.
 
 Dựa theo Figma screens:
 - 02 Super Admin Dashboard
@@ -250,7 +257,7 @@ Yêu cầu:
 ## 7. Clinic Admin app
 
 ```txt
-Implement Clinic Admin app shell trong apps/clinic-admin.
+Implement Clinic Admin app shell trong `frontend/apps/clinic-admin`.
 
 Dựa theo Figma screens:
 - 06 Clinic Admin Dashboard
@@ -287,7 +294,7 @@ Yêu cầu:
 ## 8. Public Website app
 
 ```txt
-Implement Public Website app trong apps/public-web.
+Implement Public Website app trong `frontend/apps/public-web`.
 
 Dựa theo Figma screens:
 - 08 Public Homepage Dynamic
@@ -498,14 +505,14 @@ Documentation Agent, cập nhật tài liệu sau khi skeleton được tạo.
 Cần cập nhật:
 - README.md
 - AGENTS.md nếu thiếu
-- LEAD_AGENT.md nếu thiếu
+- docs/agent-playbook.md nếu thiếu hoặc lệch
 - docs/current-task.md
 - docs/setup/local-development.md
 - docs/architecture/overview.md
 - docs/architecture/service-boundaries.md
 - docs/architecture/tenant-isolation.md
 
-Nội dung phải khớp với Figma UI, FigJam Architecture và clinic_saas_report_vi.md.
+Nội dung phải khớp với Figma UI, FigJam Architecture và clinic_saas_report.md.
 ```
 
 ---
@@ -534,9 +541,9 @@ Dừng implement.
 
 Hãy đọc lại:
 - AGENTS.md
-- LEAD_AGENT.md
+- docs/agent-playbook.md
 - docs/current-task.md
-- docs/clinic_saas_report_vi.md
+- clinic_saas_report.md
 
 Sau đó tóm tắt:
 1. Task hiện tại là gì

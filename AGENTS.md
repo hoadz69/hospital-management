@@ -40,6 +40,28 @@ File này là hướng dẫn chung cho Codex, Claude Code và các coding agent 
 - Backend/frontend chưa phải implementation hoàn chỉnh; khi gặp tài liệu/script chưa khớp Clinic SaaS thì phải cập nhật theo hướng Clinic SaaS, không chạy theo giả định cũ.
 - Thông tin server/database thật chưa được owner chốt. Chỉ dùng placeholder cho đến khi owner cung cấp.
 
+## Structure Project Hiện Tại
+
+```txt
+frontend/
+  apps/
+  packages/
+
+backend/
+  services/
+  shared/
+
+infrastructure/
+docs/
+temp/
+```
+
+- Không dùng root-level `apps/`, `packages/`, hoặc `services/` cho source mới.
+- Frontend apps nằm trong `frontend/apps/`.
+- Shared frontend packages nằm trong `frontend/packages/`.
+- Backend microservices nằm trong `backend/services/`.
+- Backend shared building blocks/contracts/observability nằm trong `backend/shared/`.
+
 ## Quy Trình Làm Việc
 
 1. Đọc source of truth.

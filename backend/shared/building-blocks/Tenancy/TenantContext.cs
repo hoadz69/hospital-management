@@ -1,0 +1,8 @@
+namespace ClinicSaaS.BuildingBlocks.Tenancy;
+
+public sealed record TenantContext(string? TenantId, string? Source, bool IsPlatformScope = false)
+{
+    public bool HasTenant => !string.IsNullOrWhiteSpace(TenantId);
+
+    public static TenantContext Empty { get; } = new(null, null);
+}
