@@ -483,6 +483,10 @@ public sealed class DapperTenantRepository : ITenantRepository
         DateTimeOffset? SuspendedAtUtc,
         DateTimeOffset? ArchivedAtUtc);
 
+    // Thứ tự positional record phải khớp thứ tự cột trong SELECT của ListAsync vì Dapper
+    // 2.1 với positional record materialize theo position (type của tham số ctor phải khớp
+    // type của cột reader cùng index). Đặt ClinicName ở cuối vì SQL list query JOIN với
+    // tenant_profiles và đặt p.clinic_name sau cùng.
     private sealed record TenantListRow(
         Guid Id,
         string Slug,
@@ -490,12 +494,12 @@ public sealed class DapperTenantRepository : ITenantRepository
         string Status,
         string PlanCode,
         string? PlanDisplayName,
-        string? ClinicName,
         DateTimeOffset CreatedAtUtc,
         DateTimeOffset? UpdatedAtUtc,
         DateTimeOffset? ActivatedAtUtc,
         DateTimeOffset? SuspendedAtUtc,
-        DateTimeOffset? ArchivedAtUtc);
+        DateTimeOffset? ArchivedAtUtc,
+        string? ClinicName);
 
     private sealed record ClinicProfileRow(
         Guid TenantId,
