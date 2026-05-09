@@ -1,169 +1,56 @@
-# Current Task - Verify Phase 2 Tenant MVP Backend Staged Changes
+# Current Task - Project Coordination Dashboard
 
-Ngày cập nhật: 2026-05-09
+Ngày cập nhật: 2026-05-10
 
-## Trạng Thái
+File này là dashboard điều phối project. Không ghi plan chi tiết của một lane vào đây.
+Lead Agent chỉ dùng file này để tóm tắt trạng thái tổng quan và trỏ sang task/plan lane riêng.
 
-🟡 Verify Partial Pass - DB Runtime Smoke Blocked
+## Workstream Đang Chạy Song Song
 
-## Yêu Cầu Của Owner
+| Workstream | Task file | Plan file | Trạng thái ngắn | Bước tiếp theo |
+|---|---|---|---|---|
+| Backend/DevOps | `docs/current-task.backend.md` | `temp/plan.backend.md` | ✅ Phase 2 API Runtime Smoke Gate PASS đủ 5 case trên server `116.118.47.78` sau 2 vòng fix (Dapper type handler + reorder positional record `TenantListRow`); roadmap chuyển Phase 2 Done | (Optional) commit backend fix + lane docs khi owner duyệt; chuẩn bị Phase 3 backend support khi frontend cần real API |
+| Frontend | `docs/current-task.frontend.md` | `temp/plan.frontend.md` | Phase 3 Owner Admin Tenant Slice: implementation Done, typecheck/build/dev-server PASS, HTTP+Vite smoke 5 route PASS, đang dùng mock fallback do backend smoke chưa Done | Bổ sung browser/Playwright cho headless visual hoặc owner mở thủ công; smoke real API khi backend Phase 2 pass |
 
-Verify Phase 2 Tenant MVP Backend staged changes theo `temp/plan.md` và handoff context.
+## Rule Điều Phối
 
-Không implement thêm feature mới, không revert staged changes, không commit, không sửa frontend, không tạo Figma file mới.
+- `docs/current-task.md` chỉ do Lead Agent cập nhật dạng dashboard.
+- Backend Agent và DevOps Agent chỉ cập nhật `docs/current-task.backend.md` và `temp/plan.backend.md`.
+- Frontend Agent chỉ cập nhật `docs/current-task.frontend.md` và `temp/plan.frontend.md`.
+- Không agent nào overwrite `docs/current-task.md` bằng task chi tiết của một lane.
+- Nếu task mới chưa rõ thuộc lane nào, Lead Agent ghi một dòng ngắn ở phần Notes/Unclassified rồi phân lane sau.
+- `temp/plan.md` là index tương thích cũ, không dùng làm plan chi tiết cho backend hoặc frontend.
 
-## Phase Hiện Tại
+## Notes / Unclassified
 
-Phase 2 - Tenant MVP Backend.
+- Nội dung backend cũ từ `docs/current-task.md` đã được chuyển sang `docs/current-task.backend.md`.
+- Nội dung frontend/UI cũ từ `docs/current-task.md` đã được chuyển sang `docs/current-task.frontend.md`.
+- Không có task chi tiết chưa phân loại tại thời điểm cập nhật này.
 
-Phase 1.3 API Boundary Standardization đã Done và đã verify.
+## Prompt Ngắn Từ Giờ
 
-Phase 2 staged implementation hiện có trong git index và đã được verify ở mức restore/build/docker config/startup smoke. Chưa thể xác nhận Done vì full CRUD smoke qua PostgreSQL bị chặn bởi Docker daemon không chạy.
-
-## Staged Changes Đã Verify
-
-Các nhóm file staged chính:
-
-```txt
-backend/services/tenant-service/src/TenantService.Domain/Tenants/*
-backend/services/tenant-service/src/TenantService.Application/Tenants/*
-backend/services/tenant-service/src/TenantService.Infrastructure/Persistence/*
-backend/services/tenant-service/src/TenantService.Infrastructure/Migrations/0001_create_tenant_mvp.sql
-backend/services/tenant-service/src/TenantService.Api/Endpoints/TenantEndpoints.cs
-backend/services/api-gateway/src/ApiGateway.Application/Tenants/*
-backend/services/api-gateway/src/ApiGateway.Infrastructure/Tenants/*
-backend/services/api-gateway/src/ApiGateway.Api/Endpoints/TenantEndpoints.cs
-backend/shared/contracts/Tenancy/*
-infrastructure/postgres/init.sql
-docs/commands/implement-phase.md
-ai gen/clinic_saas_full_handoff_context.md
-```
-
-Ghi chú worktree:
+Backend/DevOps:
 
 ```txt
-ai gen/clinic_saas_full_handoff_context.md đang ở trạng thái AM:
-- staged base từ trước
-- có unstaged bổ sung handoff ở lượt tài liệu gần nhất
+Backend Agent: tiếp tục Phase 2 API Runtime Smoke Gate theo docs/current-task.backend.md và temp/plan.backend.md. Không sửa frontend, không commit, không đánh dấu Done nếu API smoke chưa pass.
 ```
 
-Không revert các staged/unstaged changes nếu owner chưa yêu cầu.
-
-## Verify Đã Chạy
-
-Git:
-
-```powershell
-git status --short
-git diff --cached --stat
-git diff --cached --name-only
-```
-
-Kết quả:
+Frontend:
 
 ```txt
-Staged changes: 40 files, 3101 insertions, 9 deletions.
-Có Phase 2 Tenant MVP Backend staged changes.
+Frontend Agent: tiếp tục Phase 3 Owner Admin Tenant Slice theo docs/current-task.frontend.md và temp/plan.frontend.md. Chỉ implement khi owner đã duyệt plan rõ, không sửa backend, không sửa Figma.
 ```
 
-.NET:
-
-```powershell
-dotnet restore backend/ClinicSaaS.Backend.sln
-```
-
-Kết quả:
+Lead:
 
 ```txt
-Fail do PATH đang trỏ C:\Program Files (x86)\dotnet\dotnet.exe và không thấy SDK.
+Lead Agent: cập nhật dashboard multi-workstream, đồng bộ roadmap và phân lane task mới nếu cần.
 ```
 
-Chạy lại bằng SDK x64:
+## Guardrail Chung
 
-```powershell
-& 'C:\Program Files\dotnet\dotnet.exe' restore backend/ClinicSaaS.Backend.sln
-& 'C:\Program Files\dotnet\dotnet.exe' build backend/ClinicSaaS.Backend.sln --no-restore
-& 'C:\Program Files\dotnet\dotnet.exe' test backend/ClinicSaaS.Backend.sln --no-build
-```
-
-Kết quả:
-
-```txt
-restore: pass.
-build: pass, 0 warnings, 0 errors.
-test: exit code 0, nhưng test projects hiện là placeholder chưa có test framework/test cases thực tế.
-```
-
-Docker compose:
-
-```powershell
-docker compose -f infrastructure/docker/docker-compose.dev.yml config
-```
-
-Kết quả:
-
-```txt
-pass.
-```
-
-Runtime startup smoke:
-
-```txt
-tenant-service:
-- /health: 200
-- /openapi/v1.json: 200
-
-api-gateway:
-- /health: 200
-- /openapi/v1.json: 200
-```
-
-Full Tenant CRUD smoke:
-
-```txt
-Blocked.
-Docker daemon không chạy:
-open //./pipe/dockerDesktopLinuxEngine: The system cannot find the file specified.
-
-Vì không có PostgreSQL local đang chạy, chưa thể verify:
-- POST /api/tenants
-- GET /api/tenants
-- GET /api/tenants/{id}
-- PATCH /api/tenants/{id}/status
-- duplicate slug/domain -> 409
-```
-
-## Scope Đã Giữ
-
-Không implement thêm feature mới.
-Không sửa frontend.
-Không tạo Figma file mới.
-Không commit.
-Không revert staged changes.
-
-## Còn Thiếu / Bị Chặn
-
-Phase 2 chưa nên đánh dấu Done cho tới khi chạy được DB runtime smoke thật:
-
-```txt
-1. Bật Docker Desktop hoặc chuẩn bị PostgreSQL local.
-2. Apply schema từ infrastructure/postgres/init.sql hoặc migration SQL.
-3. Run tenant-service và api-gateway.
-4. Smoke:
-   - POST /api/tenants
-   - GET /api/tenants
-   - GET /api/tenants/{id}
-   - PATCH /api/tenants/{id}/status
-   - duplicate slug/domain trả 409
-5. Sau khi pass, cập nhật docs/current-task.md và roadmap sang Done cho Phase 2.
-```
-
-## Bước Tiếp Theo
-
-Đề xuất bước tiếp theo:
-
-```txt
-Chạy DB runtime smoke cho Phase 2 sau khi Docker/PostgreSQL local sẵn sàng.
-```
-
-Không chuyển sang feature mới trước khi owner quyết định xử lý phần DB smoke hoặc chấp nhận trạng thái verify partial.
+- Không sửa source code nếu task chỉ là docs/task management.
+- Không sửa Figma nếu owner không yêu cầu.
+- Không commit hoặc push nếu owner chưa yêu cầu rõ.
+- Không ghi secret, IP server thật, private key, token hoặc connection string thật vào repo.
+- Phase 2 đã PASS 5 smoke pass đủ trên server, đủ điều kiện Done. Roadmap đã chuyển Phase 2 Done ngày 2026-05-10.
