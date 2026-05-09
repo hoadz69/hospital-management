@@ -28,6 +28,7 @@ app.MapHealthChecks("/health")
     .WithTags("System");
 app.UseClinicSaaSOpenApi("Tenant Service");
 app.MapSystemEndpoints("tenant-service");
+app.MapTenantEndpoints();
 
 app.Run();
 

@@ -7,10 +7,24 @@ using System.Security.Claims;
 
 namespace ClinicSaaS.BuildingBlocks.Authorization;
 
+/// <summary>
+/// Middleware đọc metadata RBAC và tạo user context placeholder, chưa enforce auth thật.
+/// </summary>
+/// <param name="next">Middleware kế tiếp trong ASP.NET Core pipeline.</param>
 public class AuthRbacPlaceholderMiddleware(RequestDelegate next)
 {
+    /// <summary>
+    /// Key lưu context RBAC placeholder trong HttpContext.Items.
+    /// </summary>
     public const string ContextItemKey = "ClinicSaaS.AuthRbacPlaceholder";
 
+    /// <summary>
+    /// Tạo context RBAC placeholder để endpoint/system endpoint có thể inspect.
+    /// </summary>
+    /// <param name="context">HttpContext của request hiện tại.</param>
+    /// <param name="tenantContextAccessor">Accessor chứa tenant context đã resolve trước đó.</param>
+    /// <param name="userContextAccessor">Accessor dùng để lưu user context placeholder cho các layer phía sau.</param>
+    /// <returns>Task hoàn tất khi middleware kế tiếp xử lý xong.</returns>
     public async Task InvokeAsync(
         HttpContext context,
         ITenantContextAccessor tenantContextAccessor,

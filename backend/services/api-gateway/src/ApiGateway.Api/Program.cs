@@ -28,6 +28,7 @@ app.MapHealthChecks("/health")
     .WithTags("System");
 app.UseClinicSaaSOpenApi("API Gateway");
 app.MapSystemEndpoints("api-gateway");
+app.MapTenantEndpoints();
 
 app.Run();
 

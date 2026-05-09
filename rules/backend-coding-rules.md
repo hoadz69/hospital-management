@@ -8,6 +8,7 @@
 - Chỉ implementation khi có `temp/plan.md` được owner duyệt, trừ khi owner yêu cầu làm ngay.
 - Không dùng connection string/server/token thật nếu owner chưa cung cấp trong task hiện tại.
 - Mỗi thay đổi backend phải giữ tenant isolation.
+- Nếu thay đổi liên quan database/schema/SQL/migration/persistence/index/seed, phải đọc thêm `rules/database-rules.md`.
 - Sau khi làm xong phải report lại: đã sửa gì, file nào, kiểm tra gì, còn thiếu/bị chặn gì.
 
 ## 1. Service Structure
@@ -60,33 +61,48 @@ Rules:
 
 Backend shared code đặt dưới `backend/shared/`.
 
-Nếu tạo shared projects, dùng hướng sau:
+Structure hiện tại đã chốt:
 
 ```txt
-ClinicSaaS.SharedKernel/
-  Common/
-  Entities/
-  Enums/
-  Exceptions/
-  Behaviors/
-  Auth/
-  Extensions/
-
-ClinicSaaS.Infrastructure.Shared/
-  Auth/
-  Database/
-  Services/
-  Middleware/
-  Tenant/
-  Extensions/
+backend/shared/
+  building-blocks/    -> ClinicSaaS.BuildingBlocks
+  contracts/          -> ClinicSaaS.Contracts
+  observability/      -> ClinicSaaS.Observability
 ```
 
 Rules:
 
-- `SharedKernel` chỉ chứa core abstractions, interfaces, constants, exceptions, result/error types.
-- `SharedKernel` không chứa JWT implementation, database implementation hoặc external provider implementation.
-- `Infrastructure.Shared` chứa implementation kỹ thuật dùng chung: auth validation, connection factory, logging, caching, middleware.
-- Không đưa business logic tenant/clinic cụ thể vào shared infrastructure.
+- `ClinicSaaS.BuildingBlocks` chứa primitive dùng chung: tenant context, endpoint metadata, result/error, guard, options, middleware kỹ thuật thật sự dùng chung.
+- `ClinicSaaS.Contracts` chứa DTO/contract/event/role/permission constant chia sẻ giữa services.
+- `ClinicSaaS.Observability` chứa correlation id, trace/logging constants, health tags.
+- Không tự tạo shared project mới như `SharedKernel` hoặc `Infrastructure.Shared` nếu chưa có plan được owner duyệt.
+- Không đưa business logic tenant/clinic cụ thể vào shared projects.
+
+## 3.1 Comment Rule
+
+- Comment trong C# code, XML doc comment, SQL comment và database object comment phải viết bằng tiếng Việt.
+- Được giữ nguyên tên type/member/parameter, endpoint, role/permission, keyword hoặc thuật ngữ kỹ thuật chuẩn khi cần.
+- Public contract, DTO, middleware, endpoint metadata, domain rule, security/tenant rule và transaction boundary nếu cần comment thì phải giải thích mục đích bằng tiếng Việt.
+- Không thêm comment máy móc cho code tự rõ nghĩa. Nếu comment không giúp hiểu nghiệp vụ/rủi ro/kỹ thuật thì không thêm.
+- Khi sửa đoạn có XML doc tiếng Anh trong phạm vi task, chuyển đoạn comment liên quan sang tiếng Việt.
+- XML doc cho public type/member backend phải đủ `summary`, `param` và `returns` khi có liên quan:
+  - `summary` nói rõ type/hàm làm gì, thuộc boundary/use case/domain rule nào.
+  - `param` mô tả từng đầu vào dùng để làm gì; không để `param` rỗng.
+  - `returns` bắt buộc với public method có return value, mô tả response/result/connection/query output trả về.
+  - Với DTO/record/contract/event public, mô tả từng primary-constructor parameter quan trọng bằng `param`.
+  - Không dùng comment tiếng Anh chung chung hoặc comment chỉ lặp lại tên hàm.
+
+Ví dụ:
+
+```csharp
+/// <summary>
+/// Mô tả yêu cầu role/permission tối thiểu mà endpoint cần để kiểm tra RBAC.
+/// </summary>
+/// <param name="Role">Role bắt buộc của user khi truy cập endpoint.</param>
+/// <param name="Permission">Permission bắt buộc gắn với hành động nghiệp vụ.</param>
+/// <param name="RequiresTenant">Cho biết endpoint có cần tenant context hợp lệ hay không.</param>
+public sealed record AuthRbacRequirement(string Role, string Permission, bool RequiresTenant);
+```
 
 ## 4. Configuration Rules
 
@@ -192,13 +208,16 @@ public class ErrorResponse
 - MongoDB cho CMS/layout/template JSON.
 - Redis cho cache và locks.
 - Kafka/Event Bus cho async workflows.
+- Tenant Service hiện chốt dùng Dapper + Npgsql, không dùng EF Core và không dùng EF migrations.
 - Repository methods phải async và nhận `CancellationToken` khi có I/O.
 - Dùng connection factory hoặc DbContext factory thống nhất, không tạo connection tùy tiện trong handler.
 - Log data access errors đủ context nhưng không log secret/token/password.
 - Mọi raw SQL phải dùng parameterized query; không nối chuỗi trực tiếp từ input.
 - Migration scripts phải rõ ràng và review được.
-- Nếu dùng SQL migration thủ công, đặt file dạng `[timestamp]_[description_snake_case].sql` trong service tương ứng.
+- Nếu dùng SQL migration thủ công, đặt file dạng `[version]_[description_snake_case].sql` hoặc `[timestamp]_[description_snake_case].sql` trong service tương ứng.
+- Với Phase 2 Tenant MVP Backend, migration nằm trong `backend/services/tenant-service/src/TenantService.Infrastructure/Migrations/` và `infrastructure/postgres/init.sql` chỉ dùng mirror/bootstrap local.
 - Nếu dùng EF Core, map table/column rõ theo convention `snake_case` để thống nhất DB.
+- Quy tắc chi tiết về schema, comment DB, index và migration nằm trong `rules/database-rules.md`.
 
 Ví dụ repository:
 

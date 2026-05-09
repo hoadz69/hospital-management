@@ -11,8 +11,17 @@ using HttpResults = Microsoft.AspNetCore.Http.Results;
 
 namespace ClinicSaaS.BuildingBlocks.SystemEndpoints;
 
+/// <summary>
+/// Đăng ký nhóm system endpoints dùng chung cho các service.
+/// </summary>
 public static class SystemEndpointRouteBuilderExtensions
 {
+    /// <summary>
+    /// Map các endpoint kiểm tra OpenAPI, tenant context, RBAC placeholder và PostgreSQL config.
+    /// </summary>
+    /// <param name="endpoints">Endpoint route builder của service hiện tại.</param>
+    /// <param name="serviceName">Tên service được trả trong response system endpoints.</param>
+    /// <returns>Endpoint route builder sau khi đã map nhóm `/api/_system`.</returns>
     public static IEndpointRouteBuilder MapClinicSaaSSystemEndpoints(
         this IEndpointRouteBuilder endpoints,
         string serviceName)

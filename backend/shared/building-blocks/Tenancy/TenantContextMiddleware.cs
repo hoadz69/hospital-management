@@ -4,11 +4,28 @@ using Microsoft.AspNetCore.Http;
 
 namespace ClinicSaaS.BuildingBlocks.Tenancy;
 
+/// <summary>
+/// Middleware resolve tenant context và chặn request tenant-scoped nếu thiếu tenant hợp lệ.
+/// </summary>
+/// <param name="next">Middleware kế tiếp trong ASP.NET Core pipeline.</param>
 public class TenantContextMiddleware(RequestDelegate next)
 {
+    /// <summary>
+    /// Header nội bộ dùng cho request đã biết tenant.
+    /// </summary>
     public const string TenantHeaderName = "X-Tenant-Id";
+
+    /// <summary>
+    /// Claim tenant dự kiến có trong JWT khi tích hợp auth thật.
+    /// </summary>
     public const string TenantClaimName = "tenant_id";
 
+    /// <summary>
+    /// Resolve tenant context trước khi endpoint xử lý request.
+    /// </summary>
+    /// <param name="context">HttpContext của request hiện tại.</param>
+    /// <param name="tenantContextAccessor">Accessor dùng để lưu tenant context cho các layer phía sau.</param>
+    /// <returns>Task hoàn tất khi request được xử lý hoặc bị trả lỗi tenant context.</returns>
     public async Task InvokeAsync(HttpContext context, ITenantContextAccessor tenantContextAccessor)
     {
         var endpointScope = context.GetEndpoint()?.Metadata.GetMetadata<TenantScopeMetadata>()?.Scope

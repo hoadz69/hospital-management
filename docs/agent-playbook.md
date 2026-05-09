@@ -16,6 +16,8 @@ Tài liệu này dùng chung cho Codex, Claude Code và các agent khác. Claude
 - Khi kế thừa tài liệu cũ, chỉ giữ rule/kỹ thuật còn phù hợp; không giữ domain, endpoint, credentials hoặc service name không còn thuộc Clinic SaaS.
 - Với task nhiều bước, phải biến request thành success criteria rõ ràng và nêu cách verify từng bước trước khi implement.
 - Mọi câu trả lời cho owner, plan, report, handoff, roadmap update và tài liệu hướng dẫn agent phải viết bằng tiếng Việt. Chỉ dùng tiếng Anh cho tên code, tên file, API endpoint, command, log/error gốc, keyword kỹ thuật chuẩn, hoặc nội dung trích nguyên văn cần giữ nguyên.
+- Comment trong code, XML doc comment, SQL comment và database object comment phải viết bằng tiếng Việt, trừ keyword/tên kỹ thuật/tên tham số bắt buộc phải giữ nguyên. XML doc cho public type/member phải có `summary` rõ type/hàm làm gì, `param` mô tả đầu vào, `returns` mô tả đầu ra nếu có giá trị trả về; không để `param` rỗng hoặc comment chung chung.
+- Khi task liên quan database, phải đọc `rules/database-rules.md`.
 
 ## Architect Agent
 
@@ -103,6 +105,7 @@ Nhiệm vụ:
 - Thiết kế MongoDB collections.
 - Tạo migration/index/seed data.
 - Đảm bảo mọi tenant-owned table/collection có `tenant_id`.
+- Tuân thủ `rules/database-rules.md` trước khi tạo/sửa schema, migration, SQL, index hoặc seed.
 
 Prompt nền:
 

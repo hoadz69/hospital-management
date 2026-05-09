@@ -2,7 +2,13 @@ using System.Reflection;
 
 namespace IdentityService.Domain;
 
+/// <summary>
+/// Tham chiếu assembly Domain để các project khác/test có thể kiểm tra reference.
+/// </summary>
 public static class AssemblyReference
 {
+    /// <summary>
+    /// Assembly chứa domain model của Identity Service.
+    /// </summary>
     public static readonly Assembly Assembly = typeof(AssemblyReference).Assembly;
 }

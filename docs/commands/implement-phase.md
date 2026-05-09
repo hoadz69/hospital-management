@@ -66,12 +66,30 @@ Implement đúng phase trong `temp/plan.md`.
 9. Nếu verify fail, cập nhật current-task là Blocked hoặc In Progress, ghi rõ lỗi.
 10. Report lại owner.
 
+## Bắt buộc sau khi implement xong
+
+Sau khi implement xong, agent phải:
+
+1. Chạy verify theo `temp/plan.md`.
+2. Nếu có thay đổi backend, chạy restore/build/test nếu repo có command hoặc solution/project tương ứng.
+3. Nếu có thay đổi infra, chạy `docker compose config`.
+4. Nếu có runtime smoke test khả thi, chạy smoke test.
+5. Cập nhật `docs/current-task.md`.
+6. Cập nhật `docs/roadmap/clinic-saas-roadmap.md`.
+7. Report lại owner gồm:
+   - File đã sửa.
+   - Đã implement gì.
+   - Verify result.
+   - `docs/current-task.md` và `docs/roadmap/clinic-saas-roadmap.md` đã cập nhật ra sao.
+   - Bước tiếp theo.
+
 ## Luật
 
 - Không commit nếu owner chưa yêu cầu.
 - Không dùng secret thật.
 - Không hard-code connection string production.
 - Không tạo Figma file mới.
+- Không sửa ngoài scope `temp/plan.md`.
 - Không sửa frontend nếu phase là backend-only.
 - Không sửa backend nếu phase là frontend-only.
 - Không implement business logic ngoài scope.

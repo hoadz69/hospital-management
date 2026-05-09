@@ -8,6 +8,37 @@
 - Giữ thay đổi đúng phạm vi task.
 - Không thêm secret, IP server thật, database password, token hoặc SSH key vào repo.
 - Nếu gặp file chưa đúng hướng Clinic SaaS, cập nhật nội dung thay vì xóa trắng nếu owner chưa yêu cầu.
+- Nếu task có liên quan database, phải đọc thêm `rules/database-rules.md`.
+
+## Comment Rule
+
+- Comment trong code, XML doc comment, SQL comment và database object comment phải viết bằng tiếng Việt.
+- Được giữ nguyên keyword, tên class, tên method, tên tham số, API endpoint, tên role/permission, thuật ngữ kỹ thuật chuẩn nếu dịch làm khó hiểu.
+- Không viết comment thừa kiểu nhắc lại đúng tên hàm/biến. Ưu tiên comment cho public contract, business rule, security/tenant rule, transaction boundary, migration và logic dễ hiểu sai.
+- Nếu sửa vào đoạn đang có comment tiếng Anh, phải chuyển comment liên quan trong phạm vi task sang tiếng Việt.
+- XML doc comment cho public type/member phải mô tả mục đích nghiệp vụ/kỹ thuật bằng tiếng Việt.
+- Với public method/function có tham số, phải có `param` cho từng tham số và mỗi `param` phải nói đầu vào đó dùng để làm gì; không để rỗng kiểu `<param name="x"></param>`.
+- Với public method/function có giá trị trả về, phải có `returns` mô tả đầu ra và ý nghĩa kết quả.
+- Với public record primary constructor, dùng `param` để mô tả từng field contract quan trọng nếu record là DTO/contract/event/context public.
+- Không viết XML doc chung chung như "Represents ..." hoặc chỉ dịch tên type/hàm; comment phải trả lời được: "hàm/type này làm gì, nhận gì, trả gì".
+- Ví dụ đúng:
+
+```csharp
+/// <summary>
+/// Mô tả yêu cầu role/permission tối thiểu mà endpoint cần để kiểm tra RBAC.
+/// </summary>
+/// <param name="Role">Role bắt buộc của user khi truy cập endpoint.</param>
+/// <param name="Permission">Permission bắt buộc gắn với hành động nghiệp vụ.</param>
+/// <param name="RequiresTenant">Cho biết endpoint có cần tenant context hợp lệ hay không.</param>
+public sealed record AuthRbacRequirement(string Role, string Permission, bool RequiresTenant);
+
+/// <summary>
+/// Tạo kết quả thành công kèm payload cho handler.
+/// </summary>
+/// <param name="value">Payload nghiệp vụ cần trả về cho caller.</param>
+/// <returns>Kết quả thành công chứa payload đã truyền vào.</returns>
+public static Result<T> Success(T value) => new(value, true, Error.None);
+```
 
 ## Kiến Trúc
 
@@ -105,6 +136,7 @@ Không catch-all trong handler nếu global middleware đã xử lý. Chỉ catc
 - MongoDB: CMS, page JSON, template config, layout data.
 - Redis: cache, tenant config, domain mapping, rate limit, temporary locks.
 - Kafka/Event Bus: async domain events.
+- Quy tắc chi tiết nằm trong `rules/database-rules.md`; phải đọc file đó trước khi sửa schema, migration, SQL, repository persistence, index, seed hoặc data access.
 
 ## Verification
 

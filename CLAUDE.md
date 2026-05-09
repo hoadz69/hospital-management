@@ -11,7 +11,11 @@ Claude Code phải tuân thủ cùng luật dự án với Codex. File này là 
 5. `docs/agent-playbook.md`
 6. `docs/session-continuity.md`
 7. `docs/owner-code-notes.md`
-8. Các file trong `rules/` khi bắt đầu viết code thật
+8. Các file rule đúng ngữ cảnh:
+   - `rules/coding-rules.md` khi viết/sửa code.
+   - `rules/backend-coding-rules.md` khi sửa backend.
+   - `rules/backend-testing-rules.md` khi test API/backend.
+   - `rules/database-rules.md` khi tạo/sửa schema, migration, SQL, repository persistence, index, seed hoặc data access.
 
 ## Quy Trình Trước Khi Code
 
@@ -28,6 +32,13 @@ Claude Code phải tuân thủ cùng luật dự án với Codex. File này là 
 - Mọi câu trả lời cho owner, plan, report, handoff, roadmap update và tài liệu hướng dẫn agent phải viết bằng tiếng Việt.
 - Chỉ dùng tiếng Anh khi đó là tên code, tên file, API endpoint, command, log/error gốc, keyword kỹ thuật chuẩn, hoặc nội dung trích nguyên văn cần giữ nguyên.
 - Nếu tạo/cập nhật `temp/plan.md`, `docs/current-task.md`, `docs/roadmap/clinic-saas-roadmap.md` hoặc command docs, phần mô tả phải ưu tiên tiếng Việt; không viết plan/report chính bằng tiếng Anh.
+- Comment trong code, XML doc comment, SQL comment và database object comment phải viết bằng tiếng Việt, trừ keyword/tên kỹ thuật/tên tham số bắt buộc phải giữ nguyên.
+- XML doc cho public type/member phải đủ nghĩa:
+  - `summary` nói rõ type/hàm làm gì trong nghiệp vụ/kỹ thuật.
+  - `param` mô tả từng đầu vào dùng để làm gì; không để `param` rỗng.
+  - `returns` bắt buộc khi hàm có giá trị trả về, mô tả đầu ra/ý nghĩa kết quả.
+  - Không viết comment chung chung, không lặp lại y nguyên tên hàm/biến, không dùng comment tiếng Anh kiểu `Represents...` nếu không bắt buộc.
+- Khi chạm vào comment tiếng Anh cũ trong phạm vi task, phải chuyển sang tiếng Việt nếu sửa cùng đoạn đó.
 
 ## Coding Discipline Từ Tài Liệu Cũ
 
@@ -118,6 +129,7 @@ Codex không dùng trực tiếp `.claude/agents/*.md`. Để giữ đồng bộ
 - Vai trò agent dùng chung nằm trong `docs/agent-playbook.md`.
 - Setup Codex/Figma MCP nằm trong `docs/codex-setup.md`.
 - Khi cập nhật rule cho Claude, phải cập nhật phần tương ứng trong `AGENTS.md` hoặc `docs/agent-playbook.md` nếu rule đó cũng áp dụng cho Codex.
+- Thư mục `rules/` là rule tài liệu cho agent đọc và tuân thủ; nó không tự chạy như linter/compiler nếu không được entrypoint yêu cầu đọc.
 
 ## Handoff Bắt Buộc
 

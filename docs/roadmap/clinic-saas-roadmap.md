@@ -129,12 +129,12 @@ docs/roadmap/clinic-saas-roadmap.md
 ## 3.1 Current Phase
 
 ```txt
-Phase 2 - Tenant MVP Backend (Plan Updated - Awaiting Owner Approval)
+Phase 2 - Tenant MVP Backend (Staged changes verify partial pass, DB smoke blocked)
 ```
 
 ## 3.2 Current Codex Task
 
-Codex vừa cập nhật lead-plan cho:
+Codex vừa verify staged changes cho:
 
 ```txt
 Phase 2 - Tenant MVP Backend.
@@ -144,8 +144,9 @@ Trạng thái:
 
 ```txt
 - Phase 1.3 API Boundary Standardization: Done và verified.
-- Phase 2 lead-plan: đã cập nhật theo quyết định owner.
-- Phase 2 implementation: chưa bắt đầu, đang chờ owner duyệt lại plan trong temp/plan.md.
+- Phase 2 staged implementation: restore/build/docker config/startup smoke pass.
+- Phase 2 full CRUD smoke: blocked vì Docker daemon/PostgreSQL local chưa chạy.
+- Phase 2 chưa đánh dấu Done cho tới khi smoke DB create/list/get/update/duplicate conflict pass.
 ```
 
 Scope:
@@ -155,22 +156,23 @@ temp/plan.md
 docs/current-task.md
 docs/roadmap/clinic-saas-roadmap.md
 
-Implementation scope sau khi owner duyệt:
+Implementation scope đang có staged changes:
 backend/services/tenant-service
 backend/services/api-gateway
 backend/shared/contracts
 infrastructure/postgres
 ```
 
-Không làm trước khi owner duyệt plan:
+Scope guard hiện tại:
 
 ```txt
-- Không code implementation.
+- Không implement thêm feature mới.
 - Không sửa frontend.
 - Không real auth/JWT.
 - Không billing/domain/template/CMS/booking.
 - Không tạo Figma file mới.
 - Không commit.
+- Không revert staged changes nếu owner chưa yêu cầu.
 ```
 
 ## 3.3 Đã hoàn thành
@@ -461,7 +463,7 @@ api-gateway smoke: /health, tenant-context, auth-rbac-placeholder, /openapi/v1.j
 ### Status
 
 ```txt
-🟡 In Progress - Plan đã cập nhật theo quyết định owner, chờ duyệt lại
+🟡 In Progress - Staged implementation verify partial pass, DB smoke blocked
 ```
 
 ### Mục tiêu
@@ -553,6 +555,49 @@ PATCH /api/tenants/{id}/status
 - Có SQL migration file hoặc SQL schema bootstrap theo plan.
 - API endpoints build được.
 - Root backend solution build pass.
+- Full CRUD smoke qua PostgreSQL pass trước khi đánh dấu Done.
+```
+
+### Verify ngày 2026-05-09
+
+```txt
+git status --short: pass, xác nhận có staged Phase 2 changes.
+git diff --cached --stat: 40 files, 3101 insertions, 9 deletions.
+git diff --cached --name-only: pass.
+dotnet restore backend/ClinicSaaS.Backend.sln: fail do PATH trỏ dotnet x86 không có SDK.
+& 'C:\Program Files\dotnet\dotnet.exe' restore backend/ClinicSaaS.Backend.sln: pass.
+& 'C:\Program Files\dotnet\dotnet.exe' build backend/ClinicSaaS.Backend.sln --no-restore: pass, 0 warnings, 0 errors.
+& 'C:\Program Files\dotnet\dotnet.exe' test backend/ClinicSaaS.Backend.sln --no-build: exit code 0.
+docker compose -f infrastructure/docker/docker-compose.dev.yml config: pass.
+```
+
+Test note:
+
+```txt
+Test projects hiện là placeholder csproj, chưa có test framework package/test cases thực tế.
+```
+
+Runtime startup smoke:
+
+```txt
+tenant-service /health: 200.
+tenant-service /openapi/v1.json: 200.
+api-gateway /health: 200.
+api-gateway /openapi/v1.json: 200.
+```
+
+Blocked runtime DB smoke:
+
+```txt
+Docker daemon không chạy:
+open //./pipe/dockerDesktopLinuxEngine: The system cannot find the file specified.
+
+Chưa verify được:
+- POST /api/tenants
+- GET /api/tenants
+- GET /api/tenants/{id}
+- PATCH /api/tenants/{id}/status
+- duplicate slug/domain trả 409
 ```
 
 ---
@@ -972,86 +1017,60 @@ BookingSource
 
 ## Ngay bây giờ
 
-Owner nên review:
+Không chuyển sang feature mới. Bước còn lại của Phase 2 là DB runtime smoke khi local PostgreSQL sẵn sàng.
 
 ```txt
-temp/plan.md
-```
-
-Nếu owner duyệt plan bằng câu rõ như "Tôi duyệt plan", "Duyệt, làm tiếp", "Bắt đầu implement", hoặc "Quất theo plan", Codex mới bắt đầu implement Phase 2.
-
-Phase 2 implementation sẽ làm:
-
-```txt
-1. Tenant domain model tối thiểu.
-2. PostgreSQL schema và SQL migration files bước đầu.
-3. Tenant application use cases.
-4. Tenant Service persistence bằng Dapper + Npgsql.
-5. Tenant Service API endpoints.
-6. API Gateway typed HttpClient forwarding.
-7. Verify backend build/test/smoke theo plan.
-```
-
-## Sau đó
-
-Sau khi owner duyệt, chạy Phase 2:
-
-```txt
-Tenant MVP Backend
-```
-
-Prompt tiếp theo nếu owner duyệt plan:
-
-```txt
-Tôi duyệt plan Phase 2 - Tenant MVP Backend.
-
-Bắt đầu implement theo temp/plan.md.
-
-Mục tiêu:
-Owner Super Admin tạo phòng khám mới -> tenant-service lưu tenant vào PostgreSQL -> api-gateway expose API.
-
-Scope:
-- backend/services/tenant-service
-- backend/services/api-gateway
-- backend/shared/contracts
-- infrastructure/postgres
-- docs/current-task.md
-- docs/roadmap/clinic-saas-roadmap.md
-
-Yêu cầu:
-1. Implement đúng scope đã duyệt trong temp/plan.md.
-2. Không dùng EF Core, không dùng EF migrations.
-3. Dùng Dapper + Npgsql cho Tenant Service persistence.
-4. Thiết kế Tenant domain model tối thiểu:
-   - Tenant
-   - ClinicProfile
-   - TenantStatus
-   - TenantDomain
-   - TenantModule
-   - PlanReference
-5. Thiết kế PostgreSQL schema:
-   - tenants
-   - tenant_profiles
-   - tenant_domains
-   - tenant_modules
-6. Đề xuất use cases:
-   - CreateTenant
-   - GetTenantById
-   - ListTenants
-   - UpdateTenantStatus placeholder
-7. Đề xuất API endpoints:
+1. Bật Docker Desktop hoặc chuẩn bị PostgreSQL local tương đương.
+2. Apply schema Phase 2 từ infrastructure/postgres/init.sql hoặc migration SQL.
+3. Run tenant-service và api-gateway.
+4. Smoke tenant endpoints qua gateway:
    - POST /api/tenants
    - GET /api/tenants
    - GET /api/tenants/{id}
    - PATCH /api/tenants/{id}/status
-8. API Gateway dùng typed HttpClient forwarding; không dùng YARP trong Phase 2.
-9. TenantStatus: Draft, Active, Suspended, Archived.
-10. TenantModule dùng string module_code; chưa làm billing/plan logic thật.
-11. Không làm billing/domain/template trong phase này.
-12. Không sửa frontend ở phase này.
-13. Không tạo Figma file mới.
-14. Không commit.
-15. Sau khi implement phải verify và cập nhật current-task/roadmap.
+   - duplicate slug/domain trả 409
+5. Nếu pass, cập nhật docs/current-task.md và roadmap sang Phase 2 Done.
+```
+
+Hiện đã pass:
+
+```txt
+restore/build bằng dotnet x64.
+docker compose config.
+tenant-service startup health/openapi.
+api-gateway startup health/openapi.
+```
+
+Blocked:
+
+```txt
+Full DB-backed tenant CRUD smoke vì Docker daemon/PostgreSQL local chưa chạy.
+```
+
+## Sau đó
+
+Sau khi Phase 2 DB smoke pass, chuyển sang Phase 3:
+
+```txt
+Owner Admin Tenant Slice
+```
+
+Prompt tiếp theo nếu owner muốn hoàn tất DB smoke:
+
+```txt
+Tiếp tục verify DB runtime smoke Phase 2 Tenant MVP Backend.
+
+Bật Docker/PostgreSQL local nếu cần, không implement feature mới.
+
+Chạy smoke qua api-gateway:
+   - POST /api/tenants
+   - GET /api/tenants
+   - GET /api/tenants/{id}
+   - PATCH /api/tenants/{id}/status
+   - duplicate slug/domain trả 409
+
+Sau đó cập nhật docs/current-task.md và docs/roadmap/clinic-saas-roadmap.md theo kết quả thật.
+Không commit nếu owner chưa yêu cầu.
 ```
 
 ---
