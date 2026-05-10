@@ -21,3 +21,5 @@ export const radii = {
 } as const;
 
 export * from "./ownerAdminTokens";
+export * as v3 from "./v3";
+export * from "./v3";

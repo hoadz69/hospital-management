@@ -1,0 +1,88 @@
+:root,
+[data-theme="v3"] {
+  --v3-color-brand-clinical-blue-500: #1E5BD6;
+  --v3-color-brand-mint-500: #14B8A6;
+  --v3-color-brand-peach-300: #FFB7A0;
+  --v3-color-surface-ivory: #F8FAFC;
+  --v3-color-surface-elevated: #FFFFFF;
+  --v3-color-surface-muted: #F1F5F9;
+  --v3-color-border-subtle: #E2E8F0;
+  --v3-color-text-primary: #0F172A;
+  --v3-color-text-secondary: #475569;
+  --v3-color-text-muted: #94A3B8;
+  --v3-color-status-success: #16A34A;
+  --v3-color-status-warning: #D97706;
+  --v3-color-status-danger: #DC2626;
+  --v3-color-status-info: #0284C7;
+  --v3-color-status-draft: #64748B;
+  --v3-color-status-specialty: #7C3AED;
+  --v3-color-admin-sidebar: #0F172A;
+
+  --color-brand-primary: var(--v3-color-brand-clinical-blue-500);
+  --color-brand-accent: var(--v3-color-brand-mint-500);
+  --color-brand-secondary: var(--v3-color-brand-peach-300);
+  --color-surface-page: var(--v3-color-surface-ivory);
+  --color-surface-elevated: var(--v3-color-surface-elevated);
+  --color-surface-muted: var(--v3-color-surface-muted);
+  --color-border-subtle: var(--v3-color-border-subtle);
+  --color-text-primary: var(--v3-color-text-primary);
+  --color-text-secondary: var(--v3-color-text-secondary);
+  --color-text-muted: var(--v3-color-text-muted);
+  --color-status-success: var(--v3-color-status-success);
+  --color-status-warning: var(--v3-color-status-warning);
+  --color-status-danger: var(--v3-color-status-danger);
+  --color-status-info: var(--v3-color-status-info);
+  --color-status-draft: var(--v3-color-status-draft);
+  --color-status-specialty: var(--v3-color-status-specialty);
+  --color-admin-sidebar: var(--v3-color-admin-sidebar);
+
+  --font-family-sans: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  --font-family-mono: "JetBrains Mono", "SFMono-Regular", Consolas, "Liberation Mono", monospace;
+  --text-display-size: 48px;
+  --text-display-line-height: 56px;
+  --text-display-weight: 700;
+  --text-headline-size: 32px;
+  --text-headline-line-height: 40px;
+  --text-headline-weight: 700;
+  --text-title-size: 24px;
+  --text-title-line-height: 32px;
+  --text-title-weight: 600;
+  --text-body-size: 16px;
+  --text-body-line-height: 24px;
+  --text-body-weight: 400;
+  --text-caption-size: 12px;
+  --text-caption-line-height: 16px;
+  --text-caption-weight: 400;
+  --text-mono-size: 13px;
+  --text-mono-line-height: 20px;
+  --text-mono-weight: 500;
+
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 20px;
+  --space-6: 24px;
+  --space-8: 32px;
+  --space-10: 40px;
+  --space-14: 56px;
+  --space-18: 72px;
+  --space-24: 96px;
+
+  --radius-card: 16px;
+  --radius-button: 12px;
+  --radius-input: 10px;
+  --radius-pill: 999px;
+  --radius-sheet-top: 24px;
+
+  --shadow-elevation-1: 0 1px 2px rgba(15, 23, 42, 0.04);
+  --shadow-elevation-2: 0 8px 24px rgba(15, 23, 42, 0.06);
+  --shadow-elevation-3: 0 16px 48px rgba(15, 23, 42, 0.10);
+
+  --motion-duration-xs: 120ms;
+  --motion-duration-sm: 180ms;
+  --motion-duration-md: 240ms;
+  --motion-duration-lg: 320ms;
+  --motion-duration-xl: 480ms;
+  --motion-ease-standard: cubic-bezier(0.2, 0, 0, 1);
+}
