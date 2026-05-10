@@ -1,11 +1,18 @@
+export type HttpHeaderValue = string | undefined | null;
+
+export type HttpHeaders = Record<string, HttpHeaderValue>;
+
+export type HttpHeaderSource = HttpHeaders | (() => HttpHeaders);
+
 export type HttpClientOptions = {
   baseUrl: string;
-  headers?: Record<string, string>;
+  headers?: HttpHeaderSource;
 };
 
 export type HttpRequestOptions = {
   method?: "GET" | "POST" | "PATCH";
   body?: unknown;
+  headers?: HttpHeaderSource;
 };
 
 export class HttpError extends Error {
@@ -20,17 +27,37 @@ export class HttpError extends Error {
   }
 }
 
+export type HttpClient = {
+  request<T>(path: string, requestOptions?: HttpRequestOptions): Promise<T>;
+};
+
+export function resolveHttpHeaders(source: HttpHeaderSource | undefined): Record<string, string> {
+  const headers = typeof source === "function" ? source() : source;
+  if (!headers) {
+    return {};
+  }
+
+  return Object.fromEntries(
+    Object.entries(headers).filter((entry): entry is [string, string] => {
+      const [, value] = entry;
+      return typeof value === "string" && value.trim() !== "";
+    })
+  );
+}
+
 export function createHttpClient(options: HttpClientOptions) {
   const baseUrl = options.baseUrl.replace(/\/$/, "");
 
   async function request<T>(path: string, requestOptions: HttpRequestOptions = {}): Promise<T> {
+    const headers = {
+      "Content-Type": "application/json",
+      ...resolveHttpHeaders(options.headers),
+      ...resolveHttpHeaders(requestOptions.headers)
+    };
+
     const response = await fetch(`${baseUrl}${path}`, {
       method: requestOptions.method ?? "GET",
-      headers: {
-        "Content-Type": "application/json",
-        "X-Owner-Role": "OwnerSuperAdmin",
-        ...(options.headers ?? {})
-      },
+      headers,
       body: requestOptions.body === undefined ? undefined : JSON.stringify(requestOptions.body)
     });
 
@@ -77,5 +104,5 @@ export function createHttpClient(options: HttpClientOptions) {
     return payload as T;
   }
 
-  return { request };
+  return { request } satisfies HttpClient;
 }

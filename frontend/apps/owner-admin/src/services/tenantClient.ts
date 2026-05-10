@@ -11,5 +11,6 @@ function getMode(value: string | undefined): TenantClientMode {
 export const tenantClient = createTenantClient({
   baseUrl: import.meta.env.VITE_API_BASE_URL,
   mode: getMode(import.meta.env.VITE_TENANT_API_MODE),
-  fallbackToMock: import.meta.env.VITE_TENANT_API_FALLBACK !== "false"
+  fallbackToMock: import.meta.env.VITE_TENANT_API_FALLBACK !== "false",
+  ownerRole: "OwnerSuperAdmin"
 });

@@ -6,8 +6,9 @@ import type {
   TenantStatusUpdateRequest,
   TenantSummary
 } from "@clinic-saas/shared-types";
-import { createHttpClient, HttpError } from "./httpClient";
+import { HttpError, type HttpHeaderSource } from "./httpClient";
 import { createMockTenantClient } from "./mockTenantClient";
+import { createOwnerHttpClient } from "./owner";
 import {
   adaptTenantDetail,
   adaptTenantListResponse,
@@ -22,6 +23,8 @@ export type TenantClientOptions = {
   baseUrl?: string;
   mode?: TenantClientMode;
   fallbackToMock?: boolean;
+  ownerRole?: string;
+  headers?: HttpHeaderSource;
 };
 
 export type TenantClient = {
@@ -161,7 +164,11 @@ export function createTenantClient(options: TenantClientOptions = {}): TenantCli
     throw new Error("Tenant API baseUrl is required in real mode.");
   }
 
-  const http = createHttpClient({ baseUrl: options.baseUrl });
+  const http = createOwnerHttpClient({
+    baseUrl: options.baseUrl,
+    ownerRole: options.ownerRole ?? "",
+    headers: options.headers
+  });
   const fallbackToMock = options.fallbackToMock ?? mode === "auto";
 
   async function withFallback<T>(operation: () => Promise<T>, fallback: () => Promise<T>): Promise<T> {
