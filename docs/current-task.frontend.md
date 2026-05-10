@@ -1,6 +1,170 @@
-# Current Task Frontend - Phase 3 Owner Admin Tenant Slice
+# Current Task Frontend - Phase 3 Done + Phase 4 Wave A V3 Foundation Planning
 
 Ngày cập nhật: 2026-05-10
+
+## Trạng Thái Phase 3
+
+Phase 3 Owner Admin Tenant Slice ✅ **Implementation Done** (commit `7f6366d`).
+
+```txt
+- Pre-Phase 4 Hardening committed: P1.6 (CreateTenantWizard isStepValid gate), P1.7 (httpClient JSON.parse guard).
+- QA F-real Round 2 PASS 5/5 trên real API: HTTP smoke + contract adapter.
+- Build/typecheck PASS x3 app cuối session.
+- Phase 3 sẵn sàng đóng. Real API smoke đã hoàn tất qua adapter cho 4 endpoint.
+```
+
+## Phase 4 Wave A V3 Foundation Planning
+
+Trạng thái: 🟡 **Planning — chờ owner duyệt plan**.
+
+Mục tiêu Wave A: token V3 ADD-ONLY layer + httpClient factory rebuild + Owner Admin restyle V3 + 7 component shared mới + 4 composable foundation. Bốn frame Owner Admin V3v2 mới (Dashboard cross-tenant, Tenant Lifecycle Confirm Modal, Domain DNS Retry, SSL Pending) cần được implement đầy đủ.
+
+### Scope Chi Tiết Wave A
+
+File dự kiến tạo/sửa (chỉ trong frontend lane):
+
+```txt
+frontend/packages/design-tokens/src/v3/color.ts            (mới)
+frontend/packages/design-tokens/src/v3/typography.ts       (mới)
+frontend/packages/design-tokens/src/v3/spacing.ts          (mới)
+frontend/packages/design-tokens/src/v3/radius.ts           (mới)
+frontend/packages/design-tokens/src/v3/shadow.ts           (mới)
+frontend/packages/design-tokens/src/v3/motion.ts           (mới)
+frontend/packages/design-tokens/src/v3/v3.css              (mới — CSS custom property layer)
+frontend/packages/design-tokens/src/index.ts               (export v3 namespace, KHÔNG xoá v2 layer)
+
+frontend/packages/api-client/src/httpClient.ts             (rebuild factory pattern, bỏ X-Owner-Role hardcode)
+frontend/packages/api-client/src/owner.ts                  (mới — surface owner)
+frontend/packages/api-client/src/clinic.ts                 (mới — surface clinic admin)
+frontend/packages/api-client/src/public.ts                 (mới — surface public)
+
+frontend/packages/ui/src/composables/useTenantContext.ts   (mới)
+frontend/packages/ui/src/composables/useReducedMotion.ts   (mới)
+frontend/packages/ui/src/composables/useFocusTrap.ts       (mới)
+frontend/packages/ui/src/composables/useViewTransition.ts  (mới)
+
+frontend/packages/ui/src/components/KPITile.vue            (mới — sparkline)
+frontend/packages/ui/src/components/ModuleChips.vue        (mới — x/12)
+frontend/packages/ui/src/components/PlanBadge.vue          (mới)
+frontend/packages/ui/src/components/EmptyState.vue         (mới)
+frontend/packages/ui/src/components/TenantSwitcher.vue     (mới)
+frontend/packages/ui/src/components/CommandPalette.vue     (mới)
+frontend/packages/ui/src/components/DomainStateRow.vue     (mới)
+
+frontend/packages/ui/.histoire/                            (mới — Histoire Vue 3 setup)
+
+frontend/apps/owner-admin/src/components/TenantTable.vue           (token V3 update)
+frontend/apps/owner-admin/src/components/TenantDetailDrawer.vue    (token V3 update)
+frontend/apps/owner-admin/src/components/CreateTenantWizard.vue    (token V3 update)
+frontend/apps/owner-admin/src/components/ConflictState.vue         (token V3 update)
+frontend/apps/owner-admin/src/components/MetricCard.vue            (token V3 update — re-export từ ui package)
+frontend/apps/owner-admin/src/components/StatusPill.vue            (token V3 update — re-export từ ui package)
+frontend/apps/owner-admin/src/pages/CrossTenantDashboardPage.vue   (mới — frame 124:2)
+frontend/apps/owner-admin/src/components/TenantLifecycleConfirmModal.vue (mới — frame 124:292)
+frontend/apps/owner-admin/src/components/DomainDnsRetryState.vue   (mới — frame 125:2)
+frontend/apps/owner-admin/src/components/SslPendingState.vue       (mới — frame 125:122)
+```
+
+Frame Figma Wave A bắt buộc đối chiếu (14 frame):
+
+```txt
+66:2     Tokens reference
+127:2    Component Inventory 38
+127:410  Layout Grid + Responsive Rules
+127:518  A11y WCAG 2.2 Poster
+124:2    Owner Admin Dashboard cross-tenant
+124:292  Tenant Lifecycle Confirm Modal
+125:2    Domain DNS Retry
+125:122  SSL Pending
+85:2     Tenant Operations (V3v1 enhance)
+87:2     Tenant Detail Drawer (V3v1 enhance)
+88:2     Create Tenant Wizard (V3v1 enhance)
+88:112   Empty state (V3v1 enhance)
+88:119   Conflict slug/domain (V3v1 enhance)
+88:127   Command palette (V3v1 enhance)
+104:2    OPEN HERE Overview & TOC
+```
+
+### Backend Dependency Wave A
+
+```txt
+- Phase 4.1 Domain Service: OpenAPI contract (mock OK) — endpoint list/detail/verify dummy.
+- Phase 4.2 Template Service stub: registry + apply mode dialog 3-mode contract.
+- Phase 4.3 Website CMS Service: settings/sliders contract (CRUD mock OK).
+```
+
+Wave A cho phép mock-first; backend implementation thật chỉ bắt buộc trước Wave B/C/D.
+
+### Verify Command Wave A
+
+```powershell
+cd frontend
+npm run typecheck
+npm run build
+# Lint script SKIP nếu workspace chưa khai báo (như Phase 3).
+npm run dev:owner   # Smoke 4 page Owner Admin sau token migration: /dashboard, /clinics, /clinics/create, /clinics/:tenantId.
+# Bổ sung sau scaffold: smoke /cross-tenant-dashboard nếu route đã active trong Wave A.
+```
+
+### QA Gate Wave A
+
+```txt
+- axe-core CI baseline cho 4 page Owner Admin: /dashboard, /clinics, /clinics/create, /clinics/:tenantId.
+- Lighthouse CI baseline cho cùng 4 page (chưa fail-build, chỉ baseline).
+- VRT screenshot diff 14 component Phase 3 trước/sau token V3 migration:
+  AppButton, AppCard, MetricCard, StatusPill, AdminSidebar, AdminTopbar,
+  TenantTable, TenantFilterBar, TenantDetailDrawer, CreateTenantWizard,
+  ConflictState, DashboardPage shell, ClinicsPage shell, ClinicDetailPage shell.
+```
+
+### Effort Estimate
+
+```txt
+~34 dev-day, 4 tuần, 2 FE (parallel theo plan owner duyệt).
+```
+
+### Risk Top 3 Wave A
+
+```txt
+1. CRITICAL  httpClient hardcode X-Owner-Role: OwnerSuperAdmin
+             → rebuild factory tách 3 surface (owner / clinic / public),
+             header tenant + role do consumer inject, không hardcode trong client.
+2. HIGH      Token V2 hex literal vs V3 CSS var drift
+             → ADD-ONLY: giữ V2 layer, V3 CSS custom property mới,
+             component restyle dùng var(--color-*) thay vì hex. Phase 3 component
+             được migrate dần, không break visual.
+3. HIGH      Owner Dashboard cross-tenant API mock-first
+             → backend Phase 4 chưa có aggregate cross-tenant; Wave A dùng mock
+             trong api-client/owner.ts để unblock UI; switch real khi backend ready.
+```
+
+### Hard Rules Giữ
+
+```txt
+- KHÔNG tạo Figma file mới.
+- KHÔNG sửa V1/V2 Figma baseline.
+- KHÔNG sửa backend code trong lane này (ngoại trừ note request OpenAPI contract gửi backend lane).
+- KHÔNG commit/push trừ khi owner yêu cầu rõ.
+- KHÔNG đụng .env/secret/IP server thật/connection string thật.
+- KHÔNG hard-code role/tenant id trong httpClient sau rebuild.
+```
+
+### Điểm Dừng
+
+```txt
+- Plan ready trong temp/plan.frontend.md §16. Frontend Agent chỉ implement khi
+  owner đã duyệt plan rõ.
+- 5 owner decision (xem section 7.1.6 roadmap) phải có quyết định trước khi
+  start Wave B/C/D/E. Wave A có thể start với token + httpClient + composable
+  + Owner Admin restyle ngay khi owner duyệt.
+- Sau implement, QA Agent verify; Documentation Agent cập nhật dashboard +
+  lane + roadmap; Lead Agent gom report và đề xuất commit split.
+```
+
+---
+
+## Phase 3 Lịch Sử (giữ làm tham chiếu)
+
 
 ## Vai Trò File
 
@@ -676,4 +840,21 @@ Không hardcode secret/token/IP/connection string.
 Không chuyển Phase 2 sang Done.
 Không print tenant data thật vào output (smoke chỉ status code + structure flag).
 Comment trong code mới viết bằng tiếng Việt khi thuộc public contract.
+```
+
+## Codex Wave A Planning Pass 2026-05-10
+
+Trạng thái: 🟡 **Plan Wave A đã được Codex Lead + Frontend Agent đối chiếu lại, chưa code**.
+
+Đã đọc: `AGENTS.md`, `CLAUDE.md`, `rules/coding-rules.md`, `clinic_saas_report.md`, `architech.txt`, `docs/agent-playbook.md`, dashboard/lane current-task, `temp/plan.frontend.md`, roadmap section 7.1, `docs/agents/figma-ui-agent.md`, architecture docs và frontend workspace/package files liên quan.
+
+Đã inspect Figma bằng MCP: `104:2`, `66:2`, `85:2`, `87:2`, `88:2`, `88:112`, `88:119`, `88:127`, `124:2`, `124:292`, `125:2`, `125:122`, `127:2`, `127:410`, `127:518`; page metadata `65:2` xác nhận V3 có 76 frame. Không sửa Figma.
+
+Plan chi tiết mới nằm trong `temp/plan.frontend.md` §17. Điểm quyết định đáng chú ý:
+
+```txt
+- /dashboard nên là route canonical cho frame 124:2 Dashboard Cross-Tenant.
+- Histoire/axe/Lighthouse cần owner duyệt dependency/package-lock trước khi thêm.
+- useDomainVerifyPoll/polling thật cần owner chốt DNS retry tolerance; nếu chưa chốt, chỉ làm UI state + manual retry mock-first.
+- Chưa code, chưa build/test. Frontend Agent dừng chờ owner duyệt Wave A.
 ```

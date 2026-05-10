@@ -574,3 +574,274 @@ chore(backend): gate Swagger/OpenAPI to Development (P1.3)
 # Cách B
 chore(backend): pre-phase 4 hardening (xunit infra, swagger gating)
 ```
+
+## 13. Phase 4 Backend Plan (theo V3v2 dependency)
+
+Trạng thái: 🟡 **Planning — chờ owner duyệt**.
+
+Phase 4 backend được lập theo dependency của 5 Wave Phase 4+ (UI Redesign V3 source of truth, page Figma `65:2`). Tham chiếu chi tiết V3 + 5 Wave + 5 owner decision risk: `docs/roadmap/clinic-saas-roadmap.md#71-ui-redesign-v3-source-of-truth-phase-4`.
+
+### 13.1 Phase 4.1 - Domain Service
+
+```txt
+Trạng thái   : 🔜 Wave A unblock contract → Wave B-D implement thật.
+Ưu tiên      : Wave A FE cần OpenAPI contract (mock OK); Wave B/D cần thật.
+Effort dự kiến: ~10-15 dev-day cho contract + DNS verify + SSL ACME.
+
+API endpoint dự kiến:
+  POST /api/tenants/{tenantId}/domains
+  GET  /api/tenants/{tenantId}/domains
+  GET  /api/tenants/{tenantId}/domains/{domainId}
+  POST /api/tenants/{tenantId}/domains/{domainId}/verify
+  GET  /api/tenants/{tenantId}/domains/{domainId}/verify-status (polling)
+  POST /api/tenants/{tenantId}/domains/{domainId}/retry (DNS retry)
+  POST /api/tenants/{tenantId}/publish
+
+Dependency:
+  PostgreSQL (table tenant_domains schema platform).
+  Redis (cache domain → tenantId resolution; TTL ngắn, invalidate khi publish).
+  Background worker (DNS verify async + SSL ACME provisioning, có thể dùng
+  IHostedService hoặc tách worker service riêng nếu Phase 6 cần scale).
+
+Tenant isolation note:
+  Owner Super Admin được thao tác cross-tenant.
+  Clinic Admin chỉ thao tác domain của tenant mình (tenant context bắt buộc).
+
+Owner decision blocker:
+  - DNS retry tolerance + retry max attempts (block Wave A useDomainVerifyPoll
+    + Wave D DNS verify async).
+
+Contract Open API priority cho Wave A:
+  - Endpoint list + detail + verify trả ProblemDetails RFC 9457 chuẩn.
+  - Schema bắt buộc: domainName, normalizedDomainName, domainType,
+    status (Pending|Verified|Failed|Suspended), isPrimary, sslState
+    (None|Pending|Issued|Failed), verifiedAtUtc, lastErrorMessage.
+```
+
+### 13.2 Phase 4.2 - Template Service
+
+```txt
+Trạng thái   : 🔜 Wave A unblock contract → Wave D implement apply.
+Effort dự kiến: ~8-12 dev-day cho registry + apply 3-mode + diff.
+
+API endpoint dự kiến:
+  GET  /api/templates
+  GET  /api/templates/{templateKey}
+  POST /api/tenants/{tenantId}/template/apply
+  GET  /api/tenants/{tenantId}/template/active
+  POST /api/tenants/{tenantId}/template/preview-diff
+
+Apply 3-mode (frame Figma 116:207 Template Apply Dialog):
+  - apply full template (overwrite settings + content + style).
+  - apply style only (chỉ overwrite design tokens + brand).
+  - apply content only (chỉ overwrite homepage modules + sample content).
+
+Dependency:
+  MongoDB (template registry collection + applied template snapshot).
+  PostgreSQL (link tenant ↔ active template).
+
+Tenant isolation note:
+  Apply chỉ thao tác trong tenant. Audit log bắt buộc cho mỗi apply
+  (block Wave E Audit Log).
+
+Contract Open API priority cho Wave A:
+  - Schema templateKey, name, specialty, previewImage, supportedModes,
+    appliedAtUtc, appliedBy.
+```
+
+### 13.3 Phase 4.3 - Website CMS Service
+
+```txt
+Trạng thái   : 🔜 Wave A unblock contract → Wave B/D implement thật.
+Effort dự kiến: ~15-20 dev-day cho settings + sliders + page content +
+                 draft/publish.
+
+API endpoint dự kiến:
+  GET  /api/tenants/{tenantId}/website/settings
+  PUT  /api/tenants/{tenantId}/website/settings
+  GET  /api/tenants/{tenantId}/website/sliders
+  POST /api/tenants/{tenantId}/website/sliders
+  PUT  /api/tenants/{tenantId}/website/sliders/{slideId}
+  DELETE /api/tenants/{tenantId}/website/sliders/{slideId}
+  GET  /api/tenants/{tenantId}/website/pages
+  GET  /api/tenants/{tenantId}/website/pages/{pageKey}
+  PUT  /api/tenants/{tenantId}/website/pages/{pageKey}
+  POST /api/tenants/{tenantId}/website/publish
+  GET  /api/tenants/{tenantId}/website/publish-history
+
+Public read endpoint (cho Wave B Public Website):
+  GET  /api/public/tenants/{slug}/settings
+  GET  /api/public/tenants/{slug}/pages/{pageKey}
+  (resolve qua subdomain/domain edge resolver hoặc Public BFF)
+
+Dependency:
+  MongoDB (website_settings, sliders, page_contents, template_configs,
+  publish_snapshots).
+  Redis (cache settings public với TTL + invalidate khi publish).
+  Optimistic concurrency cho autosave (Wave D Builder).
+
+Tenant isolation note:
+  Mọi document phải có tenantId field; query phải filter tenantId.
+  Public read endpoint resolve tenant qua slug/domain, không cho Clinic Admin
+  thao tác cross-tenant.
+
+Owner decision blocker:
+  - Builder autosave conflict policy (optimistic merge / pessimistic lock /
+    manual) → block Wave D autosave implement.
+  - Tenant suspended fallback content & branding → block Wave B Public Website
+    suspended state.
+
+Contract Open API priority cho Wave A:
+  - Schema settings (brandColors, logoUrl, faviconUrl, contactInfo,
+    socialLinks, seoMeta, customDomain, themeKey).
+  - Schema slider (id, title, subtitle, imageUrl, ctaText, ctaUrl, order, isEnabled).
+  - Schema page (pageKey: home|about|services|doctors|pricing|contact|faq|blog,
+    sections, lastModifiedAtUtc, publishStatus: draft|published|conflict).
+```
+
+### 13.4 Phase 5 - Catalog Service Public Read
+
+```txt
+Trạng thái   : 🔜 Wave B dependency.
+Effort dự kiến: ~8-12 dev-day cho services + doctors public read.
+
+API endpoint dự kiến (public, cho Wave B Public Website):
+  GET  /api/public/tenants/{slug}/services
+  GET  /api/public/tenants/{slug}/services/{serviceSlug}
+  GET  /api/public/tenants/{slug}/doctors
+  GET  /api/public/tenants/{slug}/doctors/{doctorSlug}
+  GET  /api/public/tenants/{slug}/specialties
+
+Write endpoint (Wave D Clinic Admin):
+  CRUD services, doctors, schedule (theo Phase 6 model trong roadmap).
+
+Dependency:
+  PostgreSQL (services, service_categories, doctors, working_schedule,
+  prices — schema mới chưa có, tạo migration mới khi Wave D start).
+  Redis (cache public read TTL ngắn).
+
+Tenant isolation note:
+  Public read filter theo tenant (resolve slug → tenantId), không cho cross-tenant.
+  Write endpoint Clinic Admin chỉ thao tác trong tenant của họ.
+```
+
+### 13.5 Phase 6 - Booking Service
+
+```txt
+Trạng thái   : 🔜 Wave C dependency.
+Effort dự kiến: ~15-20 dev-day cho slot lock + reschedule + cancel + concurrency.
+
+API endpoint dự kiến:
+  GET  /api/public/tenants/{slug}/doctors/{doctorSlug}/available-slots
+  POST /api/bookings
+  POST /api/bookings/{bookingId}/lock        (slot lock, ETag/version)
+  PATCH /api/bookings/{bookingId}/reschedule
+  PATCH /api/bookings/{bookingId}/cancel
+  GET  /api/tenants/{tenantId}/appointments  (Clinic Admin Wave D)
+  GET  /api/tenants/{tenantId}/appointments/{appointmentId}
+  PATCH /api/tenants/{tenantId}/appointments/{appointmentId}/status
+
+Concurrency:
+  Slot lock dùng ETag/version + optimistic concurrency.
+  SSE (Server-Sent Events) push slot availability khi 2 user race condition.
+  Phase 6 Wave C dùng polling, Wave E nâng SSE.
+
+Insurance verify integration (Wave C):
+  POST /api/bookings/{bookingId}/insurance-verify (stub).
+
+Event:
+  AppointmentCreated event publish ra Kafka (placeholder).
+
+Dependency:
+  PostgreSQL (appointments, booking_slots, patient_info, booking_source).
+  Redis (slot lock với TTL ngắn 15 phút).
+
+Tenant isolation note:
+  Public booking endpoint resolve tenant qua slug/domain.
+  Clinic Admin chỉ thấy appointment của tenant mình.
+```
+
+### 13.6 Phase 7 - Billing / Reports / Audit / Monitoring / Notification
+
+```txt
+Trạng thái   : 🔜 Wave E dependency.
+Effort dự kiến: ~25-35 dev-day tổng cho 5 service.
+
+Report Service:
+  Aggregate KPI cross-tenant (cho Owner Admin Dashboard frame 124:2)
+  + per-tenant KPI (cho Clinic Admin Dashboard frame 121:2).
+  CSV/Excel export (composable useReportExport phía FE).
+
+Audit Log Service:
+  90-day retention (Linear-style) hoặc 6 năm (HIPAA) — chờ owner decision.
+  API: GET /api/audit-logs với filter tenantId, actorId, action, dateRange,
+  pagination cursor-based.
+
+Monitoring Service:
+  Health check 12-service (api-gateway, identity, tenant, website-cms,
+  template, domain, booking, catalog, customer, billing, report,
+  notification, realtime-gateway).
+  API: GET /api/monitoring/services-health.
+
+Billing Service:
+  Stripe sandbox + VNPay sandbox.
+  API: subscription, invoice, renewal, payment status.
+
+Notification Service:
+  Queue email/SMS/Zalo placeholder.
+  Event: notification.requested.
+
+Dependency:
+  PostgreSQL + MongoDB cho audit log retention scope.
+  Kafka (cho notification event consume).
+  Background worker.
+
+Owner decision blocker:
+  - Audit log retention scope → block Audit Log Service schema.
+  - PII patient handling rule → block security review Wave E.
+```
+
+### 13.7 Backend Verify Plan Phase 4+
+
+```txt
+Mỗi service Phase 4+:
+  - dotnet restore/build/test PASS với 0 warning 0 error.
+  - Migration SQL applied trên server PostgreSQL dev.
+  - Health endpoint /health 200.
+  - OpenAPI /openapi/v1.json 200 (Development env).
+  - Smoke test 5+ case end-to-end qua api-gateway.
+  - Tenant isolation test: query thiếu tenantId → fail rõ.
+  - Integration test với Testcontainers PostgreSQL khi feature data
+    nghiệp vụ thật (bắt đầu từ Phase 4.1 Domain).
+
+Cross-service:
+  - Event publish/consume Kafka khi domain event thật xuất hiện
+    (TenantCreated, AppointmentCreated, DomainVerified, TemplateApplied).
+  - Distributed tracing CorrelationIdMiddleware end-to-end.
+```
+
+### 13.8 Hard Rules Phase 4 Backend
+
+```txt
+- Không bỏ tenant isolation trong bất kỳ endpoint nào (kể cả public).
+- Không hard-code secret/connection string thật.
+- Không expose PostgreSQL public.
+- Không dùng EF Core (giữ Dapper + Npgsql như Phase 2).
+- Không skip ProblemDetails RFC 9457 cho 4xx response.
+- Không gom multi-service migration vào 1 file SQL; mỗi service migrate riêng.
+- Không tạo Figma file.
+- Không commit/push nếu owner chưa yêu cầu.
+- Mọi background work phải dùng IHostedService hoặc worker service riêng,
+  không fire-and-forget từ request handler.
+- Transaction boundary rõ với mỗi command có nhiều DB operation.
+```
+
+### 13.9 Điểm Dừng
+
+```txt
+- Plan ready. Backend Agent chỉ implement OpenAPI contract Wave A khi owner
+  duyệt rõ. Wave B/D backend implement thật chỉ khi Wave tương ứng FE bắt đầu
+  hoặc owner yêu cầu sớm.
+- Owner decision blocker (audit retention, PII rule, autosave conflict policy,
+  DNS retry tolerance) phải chốt trước khi service tương ứng implement schema/logic.
+```

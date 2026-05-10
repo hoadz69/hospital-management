@@ -205,3 +205,5 @@ Workflow đầy đủ trong `docs/agent-playbook.md` section "Feature Team Execu
 - Báo Lead Agent gap giữa Figma và code để Step 6 integration không bị treo.
 - Không sửa frontend/backend code trong UI-only task; chỉ chuẩn bị frame/component/state mapping cho Frontend Agent ở Step 5.
 - Không tạo Figma file mới và không commit kể cả khi đã sửa Figma; chỉ report frame đã thay đổi cho Lead Agent.
+
+V3 active baseline 2026-05-10: page Figma `65:2` 76 frame source of truth Phase 4+ (file key `1nbJ5XkrlDgQ3BmzpXzhCC`). 7 section entry frame: 104:2 (TOC), 105:2 (Public), 110:2 (Booking), 113:2 (Clinic Admin), 124:2 (Owner Admin), 127:2 (Design System), 129:2 (Handoff). Token V3 brand clinical-blue `#1E5BD6` + mint `#14B8A6` + peach `#FFB7A0`. V1 (page 0:1 40 frame) baseline historical, V2 (page 36:2 empty) historical, V3 active. Không tạo Figma file mới, không sửa V1/V2. Detail + 5 Wave plan: `docs/roadmap/clinic-saas-roadmap.md#71-ui-redesign-v3-source-of-truth-phase-4`.

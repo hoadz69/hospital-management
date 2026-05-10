@@ -124,6 +124,9 @@ Lead Agent: chia commit theo lane cho [feature name]. Không push.
 - Hướng dẫn chống mất session: `docs/session-continuity.md`
 - Ghi chú cho owner khi project đã có code: `docs/owner-code-notes.md`
 - UI source of truth: Figma/FigJam do owner cung cấp
+- UI Source of Truth Phase 4+: Figma page `65:2` UI Redesign V3 - 2026-05-10 (file key `1nbJ5XkrlDgQ3BmzpXzhCC`), 76 frame, 7 section grouping. Chi tiết V3 + 5 Wave plan + 5 owner decision risk: `docs/roadmap/clinic-saas-roadmap.md#71-ui-redesign-v3-source-of-truth-phase-4` và `docs/agents/figma-ui-agent.md`.
+- V1 (Figma page `0:1` Clinic Website UI Kit, 40 frame): functional baseline historical, không sửa, không xóa.
+- V2 (Figma page `36:2`, empty): historical/partial baseline, không sửa, không xóa.
 - PDF export đã đọc từ FigJam:
   - `Clinic SaaS Architecture - Source of Truth.pdf`
   - `Clinic SaaS Technical Architecture - Microservices Clean Architecture.pdf`
@@ -169,13 +172,14 @@ temp/
 3. Với task code, lập kế hoạch trong plan lane phù hợp và chờ duyệt.
 4. Sửa đúng phạm vi task, không reorganize repo rộng nếu chưa được duyệt.
 5. Sau khi sửa, chạy kiểm tra phù hợp với mức độ thay đổi.
-6. Cuối mỗi lượt làm việc, trả lời owner bằng báo cáo ngắn gồm:
+6. Khi implement UI Phase 4+, đọc Figma V3 frame đúng surface trước khi code. Không tự invent layout khi V3 đã có frame detailed visual. Frame wireframe annotated chỉ là placeholder Phase 6-7, cần upgrade detailed trước khi code wave đó.
+7. Cuối mỗi lượt làm việc, trả lời owner bằng báo cáo ngắn gồm:
    - đã hoàn thành gì,
    - file đã sửa/tạo,
    - đã kiểm tra bằng lệnh gì hoặc vì sao chưa kiểm tra,
    - việc còn thiếu/bị chặn,
    - bước tiếp theo đề xuất.
-7. Nếu không hoàn tất, cập nhật current-task lane phù hợp gồm:
+8. Nếu không hoàn tất, cập nhật current-task lane phù hợp gồm:
    - đã hoàn thành gì,
    - đang bị chặn ở đâu,
    - bước tiếp theo cụ thể,

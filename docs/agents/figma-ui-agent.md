@@ -329,3 +329,94 @@ Sau mỗi UI/Figma task, report:
 - Mặc định chỉ đọc Figma; chỉ sửa Figma khi owner yêu cầu rõ ("redesign", "cập nhật Figma", "làm Figma").
 - Báo Lead Agent gap giữa Figma và code để Step 6 integration không bị treo.
 - Không sửa frontend code trong UI-only task; chỉ chuẩn bị frame/component/state mapping cho Frontend Agent.
+
+## V3v2 Active Baseline (2026-05-10)
+
+UI Redesign V3 là **active source of truth Phase 4+**. Mọi thiết kế/handoff/code Phase 4 trở đi phải đọc V3 trước, không tự invent layout, không tạo Figma file mới.
+
+### Snapshot V3
+
+```txt
+Figma file key : 1nbJ5XkrlDgQ3BmzpXzhCC
+Page V3 id     : 65:2 "UI Redesign V3 - 2026-05-10"
+Total frame    : 76 (16 V3v1 + 60 V3v2 expand)
+Section count  : 7
+Direction      : Calm Clinical Premium (Public) + Clinical SaaS Cockpit (Admin)
+```
+
+### 7 Section Entry Frame
+
+```txt
+Section 0  OPEN HERE Overview & TOC                  entry frame 104:2
+Section 1  Public Website (15 V3v2 + 2 V3v1)         entry frame 105:2 About
+Section 2  Booking (5 V3v2 + 1 V3v1)                 entry frame 110:2 Landing
+Section 3  Clinic Admin (21 V3v2 + 4 V3v1)           entry frame 113:2 Brand
+Section 4  Owner Admin (10 V3v2 + 7 V3v1)            entry frame 124:2 Dashboard cross-tenant
+Section 5  Design System (6 V3v2 + 1 V3v1)           entry frame 127:2 Component Inventory 38
+Section 6  Handoff (2 V3v2 + 1 V3v1)                 entry frame 129:2 Implementation Waves
+```
+
+Frame ID đầy đủ trong từng section: xem `docs/roadmap/clinic-saas-roadmap.md#71-ui-redesign-v3-source-of-truth-phase-4` (section 7.1.1).
+
+### Token V3 Đã Chốt
+
+```txt
+Brand     : #1E5BD6 clinical-blue, #14B8A6 mint, #FFB7A0 peach.
+Surface   : #F8FAFC ivory, #FFFFFF elevated, #F1F5F9 muted, #E2E8F0 border.
+Text      : #0F172A primary, #475569 secondary, #94A3B8 muted.
+Status    : #16A34A success, #D97706 warning, #DC2626 danger,
+            #0284C7 info, #64748B draft, #7C3AED specialty.
+Sidebar   : #0F172A.
+Typography (Inter scale): display 48/56, headline 32/40, title 24/32,
+            body 16/24, caption 12/16, mono 13/20.
+Spacing   : 4 / 8 / 12 / 16 / 20 / 24 / 32 / 40 / 56 / 72 / 96.
+Radius    : card 16, button 12, input 10, pill 999, sheet-top 24.
+Shadow    : elevation/1 0 1px 2px rgba(15,23,42,.04)
+            elevation/2 0 8px 24px rgba(15,23,42,.06)
+            elevation/3 0 16px 48px rgba(15,23,42,.10)
+Motion    : duration xs 120 / sm 180 / md 240 / lg 320 / xl 480 ms;
+            ease/standard cubic-bezier(.2,0,0,1).
+```
+
+### Component & Composable
+
+38 component V3v2 mới (Public 12 + Public dynamic/error 4 + Booking 4 + Clinic Admin 12 + Owner Admin 4 + Public 2 mở rộng) + 22 component V3v1 đã có frame Figma. 6 composable foundation (`useReducedMotion`, `useViewTransition`, `useFocusTrap`, `useTenantContext`, `useCommandPalette`, `useReveal`) + 6 composable phụ trợ (`usePublicTenantResolver`, `useSlotLock`, `useInsuranceVerify`, `useScheduleConflict`, `useDomainVerifyPoll`, `useReportExport`).
+
+Danh sách đầy đủ: `docs/roadmap/clinic-saas-roadmap.md#71-ui-redesign-v3-source-of-truth-phase-4` (section 7.1.3).
+
+### 5 Wave Phase 4+ Map Với Frame ID
+
+```txt
+Wave A  Token Foundation + Owner Admin restyle + shared UI/composables
+        (~34 dev-day) — frame 66:2, 127:2, 127:410, 127:518,
+        124:2, 124:292, 125:2, 125:122, 85:2, 87:2, 88:2, 88:112,
+        88:119, 88:127, 104:2.
+
+Wave B  Public Website V3 (~36 dev-day) — frame 68:2, 78:2,
+        105:2 đến 109:251.
+
+Wave C  Booking V3 (~42 dev-day) — frame 81:2, 110:2, 110:91,
+        110:165, 110:251, 111:2.
+
+Wave D  Clinic Admin Builder + Operational (~60 dev-day) — frame
+        83:2, 84:2, 84:28, 84:40, 113:2, 113:157, 116:2, 116:207,
+        117:2, 117:176, 119:2, 121:2 đến 123:594.
+
+Wave E  A11y/Performance/QA Polish + Reports/Audit/Monitoring/
+        Billing (~30 dev-day) — frame 126:2, 126:173, 126:300,
+        126:458, 126:612, 126:710, 128:2, 128:84, 128:178,
+        129:2, 129:197.
+```
+
+### V1 / V2 / V3 Status Policy
+
+```txt
+V1 (page 0:1, 40 frame UI Kit)  : functional baseline historical.
+                                  KHÔNG sửa, KHÔNG xóa.
+V2 (page 36:2, empty)           : historical/partial baseline.
+                                  KHÔNG sửa, KHÔNG xóa.
+V3 (page 65:2, 76 frame)        : active source of truth Phase 4+.
+                                  Mọi handoff Phase 4+ đọc V3 trước.
+```
+
+Reference đầy đủ: `docs/roadmap/clinic-saas-roadmap.md#71-ui-redesign-v3-source-of-truth-phase-4`.

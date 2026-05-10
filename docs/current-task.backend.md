@@ -291,4 +291,70 @@ Phase 2 đã pass đủ smoke. Bước tiếp theo nằm ngoài Phase 2:
    chuyển Phase 2 sang Done.
 5. Sau Phase 2 Done, Frontend lane (Phase 3 Owner Admin Tenant Slice) có thể chuyển từ
    mock fallback sang real API smoke.
+6. (Phase 4 Wave A FE-driven) Backend Agent giao OpenAPI contract Phase 4.1 Domain
+   Service + 4.2 Template Service + 4.3 Website CMS (settings, sliders, page content)
+   cho FE Wave A. Mock-first cho phép — Wave A FE chỉ cần contract (TypeScript types
+   + endpoint shape), backend implement thật ở Wave B/C/D dependency.
+7. (Phase 4 Wave B-D backend) Phase 4.1 Domain Service implement DNS verify async
+   + SSL ACME provisioning. Phase 4.2 Template Service apply 3-mode (full / style /
+   content). Phase 4.3 Website CMS Service write/publish path. Phase 5 Catalog Service
+   public read endpoints (GET /api/public/services | doctors). Phase 6 Booking Service
+   slot lock concurrency với ETag/version + reschedule + cancel. Customer Service
+   patient endpoints + Records APSO.
+```
+
+## Phase 4 Backend Roadmap (theo V3v2 dependency)
+
+5 Wave Phase 4+ trong roadmap (xem `docs/roadmap/clinic-saas-roadmap.md#71-ui-redesign-v3-source-of-truth-phase-4`) tạo dependency cho backend lane theo thứ tự sau:
+
+```txt
+Wave A (FE-driven, mock-first):
+  Backend deliverable: OpenAPI contract Phase 4.1 Domain + 4.2 Template + 4.3 CMS.
+  Backend service không bắt buộc implement thật ở Wave A.
+  Owner Admin Dashboard cross-tenant aggregate có thể mock — backend implement
+  thật ở Wave E (Reports/Monitoring).
+
+Wave B (Public Website V3):
+  Backend deliverable cần thật:
+    - Phase 4.3 Website CMS Service production-ready (settings/sliders/page content).
+    - Phase 5 Catalog Service public read endpoints
+      (GET /api/public/services, /doctors, /services/:slug, /doctors/:slug).
+    - Public BFF tenant resolution endpoint hoặc edge resolver subdomain → tenantId.
+    - Phase 4.1 Domain Service publish state cho frontend đọc.
+
+Wave C (Booking V3):
+  Backend deliverable cần thật:
+    - Booking Service:
+      POST /api/bookings, GET available-slots,
+      PATCH reschedule | cancel,
+      slot lock concurrency POST /api/bookings/:id/lock với ETag/version.
+    - Insurance verify integration stub.
+
+Wave D (Clinic Admin Builder + Operational):
+  Backend deliverable cần thật:
+    - Phase 4.3 CMS production write/publish.
+    - Phase 4.2 Template apply 3-mode + diff.
+    - Phase 4.1 Domain DNS verify async + SSL ACME provisioning.
+    - Catalog Service write (services + doctors + schedule).
+    - Customer Service patient endpoints + Records APSO domain.
+    - Booking Service Clinic Admin appointment view.
+
+Wave E (A11y/Performance/QA Polish + Reports/Audit/Monitoring/Billing):
+  Backend deliverable cần thật:
+    - Report Service aggregate (KPI cross-tenant + per-tenant).
+    - Audit Log Service 90-day pagination (retention scope chờ owner decision —
+      90 ngày Linear-style hay 6 năm HIPAA).
+    - Monitoring Service health 12-service.
+    - Billing Service Stripe / VNPay sandbox.
+    - Notification Service queue.
+```
+
+Tenant isolation note: tất cả endpoint Phase 4+ phải tuân thủ tenant context theo `AGENTS.md` "Luật Kiến Trúc Bắt Buộc". Owner Super Admin endpoint cross-tenant phải có guard rõ; Clinic Admin endpoint chỉ thao tác trong tenant của họ; Public Website endpoint resolve tenant qua domain/subdomain.
+
+Owner decision blocker liên quan backend:
+
+```txt
+- Audit retention scope (90d / 6y) — chốt schema Audit Log Service trước Wave E.
+- PII patient handling rule — chốt encryption + audit rule trước Wave D Records APSO.
+- DNS retry tolerance — chốt retry max attempts cho Domain Service trước Wave A composable.
 ```
