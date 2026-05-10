@@ -96,7 +96,8 @@ public static class TenantEndpoints
             "tenants.conflict" => HttpResults.Problem(
                 detail: error.Message,
                 statusCode: StatusCodes.Status409Conflict,
-                title: "Tenant conflict"),
+                title: "Tenant conflict",
+                extensions: BuildConflictExtensions(error)),
             "tenants.not_found" => HttpResults.Problem(
                 detail: error.Message,
                 statusCode: StatusCodes.Status404NotFound,
@@ -105,6 +106,26 @@ public static class TenantEndpoints
                 detail: error.Message,
                 statusCode: StatusCodes.Status400BadRequest,
                 title: error.Code)
+        };
+    }
+
+    /// <summary>
+    /// Trích danh sách field bị conflict từ <see cref="Error.Details"/> để gắn vào
+    /// `extensions.fields` của ProblemDetails 409, giúp FE định vị input lỗi mà không
+    /// phải regex parse trường `detail`.
+    /// </summary>
+    private static IDictionary<string, object?>? BuildConflictExtensions(Error error)
+    {
+        if (error.Details is null
+            || !error.Details.TryGetValue(TenantErrors.FieldsDetailKey, out var fields)
+            || fields.Length == 0)
+        {
+            return null;
+        }
+
+        return new Dictionary<string, object?>
+        {
+            [TenantErrors.FieldsDetailKey] = fields
         };
     }
 

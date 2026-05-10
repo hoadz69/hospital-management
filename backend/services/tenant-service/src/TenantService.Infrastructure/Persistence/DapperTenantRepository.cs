@@ -154,7 +154,13 @@ public sealed class DapperTenantRepository : ITenantRepository
         catch (PostgresException ex) when (ex.SqlState == PostgresErrorCodes.UniqueViolation)
         {
             await transaction.RollbackAsync(cancellationToken);
-            return Result<Tenant>.Failure(TenantErrors.Conflict("Tenant slug or domain already exists."));
+            // Parse constraint name để FE định vị field input bị conflict thay vì regex parse `detail`.
+            // Tham chiếu migration 0001_create_tenant_mvp.sql:
+            //   uq_tenants_slug -> trùng slug.
+            //   uq_tenant_domains_normalized_domain_name -> trùng domain mặc định.
+            var fields = MapUniqueViolationToFields(ex.ConstraintName);
+            return Result<Tenant>.Failure(
+                TenantErrors.Conflict("Tenant slug or domain already exists.", fields));
         }
         catch
         {
@@ -468,6 +474,35 @@ public sealed class DapperTenantRepository : ITenantRepository
             row.SourcePlanCode,
             row.CreatedAtUtc,
             row.UpdatedAtUtc);
+    }
+
+    /// <summary>
+    /// Map tên constraint UNIQUE từ <see cref="PostgresException.ConstraintName"/> sang danh sách
+    /// field code mà FE dùng để định vị input bị conflict trong form tạo tenant.
+    /// </summary>
+    /// <param name="constraintName">Tên constraint do PostgreSQL trả về khi vi phạm unique.</param>
+    /// <returns>Danh sách field code; rỗng nếu không match constraint nào đã biết.</returns>
+    private static IReadOnlyList<string> MapUniqueViolationToFields(string? constraintName)
+    {
+        if (string.IsNullOrEmpty(constraintName))
+        {
+            return Array.Empty<string>();
+        }
+
+        // Dùng so khớp substring chứ không phải equals chính xác để chịu được prefix/suffix
+        // schema (ví dụ "platform.uq_tenants_slug") nếu provider thay đổi format ConstraintName.
+        if (constraintName.Contains("tenant_domains", StringComparison.OrdinalIgnoreCase)
+            || constraintName.Contains("domain", StringComparison.OrdinalIgnoreCase))
+        {
+            return new[] { TenantErrors.FieldDefaultDomainName };
+        }
+
+        if (constraintName.Contains("slug", StringComparison.OrdinalIgnoreCase))
+        {
+            return new[] { TenantErrors.FieldSlug };
+        }
+
+        return Array.Empty<string>();
     }
 
     private sealed record TenantRootRow(

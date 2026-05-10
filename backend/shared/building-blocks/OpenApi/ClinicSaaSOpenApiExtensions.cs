@@ -1,6 +1,7 @@
 using ClinicSaaS.BuildingBlocks.Tenancy;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
 
 namespace ClinicSaaS.BuildingBlocks.OpenApi;
 
@@ -36,15 +37,25 @@ public static class ClinicSaaSOpenApiExtensions
     }
 
     /// <summary>
-    /// Bật OpenAPI JSON và Swagger UI theo route thống nhất.
+    /// Bật OpenAPI JSON và Swagger UI theo route thống nhất, chỉ trong Development.
     /// </summary>
     /// <param name="app">WebApplication cần bật middleware Swagger.</param>
     /// <param name="serviceDisplayName">Tên hiển thị của service trên Swagger UI.</param>
     /// <returns>WebApplication đã cấu hình OpenAPI để tiếp tục chain startup.</returns>
+    /// <remarks>
+    /// Chỉ expose `/swagger` và `/openapi/v1.json` khi ASPNETCORE_ENVIRONMENT là Development.
+    /// Trên Staging/Production, contract endpoint không được phát tán mặc định.
+    /// Để mở Swagger trên server smoke, set ASPNETCORE_ENVIRONMENT=Development trên runtime.
+    /// </remarks>
     public static WebApplication UseClinicSaaSOpenApi(
         this WebApplication app,
         string serviceDisplayName)
     {
+        if (!app.Environment.IsDevelopment())
+        {
+            return app;
+        }
+
         app.UseSwagger(options =>
         {
             options.RouteTemplate = "openapi/{documentName}.json";
