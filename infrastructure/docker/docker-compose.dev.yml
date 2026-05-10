@@ -1,5 +1,9 @@
 name: clinic-saas-dev
 
+# Dev compose chỉ bind cổng ra loopback `127.0.0.1` để không expose ra LAN.
+# Nếu cần truy cập từ thiết bị khác trong mạng dev (ví dụ test mobile),
+# tạm đổi `127.0.0.1` thành `0.0.0.0` ở session local, không commit.
+
 services:
   postgres:
     image: postgres:16-alpine
@@ -9,7 +13,7 @@ services:
       POSTGRES_USER: clinic_dev
       POSTGRES_PASSWORD: clinic_dev_password
     ports:
-      - "5432:5432"
+      - "127.0.0.1:5432:5432"
     volumes:
       - clinic_saas_postgres:/var/lib/postgresql/data
       - ../postgres/init.sql:/docker-entrypoint-initdb.d/001-init.sql:ro
@@ -27,7 +31,7 @@ services:
       MONGO_INITDB_ROOT_PASSWORD: clinic_dev_password
       MONGO_INITDB_DATABASE: clinic_saas_cms_dev
     ports:
-      - "27017:27017"
+      - "127.0.0.1:27017:27017"
     volumes:
       - clinic_saas_mongodb:/data/db
       - ../mongodb/init.js:/docker-entrypoint-initdb.d/001-init.js:ro
@@ -37,7 +41,7 @@ services:
     container_name: clinic-saas-redis
     command: ["redis-server", "/usr/local/etc/redis/redis.conf"]
     ports:
-      - "6379:6379"
+      - "127.0.0.1:6379:6379"
     volumes:
       - ../redis/redis.conf:/usr/local/etc/redis/redis.conf:ro
 
@@ -54,7 +58,7 @@ services:
       KAFKA_CFG_AUTO_CREATE_TOPICS_ENABLE: "false"
       ALLOW_PLAINTEXT_LISTENER: "yes"
     ports:
-      - "9092:9092"
+      - "127.0.0.1:9092:9092"
     volumes:
       - clinic_saas_kafka:/bitnami/kafka
 
