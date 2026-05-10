@@ -7,3 +7,14 @@ dist/
 *.suo
 bin/
 obj/
+
+# Local env không commit (Vite frontend, ASP.NET backend, generic)
+.env
+.env.local
+.env.*.local
+
+# Generated artifacts (dotnet publish output, smoke runtime)
+temp/publish/
+
+# Smoke helper script (giữ ngoài source nếu chạy ad-hoc; nếu cần regression thì move sang scripts/smoke/ ở commit hygiene riêng)
+temp/smoke.sh
