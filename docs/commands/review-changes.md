@@ -1,5 +1,13 @@
 # Command: Review Changes
 
+## Multi-Workstream Lane Override
+
+Khi project có nhiều workstream song song, review phải đọc dashboard `docs/current-task.md` rồi đọc lane liên quan:
+
+- Backend/DevOps: `docs/current-task.backend.md`, `temp/plan.backend.md`.
+- Frontend: `docs/current-task.frontend.md`, `temp/plan.frontend.md`.
+- `temp/plan.md` chỉ là index, không phải plan chi tiết.
+
 ## Command Execution Rule
 
 1. Khi owner yêu cầu chạy lead-plan hoặc tạo plan:

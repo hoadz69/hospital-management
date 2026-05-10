@@ -1,5 +1,15 @@
 # Command: Lead Plan
 
+## Multi-Workstream Lane Override
+
+Khi project có nhiều workstream song song:
+
+- `docs/current-task.md` chỉ là Project Coordination Dashboard.
+- `temp/plan.md` chỉ là index tương thích cũ.
+- Backend/DevOps plan dùng `temp/plan.backend.md` và `docs/current-task.backend.md`.
+- Frontend plan dùng `temp/plan.frontend.md` và `docs/current-task.frontend.md`.
+- Nếu command bên dưới nhắc `docs/current-task.md` hoặc `temp/plan.md`, phải hiểu là dashboard/index hoặc lane file phù hợp theo scope task.
+
 ## Command Execution Rule
 
 1. Khi owner yêu cầu chạy lead-plan hoặc tạo plan:

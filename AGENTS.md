@@ -11,7 +11,7 @@ File này là hướng dẫn chung cho Codex, Claude Code và các coding agent 
    - `rules/backend-coding-rules.md` cho backend.
    - `rules/backend-testing-rules.md` khi test API/backend.
    - `rules/database-rules.md` khi tạo/sửa schema, migration, SQL, repository persistence, index, seed hoặc data access.
-4. Nếu là task implementation, phải tạo/cập nhật `temp/plan.md` trước và chờ owner duyệt, trừ khi owner nói rõ là làm ngay.
+4. Nếu là task implementation, phải tạo/cập nhật plan trước và chờ owner duyệt, trừ khi owner nói rõ là làm ngay. Với multi-workstream, dùng plan lane tương ứng như `temp/plan.backend.md` hoặc `temp/plan.frontend.md`; `temp/plan.md` chỉ là index.
 5. Khi owner chỉ hỏi/phân tích, không được tự code. Chỉ đọc file liên quan, phân tích và trả lời.
 6. Nếu chỉ dọn tài liệu/config theo yêu cầu trực tiếp của owner, được sửa ngay nhưng phải giữ scope nhỏ và ghi rõ file đã sửa.
 7. Không commit nếu owner chưa yêu cầu.
@@ -26,8 +26,8 @@ File này là hướng dẫn chung cho Codex, Claude Code và các coding agent 
    - Không hỏi lại.
    - Không chỉ xác nhận đã hiểu.
    - Được phép cập nhật:
-     - `temp/plan.md`
-     - `docs/current-task.md`
+     - `temp/plan.md` hoặc plan lane tương ứng
+     - `docs/current-task.md` hoặc current-task lane tương ứng
      - `docs/roadmap/clinic-saas-roadmap.md`
    - Không code implementation.
    - Sau khi tạo plan xong mới dừng lại để owner duyệt action/implementation.
@@ -50,14 +50,28 @@ File này là hướng dẫn chung cho Codex, Claude Code và các coding agent 
 4. Không commit trừ khi owner yêu cầu rõ.
 5. Không tạo Figma file mới trừ khi owner yêu cầu rõ.
 6. Sau mỗi phase/task lớn phải cập nhật:
-   - `docs/current-task.md`
+   - `docs/current-task.md` hoặc current-task lane tương ứng
    - `docs/roadmap/clinic-saas-roadmap.md`
+
+## Multi-Workstream Task Lane Rule
+
+Project có thể chạy nhiều workstream song song. Khi có nhiều lane đang hoạt động, không dùng `docs/current-task.md` hoặc `temp/plan.md` để chứa chi tiết của một lane.
+
+Quy ước hiện tại:
+
+- `docs/current-task.md` là Project Coordination Dashboard, chỉ do Lead Agent cập nhật dạng tổng quan ngắn và trỏ sang lane files.
+- `temp/plan.md` là index tương thích cũ, không chứa plan chi tiết của backend hoặc frontend.
+- Backend Agent và DevOps Agent chỉ cập nhật `docs/current-task.backend.md` và `temp/plan.backend.md`.
+- Frontend Agent chỉ cập nhật `docs/current-task.frontend.md` và `temp/plan.frontend.md`.
+- Lead Agent chịu trách nhiệm tạo lane mới hoặc phân lane khi owner nói chung chung.
+- Không agent nào overwrite `docs/current-task.md` bằng task chi tiết của một lane.
+- Nếu không chắc nội dung thuộc lane nào, ghi một note ngắn vào `docs/current-task.md` phần Notes/Unclassified và chờ Lead Agent phân loại.
 
 ## Language Rule
 
 - Mọi câu trả lời cho owner, plan, report, handoff, roadmap update và tài liệu hướng dẫn agent phải viết bằng tiếng Việt.
 - Chỉ dùng tiếng Anh khi đó là tên code, tên file, API endpoint, command, log/error gốc, keyword kỹ thuật chuẩn, hoặc nội dung trích nguyên văn cần giữ nguyên.
-- Nếu tạo/cập nhật `temp/plan.md`, `docs/current-task.md`, `docs/roadmap/clinic-saas-roadmap.md` hoặc command docs, phần mô tả phải ưu tiên tiếng Việt; không viết plan/report chính bằng tiếng Anh.
+- Nếu tạo/cập nhật `temp/plan.md`, plan lane, `docs/current-task.md`, current-task lane, `docs/roadmap/clinic-saas-roadmap.md` hoặc command docs, phần mô tả phải ưu tiên tiếng Việt; không viết plan/report chính bằng tiếng Anh.
 - Comment trong code, XML doc comment, SQL comment và database object comment phải viết bằng tiếng Việt, trừ keyword/tên kỹ thuật/tên tham số bắt buộc phải giữ nguyên.
 - XML doc cho public type/member phải đủ nghĩa:
   - `summary` nói rõ type/hàm làm gì trong nghiệp vụ/kỹ thuật.
@@ -70,7 +84,11 @@ File này là hướng dẫn chung cho Codex, Claude Code và các coding agent 
 
 - Báo cáo sản phẩm/kiến trúc chính: `clinic_saas_report.md`
 - Ghi chú kiến trúc kỹ thuật: `architech.txt`
-- Handoff task hiện tại: `docs/current-task.md`
+- Handoff dashboard hiện tại: `docs/current-task.md`
+- Backend/DevOps task lane: `docs/current-task.backend.md`
+- Frontend task lane: `docs/current-task.frontend.md`
+- Backend/DevOps plan lane: `temp/plan.backend.md`
+- Frontend plan lane: `temp/plan.frontend.md`
 - Playbook agent: `docs/agent-playbook.md`
 - Setup riêng cho Codex: `docs/codex-setup.md`
 - Hướng dẫn chống mất session: `docs/session-continuity.md`
@@ -118,7 +136,7 @@ temp/
 
 1. Đọc source of truth.
 2. Kiểm tra `git status` trước khi sửa để tránh ghi đè thay đổi của người khác.
-3. Với task code, lập kế hoạch trong `temp/plan.md` và chờ duyệt.
+3. Với task code, lập kế hoạch trong plan lane phù hợp và chờ duyệt.
 4. Sửa đúng phạm vi task, không reorganize repo rộng nếu chưa được duyệt.
 5. Sau khi sửa, chạy kiểm tra phù hợp với mức độ thay đổi.
 6. Cuối mỗi lượt làm việc, trả lời owner bằng báo cáo ngắn gồm:
@@ -127,7 +145,7 @@ temp/
    - đã kiểm tra bằng lệnh gì hoặc vì sao chưa kiểm tra,
    - việc còn thiếu/bị chặn,
    - bước tiếp theo đề xuất.
-7. Nếu không hoàn tất, cập nhật `docs/current-task.md` gồm:
+7. Nếu không hoàn tất, cập nhật current-task lane phù hợp gồm:
    - đã hoàn thành gì,
    - đang bị chặn ở đâu,
    - bước tiếp theo cụ thể,
@@ -155,7 +173,7 @@ temp/
 - Think before coding: nêu assumption, điểm mơ hồ và tradeoff trước khi implement task lớn. Nếu có nhiều cách hiểu, trình bày ra; không tự chọn im lặng. Nếu không rõ, dừng lại và hỏi.
 - Simplicity first: code tối thiểu để giải quyết đúng vấn đề, không thêm feature ngoài scope, không thêm abstraction/configurability khi chưa cần.
 - Surgical changes: chỉ sửa dòng/file liên quan trực tiếp tới yêu cầu. Mỗi dòng thay đổi phải trace được về request của owner.
-- Goal-driven execution: với task nhiều bước, nêu success criteria và cách verify cho từng bước trước khi làm hoặc trong `temp/plan.md`.
+- Goal-driven execution: với task nhiều bước, nêu success criteria và cách verify cho từng bước trước khi làm hoặc trong plan lane phù hợp.
 - Đọc code hiện có trước khi viết mới, theo style đang có nếu đã tồn tại implementation.
 - Không tạo abstraction khi mới có một use case.
 - Không refactor, format hoặc dọn file không liên quan.
@@ -172,7 +190,9 @@ temp/
 Codex và Claude Code dùng cùng khung phân vai sau:
 
 - Architect Agent: kiểm tra service boundary, data ownership, tenant isolation và FigJam alignment.
-- Figma UI Agent: chuyển Figma UI thành Vue components và design tokens.
+- Lead / Orchestrator Agent: điều phối phase/task, tạo plan, chia việc, gọi subagent/parallel agent khi cần, tổng hợp verify và handoff.
+- Web Research Agent: research UI/UX inspiration bằng web search/browser/MCP nếu môi trường có, tổng hợp direction, không sửa Figma/code.
+- Figma UI Agent: cải tổ Figma UI/design system, mapping UI với product/backend phase, chuẩn bị handoff frontend.
 - Frontend Agent: xây `public-web`, `clinic-admin`, `owner-admin`, routing, API client, tenant context.
 - Backend Agent: xây .NET services theo Clean Architecture.
 - Database Agent: thiết kế PostgreSQL schema, MongoDB collections, indexes, migrations, seed data.
@@ -180,11 +200,22 @@ Codex và Claude Code dùng cùng khung phân vai sau:
 - QA Agent: verify tenant isolation, auth permissions, booking, template apply, domain verification.
 - Documentation Agent: giữ README, architecture docs, setup, deployment, troubleshooting luôn cập nhật.
 
-Nếu tool hỗ trợ subagent, chỉ dùng khi owner yêu cầu rõ việc chia agent/parallel agent. Nếu không, dùng phân vai này như checklist tư duy.
+Khi owner gọi "Lead Agent", "Lead / Orchestrator Agent", "lead-plan", "giao việc", "điều phối", "làm việc này", "làm tiếp", "chạy workflow" hoặc yêu cầu tương đương, đó là quyền rõ ràng cho Codex tự điều phối theo team agent trong phạm vi task. Nếu tool hỗ trợ subagent/parallel agent, Lead Agent được phép tự tạo, giao việc, chờ kết quả và tổng hợp các subagent phù hợp mà không cần hỏi lại từng lần.
+
+Lead Agent dùng cùng logic nền với `lead-plan`:
+
+- Nếu owner yêu cầu plan/lead-plan: tạo hoặc cập nhật plan, không implement code.
+- Nếu owner yêu cầu implement/action/code nhưng chưa có plan được duyệt: tự chạy lead-plan trước rồi dừng chờ duyệt, trừ khi owner nói rõ làm ngay.
+- Nếu owner nói làm tiếp trong task đã có plan/approval rõ: tiếp tục theo plan và guardrail hiện tại.
+- Nếu task chỉ là docs/config/agent workflow theo yêu cầu trực tiếp: được sửa nhỏ ngay, không cần chờ plan.
+
+Lead Agent vẫn phải giữ các guardrail bắt buộc: không commit/push nếu owner chưa yêu cầu, không ghi secret/IP/private key vào repo, không tạo Figma file nếu chưa được yêu cầu, không chuyển phase sang Done khi verify bắt buộc chưa pass, và không sửa ngoài scope.
 
 Chi tiết agent nằm trong:
 
-- `docs/agent-playbook.md` cho Codex và mọi agent.
+- `agents/*.md` là entrypoint workflow ngắn cho các task UI/research cần gọi nhanh.
+- `docs/agents/*.md` là nguồn chi tiết chính cho Codex.
+- `docs/agent-playbook.md` là index/tóm tắt vai trò cho Codex và mọi agent.
 - `.claude/agents/*.md` cho Claude Code.
 
 ## Codex Support
@@ -192,16 +223,34 @@ Chi tiết agent nằm trong:
 Codex không dùng trực tiếp format `.claude/agents/*.md`. Cấu trúc chuẩn cho Codex trong repo này là:
 
 - `AGENTS.md`: luật bắt buộc và project instructions, Codex phải đọc đầu tiên.
-- `docs/agent-playbook.md`: mô tả vai trò Architect/Figma UI/Frontend/Backend/Database/DevOps/QA/Documentation để Codex dùng như checklist hoặc prompt nền.
+- `docs/agent-playbook.md`: index/tóm tắt vai trò Lead/Architect/Web Research/Figma UI/Frontend/Backend/Database/DevOps/QA/Documentation cho Codex.
+- `agents/figma-ui-agent.md` và `agents/web-research-agent.md`: workflow UI/research root-level, chứa source of truth, Figma links, UI redesign rules và MCP/search-browser rules để không cần prompt dài.
+- `docs/agents/*.md`: prompt/checklist chi tiết từng agent cho Codex, là nguồn đọc chính khi owner gọi vai agent.
 - `docs/codex-setup.md`: cách cấu hình MCP, Figma, GitNexus và quy trình chạy Codex.
 - `rules/*.md`: luật code/test/database theo từng ngữ cảnh. Đây là rule tài liệu cho agent đọc và tuân thủ, không phải linter tự động.
-- `docs/current-task.md`: handoff hiện tại.
+- `docs/current-task.md`: dashboard điều phối hiện tại.
+- `docs/current-task.backend.md`, `docs/current-task.frontend.md`, `temp/plan.backend.md`, `temp/plan.frontend.md`: lane task/plan chi tiết khi backend/devops và frontend chạy song song.
 
-Nếu cần tách việc theo agent trong Codex, chỉ dùng khi owner yêu cầu rõ. Khi đó dùng vai trò trong `docs/agent-playbook.md`; không tự tạo workflow song song ngoài yêu cầu.
+Khi owner gọi Lead Agent hoặc giao việc theo kiểu điều phối, Codex được phép tự tách việc theo `docs/agents/*.md` và tự dùng subagent/parallel agent nếu tool hỗ trợ. Với task UI/research, đọc thêm `agents/figma-ui-agent.md` và `agents/web-research-agent.md` trước khi hỏi lại owner. Với task không gọi vai Lead/agent và không cần song song, Codex có thể tự làm theo checklist agent mà không spawn subagent.
+
+## UI Research + Figma Workflow
+
+Khi owner yêu cầu redesign/tối ưu/cải tổ UI:
+
+1. Lead Agent đọc `agents/web-research-agent.md`, `agents/figma-ui-agent.md`, rồi đối chiếu thêm `docs/agents/lead-agent.md`, `docs/agents/web-research-agent.md` và `docs/agents/figma-ui-agent.md` nếu cần.
+2. Lead Agent gọi Web Research Agent trước nếu cần inspiration/benchmark.
+3. Web Research Agent dùng web search/browser/MCP nếu môi trường có; nếu không có thì báo rõ và không tự bịa research web.
+4. Lead Agent tổng hợp direction.
+5. Nếu owner yêu cầu làm thẳng hoặc direction đã đủ rõ, Lead Agent gọi Figma UI Agent.
+6. Figma UI Agent update trực tiếp Figma source of truth, không tạo Figma file mới.
+7. Nếu task chỉ là UI/Figma, không sửa backend/frontend code.
+8. Sau khi sửa Figma phải report frame đã sửa/thêm.
 
 ## Figma / MCP
 
 - Codex global Figma MCP đã cấu hình remote URL: `https://mcp.figma.com/mcp`.
+- Codex global Playwright MCP đã enabled bằng `npx -y @playwright/mcp@latest` để hỗ trợ browser/research workflow khi phiên Codex mới load MCP.
+- Search MCP cần API key như Brave/Perplexity chỉ được cấu hình khi owner cung cấp key rõ; không ghi API key giả hoặc secret vào repo/global config.
 - `.mcp.json` trong repo dùng cho Claude-style project MCP config.
 - Nếu Figma MCP tools không hiện trong phiên làm việc, restart Codex/Claude Code để MCP config được load lại.
 - Nếu không đọc được Figma trong phiên hiện tại, phải ghi rõ giới hạn vào `docs/current-task.md` và không tự bịa nội dung board.

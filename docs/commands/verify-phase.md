@@ -1,5 +1,14 @@
 # Command: Verify Phase
 
+## Multi-Workstream Lane Override
+
+Khi verify một lane:
+
+- Backend/DevOps verify theo `temp/plan.backend.md` và cập nhật `docs/current-task.backend.md`.
+- Frontend verify theo `temp/plan.frontend.md` và cập nhật `docs/current-task.frontend.md`.
+- `docs/current-task.md` chỉ cập nhật dashboard ngắn qua Lead Agent.
+- `temp/plan.md` chỉ là index, không phải verify plan chi tiết.
+
 ## Command Execution Rule
 
 1. Khi owner yêu cầu chạy lead-plan hoặc tạo plan:

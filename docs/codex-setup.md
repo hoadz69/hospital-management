@@ -35,6 +35,25 @@ Trạng thái hiện tại:
 - URL: `https://mcp.figma.com/mcp`.
 - Auth: OAuth đã hoàn tất.
 
+## Browser MCP Cho UI Research
+
+Đã cấu hình thêm global MCP cho browser/research workflow:
+
+```bash
+codex mcp add playwright -- npx -y @playwright/mcp@latest
+```
+
+Kết quả kiểm tra bằng `codex mcp list`:
+
+- MCP server `playwright` đã enabled.
+- Command: `npx`.
+- Args: `-y @playwright/mcp@latest`.
+- Auth: không cần OAuth/API key.
+
+Lưu ý: MCP tools thường chỉ xuất hiện sau khi mở phiên Codex mới. Playwright MCP hỗ trợ mở/render website thật khi có URL hoặc search engine, nhưng không thay thế Figma MCP. Figma MCP dùng để đọc/sửa Figma; browser/search MCP dùng cho research UI inspiration.
+
+Search MCP như Brave/Perplexity thường cần API key. Không cấu hình các MCP này bằng secret giả; chỉ thêm khi owner cung cấp key rõ qua cơ chế an toàn. Đã kiểm tra `@modelcontextprotocol/server-fetch` trên npm ngày 2026-05-09 nhưng package này không tồn tại dưới tên đó, nên chưa thêm Fetch MCP.
+
 ## Figma Board Status
 
 Đã kiểm tra lại bằng Figma MCP ngày 2026-05-08 sau khi owner đổi tài khoản/link Figma:
@@ -80,6 +99,7 @@ Codex dùng vai trò trong `docs/agent-playbook.md`. Không cần tạo `.claude
 Nếu owner yêu cầu chạy nhiều agent/parallel work, dùng role tương ứng:
 
 - Architect Agent
+- Web Research Agent
 - Figma UI Agent
 - Frontend Agent
 - Backend Agent

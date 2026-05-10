@@ -1,5 +1,15 @@
 # Command: Implement Phase
 
+## Multi-Workstream Lane Override
+
+Khi project có nhiều workstream song song:
+
+- `docs/current-task.md` chỉ là Project Coordination Dashboard.
+- `temp/plan.md` chỉ là index tương thích cũ.
+- Backend/DevOps implement theo `temp/plan.backend.md` và cập nhật `docs/current-task.backend.md`.
+- Frontend implement theo `temp/plan.frontend.md` và cập nhật `docs/current-task.frontend.md`.
+- Không agent nào ghi task chi tiết của một lane vào `docs/current-task.md`.
+
 ## Command Execution Rule
 
 1. Khi owner yêu cầu chạy lead-plan hoặc tạo plan:

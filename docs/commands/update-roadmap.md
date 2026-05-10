@@ -1,5 +1,14 @@
 # Command: Update Roadmap
 
+## Multi-Workstream Lane Override
+
+Khi project có nhiều workstream song song:
+
+- Roadmap phải thể hiện các lane song song, không ghi sai là chỉ có một current task duy nhất.
+- `docs/current-task.md` là dashboard.
+- Backend/DevOps status lấy từ `docs/current-task.backend.md` và `temp/plan.backend.md`.
+- Frontend status lấy từ `docs/current-task.frontend.md` và `temp/plan.frontend.md`.
+
 ## Command Execution Rule
 
 1. Khi owner yêu cầu chạy lead-plan hoặc tạo plan:
