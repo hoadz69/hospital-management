@@ -25,6 +25,7 @@ Authority:
 - Use subagents/parallel work if available and safe.
 - Fall back to sequential checklist if subagent runtime is unavailable.
 - Verify, integrate, update handoff/roadmap, and report.
+- For tasks longer than 30 minutes, touching 5+ files, or at risk of context loss, write an in-progress checkpoint to the matching lane current-task file using `docs/session-continuity.md`.
 
 Lead-plan rule:
 
@@ -39,6 +40,13 @@ Guardrails:
 - No new Figma file unless owner asks.
 - No frontend/backend code changes in UI-only tasks.
 - Do not mark phase Done before required verification passes.
+
+Crash recovery:
+
+- If the previous session died mid-implementation, resume from `git status --short`, `git diff --stat`, `git diff --check`, and the latest lane checkpoint.
+- Do not continue from chat memory alone.
+- Do not revert dirty work unless owner explicitly asks or ownership is clear.
+- If no checkpoint exists, create a recovery summary from the dirty worktree before continuing.
 
 UI workflow:
 
@@ -60,6 +68,7 @@ When owner requests a new feature, run the 10-step "Feature Team Execution Workf
 - Step 6 Integration: Lead reconciles API contract, FE mock/real mode, migration status, env notes, Figma alignment, docs.
 - Step 7 Verification: QA Agent runs build/typecheck/test, API smoke, UI smoke, edge states, tenant isolation, regression.
 - Step 8 Status Update: Documentation Agent updates dashboard, lane current-task, lane plan, roadmap.
+- Step 8 also records an in-progress checkpoint when work is unfinished or context-loss risk is high; checkpoint is not a Done marker.
 - Step 9 Commit Split: Lead proposes per-lane commits; do not bundle lanes unless necessary.
 - Step 10 Push Gate: never push unless owner asked; never force-push; never push secrets/temp/generated artifacts.
 

@@ -32,6 +32,7 @@ Khi owner gọi "Lead Agent", "lead-plan", "giao việc", "điều phối", "là
 - Không dùng secret/server/database thật khi owner chưa cung cấp.
 - Mọi tenant-owned data phải có tenant context.
 - Sau mỗi lần làm xong, phải report lại cho owner: đã làm gì, sửa file nào, kiểm tra gì, còn thiếu/bị chặn gì, bước tiếp theo là gì.
+- Với task dài hơn 30 phút, sửa/tạo từ 5 file trở lên, hoặc có nguy cơ context compact/chết session, phải ghi checkpoint ngắn vào lane current-task phù hợp theo `docs/session-continuity.md`.
 - Khi kế thừa tài liệu cũ, chỉ giữ rule/kỹ thuật còn phù hợp; không giữ domain, endpoint, credentials hoặc service name không còn thuộc Clinic SaaS.
 - Với task nhiều bước, phải biến request thành success criteria rõ ràng và nêu cách verify từng bước trước khi implement.
 - Mọi câu trả lời cho owner, plan, report, handoff, roadmap update và tài liệu hướng dẫn agent phải viết bằng tiếng Việt. Chỉ dùng tiếng Anh cho tên code, tên file, API endpoint, command, log/error gốc, keyword kỹ thuật chuẩn, hoặc nội dung trích nguyên văn cần giữ nguyên.
@@ -125,6 +126,7 @@ Plan lưu vào lane file phù hợp:
 - QA Agent không sửa source code trừ khi Lead cho phép vá nhỏ trong slice đang test.
 - Documentation Agent chỉ cập nhật docs đúng lane và dashboard tổng quan.
 - Không agent nào overwrite lane khác.
+- Sau mỗi wave nhỏ hoặc khi số file thay đổi vượt 5 file, agent đang thực thi phải gửi/ghi checkpoint cho Documentation Agent cập nhật lane current-task. Checkpoint phải đủ để session mới resume từ `git status` + `git diff` mà không cần context chat cũ.
 
 ### Step 6 - Integration
 
@@ -158,6 +160,7 @@ Documentation Agent cập nhật:
 - Lane plan file (`temp/plan.<lane>.md`) ghi nhận trạng thái thực hiện.
 - Roadmap (`docs/roadmap/clinic-saas-roadmap.md`) khi phase/status thay đổi thật.
 - Testing checklist nếu có thay đổi đáng kể.
+- In-progress checkpoint khi task chưa xong hoặc có nguy cơ mất session. Không ghi checkpoint như Done nếu verify chưa pass.
 
 ### Step 9 - Commit Split
 
@@ -209,6 +212,7 @@ Nhiệm vụ:
 - Tự chia việc cho Architect, Web Research, Figma UI, Frontend, Backend, Database, DevOps, QA và Documentation Agent.
 - Dùng subagent/parallel agent khi việc có thể tách độc lập và tool hỗ trợ.
 - Tổng hợp kết quả, chạy verify phù hợp, cập nhật handoff/roadmap.
+- Với task dài/nhiều file, bắt buộc điều phối checkpoint giữa chừng để chống mất context; khi resume phải đọc `git status`, `git diff --stat`, `git diff --check` và checkpoint gần nhất trước khi code tiếp.
 
 Feature team duty:
 

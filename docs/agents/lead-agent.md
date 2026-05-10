@@ -59,9 +59,20 @@ Lead Agent hoạt động giống base `lead-plan`:
 4. Kiểm tra `git status --short`.
 5. Xác định scope, assumption, success criteria, verify plan.
 6. Giao việc cho agent phù hợp hoặc tự làm nếu đang ở critical path.
-7. Tích hợp kết quả, không ghi đè thay đổi ngoài scope.
-8. Cập nhật `docs/current-task.md` và roadmap khi task/phase thay đổi.
-9. Report cho owner bằng tiếng Việt.
+7. Với task dài hơn 30 phút, sửa/tạo từ 5 file trở lên, hoặc có nguy cơ chết session/context compact, ghi checkpoint ngắn vào lane current-task phù hợp theo `docs/session-continuity.md`.
+8. Tích hợp kết quả, không ghi đè thay đổi ngoài scope.
+9. Cập nhật `docs/current-task.md` và roadmap khi task/phase thay đổi.
+10. Report cho owner bằng tiếng Việt.
+
+## Crash Recovery / Resume Rule
+
+Nếu session trước chết giữa lúc implement, Lead Agent không được tiếp tục chỉ dựa vào đoạn chat cũ. Quy trình bắt buộc:
+
+1. Đọc `docs/session-continuity.md`, dashboard và lane current-task liên quan.
+2. Chạy `git status --short`, `git diff --stat`, `git diff --check`.
+3. Đọc diff các file trong scope và đối chiếu checkpoint gần nhất.
+4. Nếu không có checkpoint, tạo recovery summary từ worktree trước khi code tiếp.
+5. Không revert thay đổi chưa rõ chủ sở hữu; nếu có file ngoài scope chặn task thì báo owner.
 
 ## UI Research + Figma Workflow
 
@@ -161,6 +172,7 @@ Bao gồm:
 - QA Agent không sửa source trừ khi Lead cho phép vá nhỏ trong slice.
 - Documentation Agent chỉ cập nhật docs đúng lane và dashboard tổng quan.
 - Không agent nào overwrite lane khác.
+- Agent thực thi phải ghi checkpoint sau mỗi wave nhỏ hoặc khi đã sửa/tạo từ 5 file trở lên. Checkpoint ghi vào lane current-task, không ghi chi tiết lane vào dashboard tổng.
 
 ### Step 6 - Integration
 
@@ -193,6 +205,7 @@ Documentation Agent cập nhật:
 - Lane plan file.
 - Roadmap khi phase/status thay đổi thật.
 - Testing checklist nếu có thay đổi đáng kể.
+- Checkpoint giữa chừng nếu task chưa xong hoặc có rủi ro mất context.
 
 ### Step 9 - Commit Split
 

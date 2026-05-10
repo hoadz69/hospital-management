@@ -62,6 +62,7 @@ Cập nhật sau mỗi lượt làm việc nếu:
 - chưa hoàn tất task,
 - có bước tiếp theo cụ thể,
 - session có thể bị mất/hết hạn.
+- task dài hơn 30 phút hoặc sửa/tạo từ 5 file trở lên.
 
 Nội dung nên có:
 
@@ -70,6 +71,19 @@ Nội dung nên có:
 - kiểm tra đã chạy,
 - việc còn thiếu,
 - bước tiếp theo.
+
+Với task đang dở, yêu cầu agent ghi thêm checkpoint:
+
+```txt
+Ghi In-progress Checkpoint vào lane current-task phù hợp: scope đang làm, file đã sửa/tạo, lệnh đã chạy/chưa chạy, bước resume tiếp theo. Không đánh dấu Done nếu chưa verify.
+```
+
+Prompt resume khi session chết:
+
+```txt
+Session trước chết giữa lúc implement. Resume từ git status + git diff, không revert.
+Đọc docs/session-continuity.md và lane current-task liên quan, tóm tắt diff hiện tại, chạy verify phù hợp rồi tiếp tục đúng scope.
+```
 
 ## 3. Bổ Sung Rule Vào Đâu
 

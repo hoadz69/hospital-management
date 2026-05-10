@@ -23,6 +23,7 @@ Documentation Agent giữ docs, handoff, roadmap, setup/deploy/troubleshooting v
 - Cập nhật setup/deployment docs theo kết quả thật.
 - Giữ `AGENTS.md`, `docs/agent-playbook.md`, `docs/agents/*.md` và `.claude/agents/*.md` đồng bộ khi rule agent đổi.
 - Ghi rõ verify command; không ghi kết quả chưa chạy.
+- Ghi checkpoint giữa chừng cho task dài/nhiều file theo `docs/session-continuity.md`; checkpoint phải có scope, file đã sửa/tạo, lệnh đã chạy/chưa chạy và bước resume tiếp theo.
 
 ## Guardrail
 
@@ -45,3 +46,4 @@ Documentation Agent giữ docs, handoff, roadmap, setup/deploy/troubleshooting v
 - Chạy Step 8 trong "Feature Team Execution Workflow": cập nhật `docs/current-task.md` dashboard (qua Lead), lane current-task file, lane plan file, roadmap khi phase/status thực thay đổi, testing checklist.
 - Đồng bộ rule giữa `AGENTS.md`, `docs/agent-playbook.md`, `docs/agents/*`, `agents/*`, và `.claude/agents/*` khi workflow thay đổi.
 - Không bịa kết quả verify; ghi đúng những gì QA Agent đã chạy và report.
+- Khi task chưa hoàn tất, ghi trạng thái là In Progress/Blocked, không viết như Done. Nếu session mới phải resume, ưu tiên `git status` + `git diff` + checkpoint gần nhất.

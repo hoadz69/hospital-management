@@ -17,7 +17,8 @@ File này là hướng dẫn chung cho Codex, Claude Code và các coding agent 
 7. Không commit nếu owner chưa yêu cầu.
 8. Không xóa file nếu owner chưa yêu cầu, trừ file mới do chính task hiện tại tạo ra.
 9. Không đưa secret, IP server thật, chuỗi kết nối database thật, token, SSH key vào repo.
-10. Sau mỗi lần làm xong phải report lại cho owner: đã làm gì, sửa file nào, kiểm tra gì, còn thiếu/bị chặn gì, bước tiếp theo là gì. Không được im lặng sau khi chạy tool hoặc sửa file.
+10. Với task dài hơn 30 phút, sửa/tạo từ 5 file trở lên, hoặc có nguy cơ chết session/context compact, phải ghi checkpoint ngắn vào lane current-task phù hợp theo `docs/session-continuity.md` trước khi tiếp tục wave kế tiếp.
+11. Sau mỗi lần làm xong phải report lại cho owner: đã làm gì, sửa file nào, kiểm tra gì, còn thiếu/bị chặn gì, bước tiếp theo là gì. Không được im lặng sau khi chạy tool hoặc sửa file.
 
 ## Command Execution Rule
 
@@ -179,7 +180,8 @@ temp/
    - đã kiểm tra bằng lệnh gì hoặc vì sao chưa kiểm tra,
    - việc còn thiếu/bị chặn,
    - bước tiếp theo đề xuất.
-8. Nếu không hoàn tất, cập nhật current-task lane phù hợp gồm:
+8. Với task nhiều wave hoặc sửa nhiều file, cập nhật "In-progress Checkpoint" trong current-task lane phù hợp sau từng wave nhỏ. Checkpoint phải ghi scope đang làm, file đã sửa/tạo, lệnh đã chạy/chưa chạy, bước resume tiếp theo và guardrail không revert/không commit.
+9. Nếu không hoàn tất, cập nhật current-task lane phù hợp gồm:
    - đã hoàn thành gì,
    - đang bị chặn ở đâu,
    - bước tiếp theo cụ thể,

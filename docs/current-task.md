@@ -35,6 +35,7 @@ Mọi feature mới phải chạy theo "Feature Team Execution Workflow" (Step 0
 - 2026-05-10 (chiều): Pre-Phase 4 Hardening **wave 2** — owner duyệt thêm 3 P1 medium từ Full Project Review: P1.2 ProblemDetails 409 attach `extensions.fields` (BE), P1.5 init.sql header drift warning + sync với migration 0001 (DB), P1.6 CreateTenantWizard isStepValid gate (FE). Feature team đã chạy đủ Step 0-7. Verify: dotnet build 0/0, dotnet test 12/12 [Fact] PASS, typecheck PASS x3, build PASS x3, docker compose config PASS. **WAVE 2 IMPLEMENTATION DONE**. Tổng 8/8 P1 hardening DONE, đã commit split theo lane (Step 9).
 - 2026-05-10: UI Redesign V3 expand từ 16 → **76 frame** (60 frame V3v2 mới). 7 section trên page Figma `65:2`. Source of truth Phase 4+. Chi tiết: `docs/roadmap/clinic-saas-roadmap.md#71-ui-redesign-v3-source-of-truth-phase-4`.
 - 2026-05-10: 5 owner decision cần duyệt trước Wave A: audit retention scope, PII patient rule, builder autosave conflict policy, DNS retry tolerance, tenant suspended fallback policy. Frame Figma `129:197` Open Questions & Risks ghi đầy đủ.
+- 2026-05-10: Lead Agent bổ sung Crash Recovery & Checkpoint Protocol để chống mất context khi Codex/Claude compact/chết session. Rule đã đồng bộ vào `docs/session-continuity.md`, `AGENTS.md`, `CLAUDE.md`, `docs/agent-playbook.md`, Lead/Documentation agent docs và `docs/commands/implement-phase.md`. Frontend lane đã có checkpoint cho Owner Admin V3 restyle đang dirty.
 - Không có task chi tiết chưa phân loại tại thời điểm cập nhật này.
 
 ## Prompt Ngắn Từ Giờ

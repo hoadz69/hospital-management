@@ -17,6 +17,64 @@ Phase 3 Owner Admin Tenant Slice ✅ **Implementation Done** (commit `7f6366d`).
 
 Trạng thái: 🟡 **Planning — chờ owner duyệt plan**.
 
+## In-progress Checkpoint - 2026-05-10 Crash Recovery Owner Admin V3 Restyle
+
+Scope đang làm:
+- Restyle Owner Admin theo Figma V3 trong phạm vi frontend lane.
+- Giữ nguyên backend/API behavior, không thêm route mới nếu không cần.
+- Ưu tiên CSS/token/layout/component state, không đụng API client/store.
+
+Đã hoàn thành trước khi session bị compact/chết:
+- Figma đã inspect các surface Owner Admin V3 liên quan: nền muted/ivory, sidebar slate, topbar mỏng, card radius 12-16, table compact, drawer sheet 560px, wizard card + stepper ngang, command palette overlay.
+- Đã bắt đầu cập nhật shared UI component theo CSS variables với fallback cũ để Owner Admin nhận token mới.
+- Đã bắt đầu restyle layout/sidebar/topbar/filter/table và thêm command palette Owner Admin.
+
+File đang dirty theo `git status --short`:
+- `frontend/packages/ui/src/components/AppButton.vue`
+- `frontend/packages/ui/src/components/AppCard.vue`
+- `frontend/packages/ui/src/components/MetricCard.vue`
+- `frontend/packages/ui/src/components/StatusPill.vue`
+- `frontend/apps/owner-admin/src/components/AdminSidebar.vue`
+- `frontend/apps/owner-admin/src/components/AdminTopbar.vue`
+- `frontend/apps/owner-admin/src/components/TenantFilterBar.vue`
+- `frontend/apps/owner-admin/src/components/TenantTable.vue`
+- `frontend/apps/owner-admin/src/layouts/OwnerAdminLayout.vue`
+- `frontend/apps/owner-admin/src/components/OwnerCommandPalette.vue` (mới)
+
+File ngoài frontend lane đang dirty:
+- `.claude/settings.local.json` — không thuộc scope restyle Owner Admin; không được tự revert nếu owner chưa yêu cầu.
+
+Chưa verify / còn thiếu:
+- Chưa có report cuối vì session trước chết sau khi sửa file.
+- Cần chạy lại verify từ repo thật, không tin vào context cũ.
+- Cần review diff để bảo đảm không đụng API/store/backend/route ngoài scope.
+- Nếu build/typecheck pass, cập nhật lại checkpoint này thành report hoàn tất.
+
+Lệnh cần chạy khi resume:
+
+```powershell
+git status --short
+git diff --stat
+git diff --check
+git diff -- frontend/packages/ui/src/components frontend/apps/owner-admin/src/components frontend/apps/owner-admin/src/layouts
+cd frontend
+npm run typecheck
+npm run build
+```
+
+Bước resume tiếp theo:
+1. Đọc `docs/session-continuity.md` Crash Recovery & Checkpoint Protocol.
+2. Đọc diff 10 file frontend ở trên.
+3. Chỉ sửa tiếp trong frontend lane nếu diff còn lỗi rõ.
+4. Chạy typecheck/build.
+5. Cập nhật checkpoint/report trước khi trả owner.
+
+Guardrail:
+- Không revert thay đổi đang dở nếu chưa rõ chủ sở hữu.
+- Không sửa backend/API behavior.
+- Không commit/push nếu owner chưa yêu cầu.
+- Không đánh dấu Done nếu verify chưa pass.
+
 Mục tiêu Wave A: token V3 ADD-ONLY layer + httpClient factory rebuild + Owner Admin restyle V3 + 7 component shared mới + 4 composable foundation. Bốn frame Owner Admin V3v2 mới (Dashboard cross-tenant, Tenant Lifecycle Confirm Modal, Domain DNS Retry, SSL Pending) cần được implement đầy đủ.
 
 ### Scope Chi Tiết Wave A

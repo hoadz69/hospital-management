@@ -53,6 +53,7 @@ Khi project có nhiều workstream song song:
 6. Sau mỗi phase/task lớn phải cập nhật:
    - `docs/current-task.md`
    - `docs/roadmap/clinic-saas-roadmap.md`
+7. Với task dài hơn 30 phút, sửa/tạo từ 5 file trở lên, hoặc có nguy cơ context compact/chết session, phải ghi checkpoint ngắn vào lane current-task phù hợp theo `docs/session-continuity.md`.
 
 Bạn là implementation agent theo plan đã được owner duyệt.
 
@@ -79,12 +80,13 @@ Implement đúng phase trong `temp/plan.md`.
 4. Không mở rộng scope.
 5. Không tự làm phase kế tiếp.
 6. Implement đúng yêu cầu.
-7. Chạy verify theo plan.
-8. Nếu verify pass, cập nhật:
+7. Sau mỗi wave nhỏ hoặc khi đã sửa/tạo từ 5 file trở lên, ghi In-progress Checkpoint vào lane current-task phù hợp.
+8. Chạy verify theo plan.
+9. Nếu verify pass, cập nhật:
    - `docs/current-task.md`
    - `docs/roadmap/clinic-saas-roadmap.md`
-9. Nếu verify fail, cập nhật current-task là Blocked hoặc In Progress, ghi rõ lỗi.
-10. Report lại owner.
+10. Nếu verify fail, cập nhật current-task là Blocked hoặc In Progress, ghi rõ lỗi.
+11. Report lại owner.
 
 ## Bắt buộc sau khi implement xong
 
@@ -117,3 +119,4 @@ Sau khi implement xong, agent phải:
 - Không tạo database/migration nếu phase chưa cho phép.
 - Mỗi phase phải có verify.
 - Sau mỗi phase/task lớn phải update roadmap.
+- Nếu resume sau session chết, phải đọc `git status --short`, `git diff --stat`, `git diff --check` và checkpoint gần nhất trước khi code tiếp; không revert thay đổi chưa rõ chủ sở hữu.

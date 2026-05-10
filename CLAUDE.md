@@ -25,6 +25,7 @@ Claude Code phải tuân thủ cùng luật dự án với Codex. File này là 
 - Không chạy build/test/start nếu task không cần.
 - Không commit nếu owner chưa yêu cầu.
 - Không dùng server/database/token/SSH thật khi owner chưa cung cấp trong phiên hiện tại.
+- Với task dài hơn 30 phút, sửa/tạo từ 5 file trở lên, hoặc có nguy cơ context compact/chết session, phải ghi checkpoint ngắn vào lane current-task phù hợp theo `docs/session-continuity.md`.
 - Sau mỗi lần làm xong phải report lại cho owner: đã làm gì, sửa file nào, kiểm tra gì, còn thiếu/bị chặn gì, bước tiếp theo là gì. Không được im lặng sau khi chạy tool hoặc sửa file.
 
 ## Language Rule
@@ -148,3 +149,5 @@ Nếu dừng giữa chừng, cập nhật `docs/current-task.md` với:
 - việc bị chặn,
 - lệnh/hành động tiếp theo,
 - file đã thay đổi.
+
+Nếu session trước chết giữa lúc implement, session mới phải chạy `git status --short`, `git diff --stat`, `git diff --check`, đọc checkpoint gần nhất trong lane current-task, rồi mới code tiếp. Không revert thay đổi chưa rõ chủ sở hữu.
