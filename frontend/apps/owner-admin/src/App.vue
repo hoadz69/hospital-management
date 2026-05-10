@@ -1,48 +1,37 @@
-<script setup lang="ts">
-import { AppButton, StatusPill } from "@clinic-saas/ui";
-</script>
-
 <template>
-  <main class="owner-shell">
-    <aside>Owner Admin</aside>
-    <section>
-      <p class="eyebrow">Platform scoped</p>
-      <h1>Clinic SaaS Operations</h1>
-      <p>Placeholder dashboard for tenants, domains, templates, plans, and monitoring.</p>
-      <div class="actions">
-        <AppButton label="Create clinic" />
-        <StatusPill label="cross-tenant role required" tone="info" />
-      </div>
-    </section>
-  </main>
+  <RouterView />
 </template>
 
-<style scoped>
-.owner-shell {
-  min-height: 100vh;
-  display: grid;
-  grid-template-columns: 240px 1fr;
-  font-family: Inter, system-ui, sans-serif;
+<style>
+* {
+  box-sizing: border-box;
 }
 
-aside {
-  padding: 32px;
-  background: #111827;
-  color: white;
+html {
+  background: #f6f8fb;
+  color: #102a43;
+  font-family:
+    Inter,
+    ui-sans-serif,
+    system-ui,
+    -apple-system,
+    BlinkMacSystemFont,
+    "Segoe UI",
+    sans-serif;
 }
 
-section {
-  padding: 48px;
+body {
+  margin: 0;
 }
 
-.actions {
-  display: flex;
-  gap: 12px;
-  align-items: center;
+button,
+input,
+select,
+textarea {
+  font: inherit;
 }
 
-.eyebrow {
-  color: #2563eb;
-  font-weight: 700;
+a {
+  color: inherit;
 }
 </style>

@@ -6,7 +6,7 @@ import { mockTenant } from "@clinic-saas/shared-types";
 <template>
   <main class="app-shell">
     <p class="eyebrow">Public Website</p>
-    <h1>{{ mockTenant.name }}</h1>
+    <h1>{{ mockTenant.displayName }}</h1>
     <p>Tenant-aware public shell. Resolve tenant by domain/subdomain before loading content.</p>
     <AppButton label="Dat lich kham" />
   </main>

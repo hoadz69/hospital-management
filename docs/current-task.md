@@ -10,7 +10,7 @@ Lead Agent chỉ dùng file này để tóm tắt trạng thái tổng quan và 
 | Workstream | Task file | Plan file | Trạng thái ngắn | Bước tiếp theo |
 |---|---|---|---|---|
 | Backend/DevOps | `docs/current-task.backend.md` | `temp/plan.backend.md` | ✅ Phase 2 API Runtime Smoke Gate PASS đủ 5 case trên server `116.118.47.78` sau 2 vòng fix (Dapper type handler + reorder positional record `TenantListRow`); roadmap chuyển Phase 2 Done | (Optional) commit backend fix + lane docs khi owner duyệt; chuẩn bị Phase 3 backend support khi frontend cần real API |
-| Frontend | `docs/current-task.frontend.md` | `temp/plan.frontend.md` | Phase 3 Owner Admin Tenant Slice: implementation Done, typecheck/build/dev-server PASS, HTTP+Vite smoke 5 route PASS, đang dùng mock fallback do backend smoke chưa Done | Bổ sung browser/Playwright cho headless visual hoặc owner mở thủ công; smoke real API khi backend Phase 2 pass |
+| Frontend | `docs/current-task.frontend.md` | `temp/plan.frontend.md` | Phase 3 Owner Admin Tenant Slice: ✅ **READY FOR COMMIT** — Vietnamese UI Copy Polish + QA F-real Round 2 PASS 5/5 HTTP + 5/5 contract sau adapter. SSH tunnel chain `localhost:5175 -> Vite proxy -> tunnel 5005 -> server gateway`. Adapter FE giải 2 gap (TenantDetail nested + ProblemDetails 409 không có `fields`). Tech-debt 1 minor gap wizard step gating ghi nhận Phase 4 | Owner duyệt commit FE Phase 3 + cleanup 2 tenant test (`qa-fe-smoke-1778382871`, `qa-fe-smoke-r2-1778383645`) trên server; plan Phase 4 |
 
 ## Rule Điều Phối
 

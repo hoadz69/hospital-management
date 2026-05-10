@@ -8,7 +8,7 @@ import { mockTenant } from "@clinic-saas/shared-types";
     <aside>Clinic Admin</aside>
     <section>
       <p class="eyebrow">Tenant scoped</p>
-      <h1>{{ mockTenant.name }}</h1>
+      <h1>{{ mockTenant.displayName }}</h1>
       <p>Placeholder dashboard. Clinic Admin must only access current tenant data.</p>
       <StatusPill label="tenant context required" tone="warning" />
     </section>
