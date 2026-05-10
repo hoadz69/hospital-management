@@ -959,3 +959,240 @@ Dừng tại đây để owner duyệt plan Wave A.
 Chưa code, chưa sửa Figma, chưa chạy build/test vì chưa có implementation.
 Sau khi owner nói rõ "duyệt plan / bắt đầu implement", Frontend Agent mới bắt đầu Step A1.
 ```
+
+## 18. Wave A Step A4 Shared Composables Foundation (2026-05-11)
+
+Trạng thái: ✅ **DONE** — commit `b87dad4` (`feat(ui): add shared composable foundation`).
+
+Verify:
+
+```txt
+cd frontend && npm run typecheck -> PASS
+cd frontend && npm run build     -> PASS
+```
+
+Step A4 chỉ làm composable foundation trong `frontend/packages/ui`, không làm shared components, không restyle UI, không sửa backend/Figma.
+
+### 18.1 Composable Hiện Trạng
+
+```txt
+frontend/packages/ui/src hiện chỉ có:
+- components/
+- index.ts
+
+Chưa có:
+- frontend/packages/ui/src/composables/
+- useReducedMotion
+- useViewTransition
+- useFocusTrap
+- useTenantContext
+```
+
+Ghi chú liên quan:
+
+```txt
+- OwnerAdminLayout.vue hiện có CSS prefers-reduced-motion riêng cho drawer/page transition.
+- frontend/packages/api-client/src/clinic.ts đã có khái niệm ClinicTenantContext ở API client layer.
+- Owner Admin hiện inject owner role tại app service tenantClient.ts; Step A4 không đổi API client.
+```
+
+### 18.2 Scope A4
+
+```txt
+IN:
+- Tạo shared composable foundation:
+  1. useReducedMotion
+  2. useViewTransition
+  3. useFocusTrap
+  4. useTenantContext
+- Export composable qua ui package index hoặc composables barrel.
+- Có thể thêm usage rất nhỏ trong owner-admin nếu cần chứng minh typecheck/sample usage,
+  nhưng không đổi visual behavior và không restyle.
+
+OUT:
+- Không tạo 7 shared components.
+- Không restyle Owner Admin.
+- Không sửa backend.
+- Không sửa Figma.
+- Không thêm Histoire/axe/Lighthouse dependency.
+- Không implement useDomainVerifyPoll/polling thật vì DNS retry tolerance chưa chốt.
+- Không commit/push.
+```
+
+### 18.3 File Dự Kiến Tạo/Sửa
+
+```txt
+frontend/packages/ui/src/composables/useReducedMotion.ts   (NEW)
+frontend/packages/ui/src/composables/useViewTransition.ts  (NEW)
+frontend/packages/ui/src/composables/useFocusTrap.ts       (NEW)
+frontend/packages/ui/src/composables/useTenantContext.ts   (NEW)
+frontend/packages/ui/src/composables/index.ts              (NEW)
+frontend/packages/ui/src/index.ts                          (MODIFIED - export composables)
+```
+
+Optional nếu cần sample usage nhỏ, chỉ sau khi owner duyệt:
+
+```txt
+frontend/apps/owner-admin/src/layouts/OwnerAdminLayout.vue
+frontend/apps/owner-admin/src/components/OwnerCommandPalette.vue
+```
+
+### 18.4 API / Interface Đề Xuất
+
+```ts
+// useReducedMotion.ts
+export type ReducedMotionPreference = {
+  prefersReducedMotion: Readonly<Ref<boolean>>;
+  isSupported: Readonly<Ref<boolean>>;
+};
+
+export function useReducedMotion(): ReducedMotionPreference;
+```
+
+```ts
+// useViewTransition.ts
+export type ViewTransitionOptions = {
+  disabled?: boolean | Ref<boolean>;
+};
+
+export type ViewTransitionControls = {
+  isRunning: Readonly<Ref<boolean>>;
+  run<T>(callback: () => T | Promise<T>): Promise<T>;
+};
+
+export function useViewTransition(options?: ViewTransitionOptions): ViewTransitionControls;
+```
+
+```ts
+// useFocusTrap.ts
+export type FocusTrapOptions = {
+  active?: Ref<boolean> | boolean;
+  initialFocus?: Ref<HTMLElement | null> | HTMLElement | null;
+  restoreFocus?: boolean;
+  escapeDeactivates?: boolean;
+  onEscape?: () => void;
+};
+
+export type FocusTrapControls = {
+  activate(): void;
+  deactivate(): void;
+  isActive: Readonly<Ref<boolean>>;
+};
+
+export function useFocusTrap(
+  container: Ref<HTMLElement | null>,
+  options?: FocusTrapOptions
+): FocusTrapControls;
+```
+
+```ts
+// useTenantContext.ts
+export type TenantContextRole = "owner" | "clinic" | "public";
+
+export type TenantContextState = {
+  tenantId: Ref<string | undefined>;
+  tenantSlug: Ref<string | undefined>;
+  role: Ref<TenantContextRole>;
+};
+
+export type TenantContextControls = TenantContextState & {
+  setTenantContext(context: Partial<Pick<TenantContextState, "tenantId" | "tenantSlug" | "role">>): void;
+  clearTenantContext(): void;
+  requireTenantId(): string;
+};
+
+export function useTenantContext(initial?: Partial<{
+  tenantId: string;
+  tenantSlug: string;
+  role: TenantContextRole;
+}>): TenantContextControls;
+```
+
+Interface có thể điều chỉnh khi implement để khớp Vue typing thực tế, nhưng nguyên tắc giữ:
+
+```txt
+- Không phụ thuộc app cụ thể.
+- Không đọc secret/env trực tiếp.
+- Không hardcode tenant id/role.
+- Fail rõ khi requireTenantId() thiếu tenant context.
+- SSR-safe / test-safe: guard window/document trước khi dùng matchMedia, document.activeElement, View Transition API.
+```
+
+### 18.5 Component Sẽ Dùng Sau Này
+
+```txt
+useReducedMotion:
+- OwnerAdminLayout page/drawer transition.
+- TenantLifecycleConfirmModal.
+- OwnerCommandPalette.
+- DomainDnsRetryState / SslPendingState animation.
+
+useViewTransition:
+- OwnerAdminLayout route transition.
+- TenantTable row -> TenantDetailDrawer/detail route.
+- Dashboard cross-tenant KPI refresh sau này.
+
+useFocusTrap:
+- OwnerCommandPalette.
+- TenantLifecycleConfirmModal.
+- TenantDetailDrawer nếu chuyển sang modal/drawer focus trap đầy đủ.
+- CreateTenantWizard confirm/conflict focus flow nếu cần.
+
+useTenantContext:
+- Clinic Admin API surface.
+- Public Website tenant/domain resolver.
+- TenantSwitcher.
+- DomainStateRow hoặc future domain verification UI.
+```
+
+### 18.6 Verify Command
+
+```powershell
+cd frontend
+npm run typecheck
+npm run build
+npm run dev:owner
+```
+
+Smoke tối thiểu sau khi dev server chạy:
+
+```txt
+/dashboard
+/clinics
+/clinics/create
+/clinics/:tenantId với tenant id thật từ list
+```
+
+Manual checks:
+
+```txt
+- prefers-reduced-motion không gây lỗi khi browser không hỗ trợ matchMedia.
+- View Transition API không làm crash Chromium/Firefox khi document.startViewTransition không tồn tại.
+- Focus trap không giữ focus sau khi modal/palette unmount.
+- Tenant context thiếu tenant id thì requireTenantId() throw lỗi rõ, không fallback hardcoded.
+```
+
+### 18.7 Risk
+
+```txt
+LOW/MEDIUM - useFocusTrap có thể can thiệp keyboard nav nếu activate/deactivate không cleanup đúng.
+Mitigation: add/remove keydown listener theo lifecycle, restore focus optional, guard HTMLElement null.
+
+MEDIUM - useViewTransition browser support không đồng nhất.
+Mitigation: progressive enhancement, fallback chạy callback trực tiếp.
+
+MEDIUM - useTenantContext dễ bị hiểu nhầm là auth/permission source.
+Mitigation: chỉ là UI context helper; không thay thế backend tenant isolation hay token claims.
+
+LOW - useReducedMotion duplicate với CSS hiện có.
+Mitigation: dùng composable cho JS decision, giữ CSS media query làm baseline.
+```
+
+### 18.8 Điểm Dừng
+
+```txt
+A4 đã hoàn tất và đã commit riêng b87dad4.
+Chưa sửa backend/Figma.
+Chưa push.
+Không stage .claude/settings.local.json.
+```
