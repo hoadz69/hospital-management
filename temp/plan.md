@@ -10,11 +10,45 @@ Mọi feature mới phải chạy theo "Feature Team Execution Workflow" (Step 0
 
 | Workstream | Plan chi tiết | Task handoff | Trạng thái |
 |---|---|---|---|
-| Backend/DevOps | `temp/plan.backend.md` | `docs/current-task.backend.md` | Phase 2 API Runtime Smoke Gate đã PASS, chờ Phase 3 backend support khi FE cần real API |
-| Frontend | `temp/plan.frontend.md` | `docs/current-task.frontend.md` | Phase 3 Owner Admin Tenant Slice ready for commit, chờ owner duyệt commit + plan Phase 4 |
+| Backend/DevOps | `temp/plan.backend.md` | `docs/current-task.backend.md` | Phase 2 API Runtime Smoke Gate đã PASS. Section 12 thêm Pre-Phase 4 Hardening (P1.1 test infra + P1.3 Swagger gating), 🟡 plan ready, chờ duyệt |
+| Frontend | `temp/plan.frontend.md` | `docs/current-task.frontend.md` | Phase 3 Owner Admin Tenant Slice committed (commit `7f6366d`). Section 15 thêm Pre-Phase 4 Hardening (P1.7 httpClient JSON.parse guard), 🟡 plan ready, chờ duyệt |
+| DevOps (lane mới) | `temp/plan.devops.md` | `docs/current-task.md` (dashboard) | Pre-Phase 4 Hardening lane: P1.4 nginx SPA fallback + X-Forwarded, P1.8 docker-compose dev bind 127.0.0.1, 🟡 plan ready, chờ duyệt |
 | Database (lane riêng nếu cần) | `temp/plan.database.md` | (sẽ tạo khi feature data lớn) | Chưa active, dùng khi Database Agent có task lớn riêng |
-| DevOps (lane riêng nếu cần) | `temp/plan.devops.md` | (sẽ tạo khi feature deployment lớn) | Chưa active, dùng khi DevOps task tách khỏi backend lane |
-| Docs/Agent Workflow | (file này) | `docs/current-task.md` | Feature Team Execution Workflow đã thêm vào agent docs, sẵn sàng commit docs riêng |
+| Docs/Agent Workflow | (file này) | `docs/current-task.md` | Feature Team Execution Workflow đã commit (commit `74c29c8`). Pre-Phase 4 Hardening đang là feature team đầu tiên áp dụng workflow |
+
+## Pre-Phase 4 Hardening (Cross-Lane Feature Team)
+
+Feature team đầu tiên chạy theo "Feature Team Execution Workflow" sau khi workflow được duyệt và commit. Mục tiêu: vá P1 quick wins trước khi mở Phase 4.
+
+| Issue | Lane | Plan section | Trạng thái |
+|---|---|---|---|
+| P1.1 test infra rỗng | backend | `temp/plan.backend.md` §12.9 | ✅ implementation done, dotnet test 3/3 PASS |
+| P1.3 Swagger/OpenAPI chỉ bật ở Development | backend | `temp/plan.backend.md` §12.9 | ✅ implementation done, build PASS, smoke env runtime pending QA |
+| P1.4 nginx SPA fallback + X-Forwarded headers | devops | `temp/plan.devops.md` §10 | ✅ implementation done, compose config PASS, `nginx -t` pending Docker daemon |
+| P1.7 httpClient JSON.parse try/catch | frontend | `temp/plan.frontend.md` §15.9 | ✅ implementation done, typecheck/build PASS x3 app |
+| P1.8 docker-compose dev bind 127.0.0.1 | devops | `temp/plan.devops.md` §10 | ✅ implementation done, compose config xác nhận host_ip 127.0.0.1 cho 4 service |
+
+Agents đã tham gia: Lead + Architect (review boundary) + Backend (P1.1, P1.3) + Frontend (P1.7) + DevOps (P1.4, P1.8) + QA (verify checklist) + Documentation (cập nhật lane plan, dashboard, roadmap). Web Research/Figma UI không cần.
+
+Verify đã chạy:
+
+```txt
+backend: dotnet restore PASS, build PASS (0 warning, 0 error), test PASS 3/3
+frontend: npm typecheck PASS x3 app, build PASS x3 app
+devops: docker compose -f docker-compose.dev.yml config PASS (host_ip 127.0.0.1 cho 4 service), prod config PASS
+devops pending: nginx -t blocked do Docker daemon offline trong session
+```
+
+Commit split đề xuất (Step 9):
+
+```txt
+chore(backend): pre-phase 4 hardening (xunit infra, swagger gating)
+fix(frontend): pre-phase 4 hardening (httpClient JSON.parse guard)
+chore(devops): pre-phase 4 hardening (compose 127.0.0.1, nginx scaffold)
+docs: update Pre-Phase 4 Hardening lane plans + dashboard
+```
+
+Hoặc 5 commit nhỏ theo issue (P1.8 → P1.7 → P1.3 → P1.4 → P1.1) cho dễ revert từng issue. Owner chọn khi commit. Không push.
 
 ## Rule Sử Dụng
 

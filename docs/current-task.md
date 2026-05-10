@@ -11,8 +11,11 @@ Mọi feature mới phải chạy theo "Feature Team Execution Workflow" (Step 0
 
 | Workstream | Task file | Plan file | Trạng thái ngắn | Bước tiếp theo |
 |---|---|---|---|---|
-| Backend/DevOps | `docs/current-task.backend.md` | `temp/plan.backend.md` | ✅ Phase 2 API Runtime Smoke Gate PASS đủ 5 case trên server `116.118.47.78` sau 2 vòng fix (Dapper type handler + reorder positional record `TenantListRow`); roadmap chuyển Phase 2 Done | (Optional) commit backend fix + lane docs khi owner duyệt; chuẩn bị Phase 3 backend support khi frontend cần real API |
-| Frontend | `docs/current-task.frontend.md` | `temp/plan.frontend.md` | Phase 3 Owner Admin Tenant Slice: ✅ **READY FOR COMMIT** — Vietnamese UI Copy Polish + QA F-real Round 2 PASS 5/5 HTTP + 5/5 contract sau adapter. SSH tunnel chain `localhost:5175 -> Vite proxy -> tunnel 5005 -> server gateway`. Adapter FE giải 2 gap (TenantDetail nested + ProblemDetails 409 không có `fields`). Tech-debt 1 minor gap wizard step gating ghi nhận Phase 4 | Owner duyệt commit FE Phase 3 + cleanup 2 tenant test (`qa-fe-smoke-1778382871`, `qa-fe-smoke-r2-1778383645`) trên server; plan Phase 4 |
+| Backend/DevOps | `docs/current-task.backend.md` | `temp/plan.backend.md` | ✅ Phase 2 API Runtime Smoke Gate PASS. ✅ Pre-Phase 4 Hardening backend lane (P1.1 + P1.3 + **P1.2**) DONE: dotnet test 12 [Fact] PASS (3+3+6), build 0 warning 0 error. P1.2 ProblemDetails 409 attach `extensions.fields` từ PostgresException ConstraintName | Chờ owner duyệt commit backend lane. QA verify 409 fields end-to-end khi có Testcontainers (Phase 4 scope) |
+| Frontend | `docs/current-task.frontend.md` | `temp/plan.frontend.md` | Phase 3 committed (`7f6366d`). ✅ Pre-Phase 4 Hardening frontend lane (P1.7 + **P1.6**) DONE: httpClient JSON.parse guard + CreateTenantWizard isStepValid gate. Bundle owner-admin 146.04 kB JS (+0.43), typecheck/build PASS x3 | Chờ owner duyệt commit frontend lane. Tech-debt P3: stepper number-click bypass gate (Phase 4) |
+| DevOps | (dashboard này) | `temp/plan.devops.md` | ✅ Pre-Phase 4 Hardening DevOps lane (P1.4 + P1.8) DONE: docker compose config PASS (host_ip 127.0.0.1 cho 4 service), nginx scaffold 56 dòng (try_files + 4 forward header + proxy_pass resolver pattern). `nginx -t` pending Docker daemon | Chờ owner duyệt commit DevOps lane |
+| Database | (dashboard này) | (note trong dashboard) | ✅ Pre-Phase 4 Hardening database lane (**P1.5**) DONE: `infrastructure/postgres/init.sql` thêm header drift warning + body khớp migration 0001 (cho phép thêm `CREATE SCHEMA tenant`). P2 candidate: chuyển sang DbUp/FluentMigrator runner Phase 4+ | Chờ owner duyệt commit database lane |
+| Docs/Agent Workflow | (dashboard này) | `temp/plan.md` | ✅ Feature Team Execution Workflow committed (`74c29c8`). ✅ Pre-Phase 4 Hardening là feature team đầu tiên áp dụng workflow, implementation DONE | Update roadmap nếu Pre-Phase 4 Hardening cần dòng riêng |
 
 ## Rule Điều Phối
 
@@ -27,7 +30,9 @@ Mọi feature mới phải chạy theo "Feature Team Execution Workflow" (Step 0
 
 - Nội dung backend cũ từ `docs/current-task.md` đã được chuyển sang `docs/current-task.backend.md`.
 - Nội dung frontend/UI cũ từ `docs/current-task.md` đã được chuyển sang `docs/current-task.frontend.md`.
-- 2026-05-10: thêm "Feature Team Execution Workflow" vào `AGENTS.md`, `docs/agent-playbook.md`, `.claude/agents/*`, `docs/agents/*`, `agents/*`, và `docs/commands/*`. Workflow áp dụng cho cả Claude Code và Codex; Lead Agent giả lập role khi tool không có subagent runtime thật.
+- 2026-05-10: thêm "Feature Team Execution Workflow" vào `AGENTS.md`, `docs/agent-playbook.md`, `.claude/agents/*`, `docs/agents/*`, `agents/*`, và `docs/commands/*`. Workflow áp dụng cho cả Claude Code và Codex; Lead Agent giả lập role khi tool không có subagent runtime thật. Commit `74c29c8`.
+- 2026-05-10 (sáng): feature team đầu tiên áp dụng workflow là "Pre-Phase 4 Hardening" wave 1 — 5 P1 quick wins (P1.1 test infra, P1.3 Swagger gating, P1.4 nginx SPA fallback, P1.7 httpClient JSON.parse, P1.8 docker-compose dev bind). Plan cross-lane đã ghi vào `temp/plan.devops.md` (mới), `temp/plan.backend.md` §12, `temp/plan.frontend.md` §15, index trong `temp/plan.md`. **IMPLEMENTATION DONE**.
+- 2026-05-10 (chiều): Pre-Phase 4 Hardening **wave 2** — owner duyệt thêm 3 P1 medium từ Full Project Review: P1.2 ProblemDetails 409 attach `extensions.fields` (BE), P1.5 init.sql header drift warning + sync với migration 0001 (DB), P1.6 CreateTenantWizard isStepValid gate (FE). Feature team đã chạy đủ Step 0-7. Verify: dotnet build 0/0, dotnet test 12/12 [Fact] PASS, typecheck PASS x3, build PASS x3, docker compose config PASS. **WAVE 2 IMPLEMENTATION DONE**. Tổng 8/8 P1 hardening DONE, sẵn sàng commit split theo lane (Step 9). Owner chưa yêu cầu commit.
 - Không có task chi tiết chưa phân loại tại thời điểm cập nhật này.
 
 ## Prompt Ngắn Từ Giờ

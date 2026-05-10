@@ -380,3 +380,197 @@ temp/publish/tenant-service/ (publish output, ngoài git)
 ```
 
 Owner chưa yêu cầu commit/push.
+
+## 12. Pre-Phase 4 Hardening - Backend Issues (2026-05-10)
+
+Trạng thái: 🟡 Plan ready, chờ owner duyệt implement.
+
+Phần này thuộc feature team Pre-Phase 4 Hardening do Lead Agent điều phối theo "Feature Team Execution Workflow". Backend lane phụ trách 2/5 issue: P1.1 test infra rỗng, P1.3 Swagger gating Development. Các issue còn lại do DevOps lane (`temp/plan.devops.md`) và Frontend lane (`temp/plan.frontend.md`) phụ trách.
+
+### 12.1 Agents Tham Gia (Lane Backend)
+
+- Lead Agent: điều phối, gom report, không tự code.
+- Architect Agent: review boundary/risk trước khi Backend Agent đụng OpenAPI extension và test project.
+- Backend Agent: thực hiện thay đổi `ClinicSaaSOpenApiExtensions`, 3 `*.Tests.csproj` và 3 `Program.cs`.
+- QA Agent: tạo verify checklist, chạy `dotnet restore/build/test`, kiểm tra Swagger endpoint trong Development vs non-Development.
+- Documentation Agent: cập nhật dashboard, lane plan này, roadmap.
+
+### 12.2 Issues Trong Lane Này
+
+#### P1.1 test infra rỗng
+
+File hiện tại: 3 test project chỉ có `ProjectReference`, không có test framework:
+
+```txt
+backend/services/api-gateway/tests/ApiGateway.Tests/ApiGateway.Tests.csproj
+backend/services/identity-service/tests/IdentityService.Tests/IdentityService.Tests.csproj
+backend/services/tenant-service/tests/TenantService.Tests/TenantService.Tests.csproj
+```
+
+Mỗi csproj đang thiếu: `Microsoft.NET.Test.Sdk`, `xunit`, `xunit.runner.visualstudio` (hoặc tương đương). Vì vậy `dotnet test backend/ClinicSaaS.Backend.sln --no-build` exit 0 nhưng không pickup test case nào (đã ghi nhận trong section 10.4 và 11.4 của lane này).
+
+Mục tiêu:
+
+- Thêm 3 PackageReference (Microsoft.NET.Test.Sdk, xunit, xunit.runner.visualstudio) vào 3 csproj.
+- Thêm `IsPackable=false` cho project test theo convention.
+- Tạo 1 sample test minh họa cho mỗi service (ví dụ `HealthEndpointTests` hoặc `SmokeTests`) để verify test runner pickup. Sample test rất nhỏ, chỉ dạng `Assert.True(true)` hoặc 1 unit test thật trên Application/Domain code đã có.
+- Tránh kéo dependency lớn (ASP.NET TestHost, WebApplicationFactory) trong scope hardening; nếu cần integration test thật, tách Phase 4.
+
+Quyết định version package: chọn xUnit 2.9.x + Microsoft.NET.Test.Sdk 17.11.x (LTS hiện tại cho .NET 9). Nếu owner có policy package version riêng, để dành thêm slot cho confirm; default xài LTS mới nhất tại 2026-05-10.
+
+#### P1.3 Swagger/OpenAPI chỉ bật ở Development
+
+File hiện tại: `backend/shared/building-blocks/OpenApi/ClinicSaaSOpenApiExtensions.cs` exposes Swagger UI (`/swagger`) và OpenAPI JSON (`/openapi/v1.json`) cho mọi environment. 3 `Program.cs` đều gọi `app.UseClinicSaaSOpenApi("...")` không gating.
+
+Mục tiêu:
+
+- Sửa `UseClinicSaaSOpenApi(this WebApplication app, string serviceDisplayName)` thành extension nhận `IWebHostEnvironment` và chỉ map Swagger UI trong Development. OpenAPI JSON cũng chỉ expose Development để tránh phát tán contract endpoint trên prod.
+- Hoặc thay vì sửa signature, bọc trong `if (app.Environment.IsDevelopment()) { ... }` ngay trong extension. Cách thứ 2 ít invasive hơn, không phá callsite hiện tại.
+- Verify Swagger vẫn hoạt động trên server smoke nếu env là Development. Tài liệu lại trong `docs/deployment/server-bootstrap.md` (nếu cần) rằng để mở Swagger trên server, phải set `ASPNETCORE_ENVIRONMENT=Development`.
+- Health endpoint `/health` và `/openapi/v1.json` phía backend smoke đã PASS Phase 2 trên server với env Development; không break smoke nếu giữ env này. Nếu server đang chạy env khác, chấp nhận `/swagger` 404 trên prod là đúng yêu cầu.
+
+### 12.3 File Dự Kiến Sửa
+
+```txt
+backend/shared/building-blocks/OpenApi/ClinicSaaSOpenApiExtensions.cs
+backend/services/api-gateway/tests/ApiGateway.Tests/ApiGateway.Tests.csproj
+backend/services/identity-service/tests/IdentityService.Tests/IdentityService.Tests.csproj
+backend/services/tenant-service/tests/TenantService.Tests/TenantService.Tests.csproj
+backend/services/api-gateway/tests/ApiGateway.Tests/SmokeTests.cs (NEW, sample)
+backend/services/identity-service/tests/IdentityService.Tests/SmokeTests.cs (NEW, sample)
+backend/services/tenant-service/tests/TenantService.Tests/SmokeTests.cs (NEW, sample)
+docs/current-task.backend.md (lane status)
+temp/plan.backend.md (file này, ghi nhận trạng thái sau implement)
+```
+
+Không sửa:
+
+```txt
+3 Program.cs (giữ nguyên signature cũ, gating bên trong extension)
+backend/services/*/src/* (chỉ Application/Domain/Infrastructure được test, không sửa)
+frontend/**
+infrastructure/**
+.env*
+```
+
+### 12.4 Risk
+
+- P1.1: thêm package cần NuGet feed. Nếu môi trường offline, restore fail. Owner phải confirm có internet/NuGet access trong session implement.
+- P1.1: nếu sample test reference Domain với constructor có dependency, có thể fail compile. Lean về `Assert.True(1+1==2)` cho 3 service đầu tiên, để khẳng định runner pickup, rồi mới mở rộng test thật.
+- P1.3: nếu server smoke không set `ASPNETCORE_ENVIRONMENT=Development`, Swagger UI sẽ trả 404 sau hardening. Document rõ trước. Phase 2 smoke 5 case không phụ thuộc Swagger UI nên không break.
+- Backward compat: callsite `app.UseClinicSaaSOpenApi(...)` không đổi signature ⇒ không phải sửa 3 Program.cs.
+
+### 12.5 Verify Command
+
+```powershell
+& 'C:\Program Files\dotnet\dotnet.exe' restore backend/ClinicSaaS.Backend.sln
+& 'C:\Program Files\dotnet\dotnet.exe' build backend/ClinicSaaS.Backend.sln --no-restore
+& 'C:\Program Files\dotnet\dotnet.exe' test backend/ClinicSaaS.Backend.sln --no-build
+```
+
+Kỳ vọng:
+
+- restore/build PASS, 0 error.
+- test runner pickup ≥ 3 test case (1 mỗi service) và PASS.
+- Output có dòng `Passed!  - Failed: 0, Passed: 3+`.
+
+Smoke Swagger gating local (nếu Backend Agent có dotnet runtime):
+
+```powershell
+$env:ASPNETCORE_ENVIRONMENT="Development"
+dotnet run --project backend/services/tenant-service/src/TenantService.Api
+# Trong session khác:
+curl -i http://localhost:<port>/swagger
+curl -i http://localhost:<port>/openapi/v1.json
+# Đổi env:
+$env:ASPNETCORE_ENVIRONMENT="Production"
+dotnet run --project backend/services/tenant-service/src/TenantService.Api
+curl -i http://localhost:<port>/swagger    # expect 404
+curl -i http://localhost:<port>/openapi/v1.json # expect 404
+```
+
+Nếu môi trường không có dotnet runtime cho Backend Agent, báo blocker và để QA Agent verify khi có server.
+
+### 12.6 Commit Split Đề Xuất
+
+```txt
+chore(backend): wire xunit + sample tests for 3 services (P1.1)
+chore(backend): gate Swagger/OpenAPI to Development (P1.3)
+```
+
+Không gom với commit DevOps/Frontend của Pre-Phase 4 Hardening.
+
+### 12.7 Out Of Scope
+
+- Không refactor service code ngoài extension OpenAPI.
+- Không thêm integration test (WebApplicationFactory, TestServer) ở scope hardening.
+- Không thêm test cho domain logic sâu; chỉ smoke confirm runner pickup.
+- Không đụng frontend/devops/infrastructure files.
+- Không tạo Figma file.
+- Không commit/push.
+- Không đổi Phase 2 status đã Done; chỉ thêm dòng Pre-Phase 4 Hardening vào roadmap khi feature team finish.
+
+### 12.8 Điểm Dừng
+
+Plan ready. Backend Agent chỉ implement khi owner đã duyệt rõ. Sau implement, QA Agent verify, Documentation Agent cập nhật dashboard/lane/roadmap. Lead Agent gom report.
+
+### 12.9 Implementation Result (2026-05-10)
+
+Trạng thái: ✅ **IMPLEMENTATION DONE** — P1.1 + P1.3 đã sửa, `dotnet restore/build/test` PASS đầy đủ.
+
+File đã sửa:
+
+```txt
+backend/shared/building-blocks/OpenApi/ClinicSaaSOpenApiExtensions.cs (P1.3: thêm using Microsoft.Extensions.Hosting + bọc UseSwagger/UseSwaggerUI trong if (!app.Environment.IsDevelopment()) return app)
+backend/services/api-gateway/tests/ApiGateway.Tests/ApiGateway.Tests.csproj (P1.1: PropertyGroup IsPackable=false + IsTestProject=true; thêm 3 PackageReference Microsoft.NET.Test.Sdk 17.11.1, xunit 2.9.2, xunit.runner.visualstudio 2.8.2)
+backend/services/identity-service/tests/IdentityService.Tests/IdentityService.Tests.csproj (P1.1: cùng pattern như ApiGateway.Tests)
+backend/services/tenant-service/tests/TenantService.Tests/TenantService.Tests.csproj (P1.1: cùng pattern như ApiGateway.Tests)
+backend/services/api-gateway/tests/ApiGateway.Tests/SmokeTests.cs (NEW, P1.1: 1 [Fact] TestRunner_PicksUp_ApiGatewayTests)
+backend/services/identity-service/tests/IdentityService.Tests/SmokeTests.cs (NEW, P1.1: 1 [Fact] TestRunner_PicksUp_IdentityServiceTests)
+backend/services/tenant-service/tests/TenantService.Tests/SmokeTests.cs (NEW, P1.1: 1 [Fact] TestRunner_PicksUp_TenantServiceTests)
+```
+
+Verify đã chạy:
+
+```powershell
+& 'C:\Program Files\dotnet\dotnet.exe' restore backend/ClinicSaaS.Backend.sln
+& 'C:\Program Files\dotnet\dotnet.exe' build backend/ClinicSaaS.Backend.sln --no-restore --nologo
+& 'C:\Program Files\dotnet\dotnet.exe' test backend/ClinicSaaS.Backend.sln --no-build --nologo
+```
+
+Kết quả:
+
+```txt
+restore: PASS, 3 test project đã restore xunit + Microsoft.NET.Test.Sdk + xunit.runner.visualstudio
+build: PASS, 0 Warning(s), 0 Error(s), 9.03s
+test: PASS đủ 3/3 test case (1 mỗi service):
+  - IdentityService.Tests.dll: Passed: 1, Failed: 0, Total: 1, 157 ms
+  - ApiGateway.Tests.dll: Passed: 1, Failed: 0, Total: 1, 180 ms
+  - TenantService.Tests.dll: Passed: 1, Failed: 0, Total: 1, 189 ms
+```
+
+P1.3 Swagger gating: callsite trong 3 Program.cs không đổi (`app.UseClinicSaaSOpenApi("...")` vẫn signature cũ); gating xảy ra bên trong extension. Khi `ASPNETCORE_ENVIRONMENT != Development`, extension return ngay sau khi check, không map `/swagger` và `/openapi/v1.json`.
+
+Smoke real Swagger gating (chưa chạy do session không có dotnet runtime đang mở; đề xuất QA chạy 2 vòng env):
+
+```powershell
+$env:ASPNETCORE_ENVIRONMENT="Development"
+dotnet run --project backend/services/tenant-service/src/TenantService.Api
+# expect /swagger 200, /openapi/v1.json 200
+$env:ASPNETCORE_ENVIRONMENT="Production"
+dotnet run --project backend/services/tenant-service/src/TenantService.Api
+# expect /swagger 404, /openapi/v1.json 404
+```
+
+Smoke server `116.118.47.78`: container hiện đang chạy ASPNETCORE_ENVIRONMENT theo cấu hình deploy cũ. Nếu env không phải Development, sau khi rebuild image, `/swagger` sẽ trả 404 trên server. Phase 2 smoke 5 case không phụ thuộc Swagger UI nên không break. Documentation Agent cần ghi note này trong `docs/deployment/server-bootstrap.md` khi cập nhật.
+
+Commit Split (Step 9): cách A (2 commit nhỏ) hoặc cách B (1 commit lane backend) — owner chọn:
+
+```txt
+# Cách A
+chore(backend): wire xunit + sample tests for 3 services (P1.1)
+chore(backend): gate Swagger/OpenAPI to Development (P1.3)
+
+# Cách B
+chore(backend): pre-phase 4 hardening (xunit infra, swagger gating)
+```

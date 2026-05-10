@@ -371,3 +371,150 @@ QA real API smoke phát hiện 2 contract gap CRITICAL chặn Phase 3 trên real
 Trạng thái mới Phase 3: **Real API HTTP Smoke 5/5 PASS, Contract Adapter applied,
 ready for QA F-real round 2** (mở browser xác nhận pixel/DOM render thật).
 ```
+
+## 15. Pre-Phase 4 Hardening - Frontend Issues (2026-05-10)
+
+Trạng thái: 🟡 Plan ready, chờ owner duyệt implement.
+
+Phần này thuộc feature team Pre-Phase 4 Hardening do Lead Agent điều phối theo "Feature Team Execution Workflow". Frontend lane phụ trách 1/5 issue: P1.7 httpClient `JSON.parse` try/catch. Các issue còn lại do Backend lane (`temp/plan.backend.md`) và DevOps lane (`temp/plan.devops.md`) phụ trách.
+
+### 15.1 Agents Tham Gia (Lane Frontend)
+
+- Lead Agent: điều phối, gom report, không tự code.
+- Architect Agent: review boundary/risk (low risk, chỉ surface error rõ hơn).
+- Frontend Agent: thực hiện thay đổi `frontend/packages/api-client/src/httpClient.ts`.
+- QA Agent: tạo verify checklist, chạy `npm run typecheck` + `npm run build`, smoke 1 trường hợp non-JSON nếu có thể (mock fetch trả HTML).
+- Documentation Agent: cập nhật dashboard, lane plan này, roadmap nếu Pre-Phase 4 Hardening thêm dòng roadmap.
+
+### 15.2 Issue Trong Lane Này
+
+#### P1.7 httpClient `JSON.parse` try/catch
+
+File hiện tại: `frontend/packages/api-client/src/httpClient.ts` line 38:
+
+```typescript
+const text = await response.text();
+const payload = text ? JSON.parse(text) : undefined;
+```
+
+Vấn đề: nếu backend hoặc reverse proxy trả non-JSON (HTML 502 từ nginx, plain text "Bad Gateway", proxy timeout HTML page), `JSON.parse(text)` throw `SyntaxError`. Lỗi này không phải `HttpError`, không có `status`/`payload` context, làm UI tenantClient không biết phải handle thế nào → tất cả error states (loading/error/conflict) sẽ không bắt được.
+
+Mục tiêu:
+
+- Bọc `JSON.parse(text)` bằng try/catch.
+- Nếu parse fail và `response.ok` là true: throw `HttpError(response.status, "Invalid JSON response", text)` (giữ raw text làm payload để debug).
+- Nếu parse fail và `response.ok` là false: throw `HttpError(response.status, message, text)` với `message = "Request failed with status N"`, payload là raw text. Không nuốt error.
+- Không đổi public API của `createHttpClient`/`HttpError`. Chỉ sửa nội bộ `request<T>`.
+- Giữ behavior text rỗng (`text === ""`) → `payload = undefined` như cũ.
+
+### 15.3 File Dự Kiến Sửa
+
+```txt
+frontend/packages/api-client/src/httpClient.ts
+docs/current-task.frontend.md (lane status)
+temp/plan.frontend.md (file này, ghi nhận trạng thái sau implement)
+```
+
+Không sửa:
+
+```txt
+frontend/packages/api-client/src/tenantClient.ts (chỉ consume HttpError)
+frontend/packages/api-client/src/tenantAdapter.ts
+frontend/packages/api-client/src/mockTenantClient.ts
+frontend/apps/owner-admin/**
+frontend/packages/ui/**
+backend/**
+infrastructure/**
+.env*
+```
+
+### 15.4 Risk
+
+- Low risk: thay đổi cục bộ trong `request<T>`, không đổi public API.
+- Test path: tenantClient hiện đã có ProblemDetails branch, sẽ chạy đúng nếu payload là object có `title/detail/...`. Khi payload là raw string (parse fail), `normalizeConflict` cần graceful fallback. Cần kiểm tra `normalizeConflict` trong tenantClient.ts xem có handle non-object payload không. Nếu không, thêm guard `if (typeof payload !== "object") { ... }`.
+- Backward compat: tất cả API call hiện tại đều mong đợi JSON từ backend. Nếu backend trả non-JSON đó là tình huống lỗi thực, chuyển từ `SyntaxError` (uncaught) sang `HttpError` (caught) là cải thiện UX.
+
+### 15.5 Verify Command
+
+```powershell
+cd frontend
+npm run typecheck
+npm run build
+```
+
+Kỳ vọng: PASS toàn 3 app, không error/warning chặn.
+
+QA Agent có thể smoke 1 trường hợp non-JSON bằng mock fetch tạm trong dev console:
+
+```typescript
+// Trong dev tool browser, chạy 1 lần để verify
+const original = window.fetch;
+window.fetch = async () => new Response("<html>502 Bad Gateway</html>", { status: 502, statusText: "Bad Gateway" });
+// Click load tenant list trong UI -> expect ConflictState/ErrorState hiển thị, không white screen
+window.fetch = original;
+```
+
+Nếu không có browser tool, để dành smoke khi Phase 3 real API rớt thật.
+
+### 15.6 Commit Split Đề Xuất
+
+```txt
+fix(frontend): guard JSON.parse in httpClient (P1.7)
+```
+
+Không gom với commit Backend/DevOps của Pre-Phase 4 Hardening.
+
+### 15.7 Out Of Scope
+
+- Không thêm retry/backoff/circuit breaker (Phase 4 reliability).
+- Không thay fetch sang Axios.
+- Không refactor tenantClient/tenantAdapter ngoài 1 guard `typeof !== "object"` nếu cần.
+- Không sửa backend.
+- Không tạo Figma file.
+- Không commit/push.
+
+### 15.8 Điểm Dừng
+
+Plan ready. Frontend Agent chỉ implement khi owner đã duyệt rõ. Sau implement, QA Agent verify, Documentation Agent cập nhật dashboard/lane. Lead Agent gom report và đề xuất commit split.
+
+### 15.9 Implementation Result (2026-05-10)
+
+Trạng thái: ✅ **IMPLEMENTATION DONE** — P1.7 đã sửa, `npm run typecheck` + `npm run build` PASS x3 app.
+
+File đã sửa:
+
+```txt
+frontend/packages/api-client/src/httpClient.ts (P1.7: bọc JSON.parse trong try/catch + parseFailed flag; nếu parse fail và response.ok=true throw HttpError với message = 200 ký tự đầu của raw text trim, payload = raw text; nếu parse fail và response.ok=false vẫn throw HttpError như branch cũ với payload = raw text)
+```
+
+`tenantClient.ts` không phải sửa: `normalizeConflict` đã có guard `typeof payload === "object"` cho cả 2 branch (forward-compat + ProblemDetails RFC 9457), branch fallback cuối dùng `error.message` từ HttpError nên non-object payload (raw HTML/text) sẽ rơi vào fallback an toàn.
+
+Verify đã chạy:
+
+```powershell
+cd frontend
+npm run typecheck   # PASS x3 app
+npm run build       # PASS x3 app
+```
+
+Kết quả:
+
+```txt
+clinic-admin:  62.23 kB JS,  0.83 kB CSS
+owner-admin:  145.73 kB JS, 22.78 kB CSS (+0.12 kB so 145.61 kB trước, do parseFailed flag + message trim logic)
+public-web:    62.56 kB JS,  1.42 kB CSS
+```
+
+Smoke non-JSON response chưa chạy (cần browser/headless tool). Logic an toàn theo manual review:
+
+- Body rỗng (`text === ""`) → `payload = undefined`, `parseFailed = false`, không throw thêm. Behavior cũ giữ nguyên.
+- Body JSON valid + ok → `payload = parsed object`, `parseFailed = false`, return.
+- Body JSON valid + 4xx/5xx → throw HttpError như cũ (branch `!response.ok`).
+- Body non-JSON + ok 2xx → `parseFailed = true`, `payload = text`; throw HttpError với status `response.status`, message = 200 ký tự đầu raw text trim. UI thấy ConflictState/ErrorState với context debug.
+- Body non-JSON + 4xx/5xx → `parseFailed = true`, `payload = text`; rơi vào branch `!response.ok` đầu tiên, message generic "Request failed with status N". Vẫn throw HttpError đúng pattern.
+
+Commit Split (Step 9):
+
+```txt
+fix(frontend): guard JSON.parse in httpClient (P1.7)
+```
