@@ -102,45 +102,50 @@ const moduleOptions: { value: TenantFilters["moduleCode"]; label: string }[] = [
 
 <style scoped>
 .filter-bar {
-  display: grid;
-  grid-template-columns: repeat(4, minmax(150px, 1fr)) auto;
-  gap: 12px;
-  align-items: end;
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  align-items: center;
 }
 
 label {
-  display: grid;
-  gap: 6px;
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
 }
 
 span {
-  color: #627d98;
-  font-size: 12px;
+  color: var(--color-text-muted);
+  font-size: 11px;
   font-weight: 800;
 }
 
 select {
-  min-height: 42px;
-  border: 1px solid #d9e2ec;
-  border-radius: 8px;
-  padding: 0 12px;
-  background: #ffffff;
-  color: #102a43;
+  min-height: 36px;
+  border: 1px solid var(--color-border-subtle);
+  border-radius: var(--radius-input);
+  padding: 0 var(--space-3);
+  background: var(--color-surface-elevated);
+  color: var(--color-text-primary);
+  font-size: 12px;
+  font-weight: 700;
 }
 
 .filter-actions {
   display: flex;
-  gap: 8px;
+  gap: var(--space-2);
+  margin-left: auto;
 }
 
 @media (max-width: 1100px) {
   .filter-bar {
-    grid-template-columns: repeat(2, minmax(160px, 1fr));
+    align-items: stretch;
   }
 }
 
 @media (max-width: 640px) {
   .filter-bar {
+    display: grid;
     grid-template-columns: 1fr;
   }
 

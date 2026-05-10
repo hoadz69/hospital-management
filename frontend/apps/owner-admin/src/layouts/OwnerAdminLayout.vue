@@ -14,6 +14,7 @@ import { computed, onBeforeUnmount, ref, watch } from "vue";
 import { useRoute } from "vue-router";
 import AdminSidebar from "../components/AdminSidebar.vue";
 import AdminTopbar from "../components/AdminTopbar.vue";
+import OwnerCommandPalette from "../components/OwnerCommandPalette.vue";
 
 const route = useRoute();
 
@@ -27,6 +28,7 @@ const showSearch = computed(() => route.meta?.showSearch !== false);
 // State drawer chỉ có nghĩa ở mobile/tablet. Trên desktop, sidebar luôn render qua grid 248px,
 // drawer state không ảnh hưởng. Khi resize từ mobile lên desktop, đóng drawer để khỏi cấn.
 const sidebarOpen = ref(false);
+const commandPaletteOpen = ref(false);
 
 function openSidebar() {
   sidebarOpen.value = true;
@@ -38,6 +40,14 @@ function closeSidebar() {
 
 function toggleSidebar() {
   sidebarOpen.value = !sidebarOpen.value;
+}
+
+function openCommandPalette() {
+  commandPaletteOpen.value = true;
+}
+
+function closeCommandPalette() {
+  commandPaletteOpen.value = false;
 }
 
 // Đóng drawer khi route đổi để mobile không bị che content sau navigation.
@@ -60,6 +70,12 @@ watch(sidebarOpen, (open) => {
 
 // Bắt phím Escape global để đóng drawer kể cả khi focus không ở sidebar.
 function handleKeydown(event: KeyboardEvent) {
+  if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === "k") {
+    event.preventDefault();
+    openCommandPalette();
+    return;
+  }
+
   if (event.key === "Escape" && sidebarOpen.value) {
     closeSidebar();
   }
@@ -111,6 +127,7 @@ onBeforeUnmount(() => {
         :show-search="showSearch"
         :sidebar-open="sidebarOpen"
         @toggle-sidebar="toggleSidebar"
+        @open-command-palette="openCommandPalette"
       />
       <main class="layout-content">
         <!--
@@ -124,6 +141,8 @@ onBeforeUnmount(() => {
         </RouterView>
       </main>
     </div>
+
+    <OwnerCommandPalette :open="commandPaletteOpen" @close="closeCommandPalette" />
   </div>
 </template>
 
@@ -131,8 +150,9 @@ onBeforeUnmount(() => {
 .owner-layout {
   min-height: 100vh;
   display: grid;
-  grid-template-columns: 248px minmax(0, 1fr);
-  background: #f6f8fb;
+  grid-template-columns: 256px minmax(0, 1fr);
+  background: var(--color-surface-muted);
+  color: var(--color-text-primary);
 }
 
 .sidebar-slot {
@@ -145,15 +165,15 @@ onBeforeUnmount(() => {
 }
 
 .layout-content {
-  padding: 28px;
+  padding: var(--space-6) var(--space-6) var(--space-10);
 }
 
 /* Hiệu ứng chuyển trang: fade + slide-up nhẹ, dùng cubic-bezier chuẩn Material để cảm giác mượt. */
 .page-enter-active,
 .page-leave-active {
   transition:
-    opacity 200ms cubic-bezier(0.4, 0, 0.2, 1),
-    transform 200ms cubic-bezier(0.4, 0, 0.2, 1);
+    opacity var(--motion-duration-md) var(--motion-ease-standard),
+    transform var(--motion-duration-md) var(--motion-ease-standard);
 }
 
 .page-enter-from {
@@ -171,8 +191,8 @@ onBeforeUnmount(() => {
   position: fixed;
   inset: 0;
   z-index: 60;
-  background: rgba(16, 42, 67, 0.55);
-  animation: backdrop-fade-in 200ms cubic-bezier(0.4, 0, 0.2, 1);
+  background: color-mix(in srgb, var(--color-text-primary) 55%, transparent);
+  animation: backdrop-fade-in var(--motion-duration-sm) var(--motion-ease-standard);
 }
 
 @keyframes backdrop-fade-in {
@@ -191,7 +211,7 @@ onBeforeUnmount(() => {
   }
 
   .layout-content {
-    padding: 18px;
+    padding: var(--space-5);
   }
 
   /* Sidebar wrapper fixed trái, slide-in bằng transform. width 280px để vẫn có chỗ cho badge "Sắp ra mắt". */
@@ -203,7 +223,7 @@ onBeforeUnmount(() => {
     z-index: 70;
     width: min(280px, 82vw);
     transform: translateX(-100%);
-    transition: transform 220ms cubic-bezier(0.4, 0, 0.2, 1);
+    transition: transform var(--motion-duration-md) var(--motion-ease-standard);
     overflow-y: auto;
   }
 

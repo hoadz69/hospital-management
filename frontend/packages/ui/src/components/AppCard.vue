@@ -19,23 +19,23 @@ withDefaults(
 
 <style scoped>
 .app-card {
-  border: 1px solid #d9e2ec;
-  border-radius: 8px;
-  background: #ffffff;
-  box-shadow: 0 12px 30px rgba(16, 42, 67, 0.08);
+  border: 1px solid var(--color-border-subtle, #d9e2ec);
+  border-radius: var(--radius-card, 8px);
+  background: var(--color-surface-elevated, #ffffff);
+  box-shadow: var(--shadow-elevation-1, 0 12px 30px rgba(16, 42, 67, 0.08));
 }
 
 .app-card.is-padded {
-  padding: 20px;
+  padding: var(--space-5, 20px);
 }
 
 .app-card[data-tone="muted"] {
-  background: #f8fafc;
+  background: var(--color-surface-muted, #f8fafc);
   box-shadow: none;
 }
 
 .app-card[data-tone="danger"] {
-  border-color: #fca5a5;
-  background: #fff7f7;
+  border-color: var(--color-status-danger, #fca5a5);
+  background: color-mix(in srgb, var(--color-status-danger, #b42318) 8%, var(--color-surface-elevated, #ffffff));
 }
 </style>

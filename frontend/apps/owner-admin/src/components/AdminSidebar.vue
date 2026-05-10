@@ -1,29 +1,23 @@
 <script setup lang="ts">
-// Danh sách menu trái cho Owner Super Admin theo Figma frame V2 - Owner Admin Tenant Operations.
-// Phase 3 chỉ Dashboard và Phòng khám có route thật (RouterLink); 6 mục còn lại render bằng
-// <button disabled> để click không navigate, không nhận router-link-active style và không gây
-// nhầm lẫn semantic. Khi mở rộng module ở phase sau chỉ cần đổi enabled=true + cập nhật `to`.
-//
-// Khi sidebar render trong drawer mode (mobile/tablet), nhận event close để layout đóng drawer
-// sau khi user click vào nav item enabled - tránh che content sau navigation.
 type NavItem = {
   label: string;
   to: string;
   enabled: boolean;
+  icon: string;
+  count?: string;
 };
 
 const navItems: NavItem[] = [
-  { label: "Tổng quan", to: "/dashboard", enabled: true },
-  { label: "Phòng khám", to: "/clinics", enabled: true },
-  { label: "Tên miền", to: "", enabled: false },
-  { label: "Mẫu giao diện", to: "", enabled: false },
-  { label: "Thanh toán", to: "", enabled: false },
-  { label: "Giám sát", to: "", enabled: false },
-  { label: "Hỗ trợ", to: "", enabled: false },
-  { label: "Cài đặt", to: "", enabled: false }
+  { label: "Tổng quan", to: "/dashboard", enabled: true, icon: "▥" },
+  { label: "Phòng khám", to: "/clinics", enabled: true, icon: "▣", count: "248" },
+  { label: "Tên miền", to: "", enabled: false, icon: "◎" },
+  { label: "Mẫu giao diện", to: "", enabled: false, icon: "◫" },
+  { label: "Thanh toán", to: "", enabled: false, icon: "▤" },
+  { label: "Báo cáo", to: "", enabled: false, icon: "▧" },
+  { label: "Nhật ký", to: "", enabled: false, icon: "☷" },
+  { label: "Cài đặt", to: "", enabled: false, icon: "⚙" }
 ];
 
-// Emit `navigate` để layout cha đóng drawer khi user chọn route mới. Disabled item không emit.
 const emit = defineEmits<{
   (event: "navigate"): void;
 }>();
@@ -35,27 +29,21 @@ function handleNavigate() {
 
 <template>
   <aside class="sidebar">
-    <RouterLink class="brand" to="/dashboard" aria-label="ClinicOS Owner Admin">
-      <span class="brand-mark">CO</span>
-      <span>
-        <strong>ClinicOS Owner</strong>
-        <small>Owner Super Admin</small>
-      </span>
+    <RouterLink class="brand" to="/dashboard" aria-label="ClinicOS Owner Admin" @click="handleNavigate">
+      <span class="brand-mark">+</span>
+      <strong>ClinicOS</strong>
     </RouterLink>
 
     <span class="role-badge">Owner Super Admin</span>
 
     <nav class="nav-list" aria-label="Điều hướng Owner Admin">
       <template v-for="item in navItems" :key="item.label">
-        <!-- Item enabled: dùng RouterLink để Vue Router xử lý active state.
-             Click sẽ emit navigate để layout cha tự đóng drawer trên mobile. -->
         <RouterLink v-if="item.enabled" class="nav-item" :to="item.to" @click="handleNavigate">
-          <span class="nav-icon" aria-hidden="true"></span>
+          <span class="nav-icon" aria-hidden="true">{{ item.icon }}</span>
           <span class="nav-label">{{ item.label }}</span>
+          <span v-if="item.count" class="count-badge" aria-hidden="true">{{ item.count }}</span>
         </RouterLink>
 
-        <!-- Item disabled: dùng button không navigate, tabindex=-1 tránh focus, title hint placeholder.
-             Hiển thị badge "Sắp ra mắt" để owner thấy ngay không cần hover. -->
         <button
           v-else
           type="button"
@@ -63,18 +51,16 @@ function handleNavigate() {
           disabled
           tabindex="-1"
           aria-disabled="true"
-          title="Sắp ra mắt - Phase 4+"
+          title="Sắp ra mắt"
         >
-          <span class="nav-icon" aria-hidden="true"></span>
+          <span class="nav-icon" aria-hidden="true">{{ item.icon }}</span>
           <span class="nav-label">{{ item.label }}</span>
-          <span class="soon-badge" aria-hidden="true">Sắp ra mắt</span>
         </button>
       </template>
     </nav>
 
     <div class="sidebar-footer">
-      <span>Phiên bản</span>
-      <strong>Phase 3 - Tenant Slice</strong>
+      <RouterLink to="/clinics/create" class="sidebar-create" @click="handleNavigate">+ Tạo phòng khám</RouterLink>
     </div>
   </aside>
 </template>
@@ -86,72 +72,65 @@ function handleNavigate() {
   min-height: 100vh;
   display: flex;
   flex-direction: column;
-  gap: 18px;
-  padding: 22px;
-  background: #102a43;
-  color: #d9e6f2;
+  gap: var(--space-4);
+  padding: var(--space-6) var(--space-4);
+  background: var(--color-admin-sidebar);
+  color: color-mix(in srgb, var(--color-surface-elevated) 72%, transparent);
 }
 
 .brand {
   display: flex;
   align-items: center;
-  gap: 12px;
-  color: #ffffff;
+  gap: var(--space-2);
+  min-height: 64px;
+  color: var(--color-surface-elevated);
   text-decoration: none;
 }
 
 .brand-mark {
-  width: 40px;
-  height: 40px;
+  width: 28px;
+  height: 28px;
   display: inline-grid;
   place-items: center;
-  border-radius: 8px;
-  background: #d8f3f1;
-  color: #075e66;
+  border-radius: 6px;
+  background: var(--color-brand-primary);
+  color: var(--color-surface-elevated);
   font-weight: 800;
 }
 
-.brand strong,
-.brand small {
-  display: block;
-}
-
-.brand small {
-  margin-top: 2px;
-  color: #9fb3c8;
-  font-size: 12px;
+.brand strong {
+  font-size: 18px;
 }
 
 .role-badge {
   align-self: flex-start;
-  border-radius: 999px;
-  padding: 6px 12px;
-  background: rgba(216, 243, 241, 0.16);
-  color: #d8f3f1;
-  font-size: 12px;
+  border-radius: var(--radius-input);
+  padding: var(--space-2) var(--space-3);
+  background: color-mix(in srgb, var(--color-surface-elevated) 6%, transparent);
+  color: color-mix(in srgb, var(--color-surface-elevated) 70%, transparent);
+  font-size: 11px;
   font-weight: 800;
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
 }
 
 .nav-list {
   display: grid;
-  gap: 6px;
+  gap: var(--space-2);
+  margin-top: var(--space-4);
 }
 
-/* Style chung cho cả RouterLink (a) và button disabled để đồng nhất hierarchy. */
 .nav-item {
+  min-height: 44px;
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: var(--space-3);
   width: 100%;
-  min-height: 40px;
-  border: none;
+  border: 1px solid transparent;
   border-radius: 8px;
-  padding: 0 12px;
+  padding: 0 var(--space-3);
   background: transparent;
-  color: #d9e6f2;
+  color: color-mix(in srgb, var(--color-surface-elevated) 72%, transparent);
   font: inherit;
+  font-size: 13px;
   font-weight: 700;
   text-align: left;
   text-decoration: none;
@@ -159,81 +138,64 @@ function handleNavigate() {
 }
 
 .nav-item:hover:not(.disabled):not(:disabled) {
-  background: rgba(216, 243, 241, 0.08);
+  background: color-mix(in srgb, var(--color-surface-elevated) 6%, transparent);
 }
 
 .nav-item.router-link-active {
-  background: #d8f3f1;
-  color: #075e66;
+  border-color: color-mix(in srgb, var(--color-brand-primary) 40%, transparent);
+  background: color-mix(in srgb, var(--color-brand-primary) 18%, transparent);
+  color: var(--color-surface-elevated);
 }
 
-/* Item disabled không bao giờ nhận active style vì không phải RouterLink. */
 .nav-item.disabled,
 .nav-item:disabled {
-  color: #9fb3c8;
+  color: color-mix(in srgb, var(--color-surface-elevated) 48%, transparent);
   cursor: not-allowed;
-  opacity: 0.7;
-  background: transparent;
 }
 
 .nav-icon {
-  width: 8px;
-  height: 8px;
-  border-radius: 999px;
-  background: currentColor;
+  width: 16px;
   flex-shrink: 0;
+  text-align: center;
 }
 
-/* Label chiếm toàn bộ không gian giữa icon và badge để badge dính sát mép phải. */
 .nav-label {
   flex: 1 1 auto;
   min-width: 0;
 }
 
-/* Badge "Sắp ra mắt" hiển thị ngay trên nav item disabled, không cần user hover xem title. */
-.soon-badge {
+.count-badge {
   flex-shrink: 0;
-  border-radius: 999px;
+  border-radius: var(--radius-pill);
   padding: 2px 8px;
-  background: rgba(255, 255, 255, 0.1);
-  color: #9fb3c8;
+  background: color-mix(in srgb, var(--color-surface-elevated) 12%, transparent);
+  color: color-mix(in srgb, var(--color-surface-elevated) 80%, transparent);
   font-size: 10px;
-  font-weight: 700;
-  letter-spacing: 0.02em;
-  text-transform: uppercase;
+  font-weight: 800;
 }
 
 .sidebar-footer {
   margin-top: auto;
-  border: 1px solid rgba(217, 230, 242, 0.18);
-  border-radius: 8px;
-  padding: 14px;
-  background: rgba(255, 255, 255, 0.06);
 }
 
-.sidebar-footer span,
-.sidebar-footer strong {
-  display: block;
+.sidebar-create {
+  min-height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--radius-input);
+  background: var(--color-brand-primary);
+  color: var(--color-surface-elevated);
+  font-size: 13px;
+  font-weight: 800;
+  text-decoration: none;
 }
 
-.sidebar-footer span {
-  color: #9fb3c8;
-  font-size: 12px;
-}
-
-.sidebar-footer strong {
-  margin-top: 4px;
-  color: #ffffff;
-  font-size: 14px;
-}
-
-/* Trong drawer mode, sidebar không sticky vì đã được layout cha định vị fixed.
-   Layout cha (OwnerAdminLayout) thêm class `sidebar--drawer` qua wrapper khi viewport < 1024px. */
 @media (max-width: 1023px) {
   .sidebar {
     position: static;
     min-height: 100vh;
-    box-shadow: 8px 0 24px rgba(16, 42, 67, 0.32);
+    box-shadow: 8px 0 24px color-mix(in srgb, var(--color-text-primary) 32%, transparent);
   }
 }
 </style>
