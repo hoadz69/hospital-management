@@ -124,7 +124,49 @@ function toggleModule(moduleCode: TenantModuleCode) {
   form.moduleCodes = [...form.moduleCodes, moduleCode];
 }
 
+/**
+ * Kiểm tra một bước wizard đã đủ điều kiện để chuyển sang bước kế hay chưa.
+ * Vì Vue conditional render unmount input của bước trước, HTML5 `required` trên
+ * `<form @submit>` chỉ chặn được khi field thuộc bước cuối còn trong DOM. Nếu user
+ * điền step 0, Tiếp tục, rồi quay lại clear field thì khi submit ở step 3 các input
+ * step 0/2 đã unmount, required không kích hoạt được. Hàm này đóng vai gate-keeper:
+ * - Step 0 (Phòng khám): các field nghiệp vụ bắt buộc phải truthy + trim non-empty.
+ * - Step 1 (Gói & Module): phải chọn ít nhất 1 module.
+ * - Step 2 (Tên miền): tên miền mặc định bắt buộc + trim non-empty.
+ * - Step 3 (Xác nhận): bước review, luôn cho phép (submit có HTML5 required defense-in-depth).
+ * @param step Index bước đang đứng (0..steps.length-1).
+ * @returns true nếu bước đã đủ dữ liệu để chuyển bước hoặc submit.
+ */
+function isStepValid(step: number): boolean {
+  if (step === 0) {
+    return (
+      form.displayName.trim() !== "" &&
+      form.clinicName.trim() !== "" &&
+      form.slug.trim() !== "" &&
+      form.specialty.trim() !== "" &&
+      form.contactEmail.trim() !== "" &&
+      form.phoneNumber.trim() !== "" &&
+      form.addressLine.trim() !== ""
+    );
+  }
+
+  if (step === 1) {
+    return form.moduleCodes.length >= 1;
+  }
+
+  if (step === 2) {
+    return form.defaultDomainName.trim() !== "";
+  }
+
+  // Step 3 (xác nhận) là bước review; submit cuối có HTML5 required ở các field còn mounted.
+  return true;
+}
+
 function next() {
+  // Gate validation trước khi tăng step để chặn user nhảy step với field rỗng.
+  if (!isStepValid(activeStep.value)) {
+    return;
+  }
   activeStep.value = Math.min(activeStep.value + 1, steps.length - 1);
 }
 
@@ -262,7 +304,7 @@ function submit() {
             v-if="activeStep < steps.length - 1"
             label="Tiếp tục"
             variant="primary"
-            :disabled="submitting"
+            :disabled="!isStepValid(activeStep) || submitting"
             @click="next"
           />
           <AppButton

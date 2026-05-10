@@ -35,7 +35,21 @@ export function createHttpClient(options: HttpClientOptions) {
     });
 
     const text = await response.text();
-    const payload = text ? JSON.parse(text) : undefined;
+
+    // Wrap JSON.parse trong try/catch để tránh SyntaxError không được catch khi
+    // backend hoặc reverse proxy trả non-JSON (ví dụ HTML 502 từ nginx, plain text
+    // "Bad Gateway"). Trong tình huống đó FE phải nhận được HttpError có status
+    // và raw text payload thay vì crash uncaught.
+    let payload: unknown = undefined;
+    let parseFailed = false;
+    if (text) {
+      try {
+        payload = JSON.parse(text);
+      } catch {
+        parseFailed = true;
+        payload = text;
+      }
+    }
 
     if (!response.ok) {
       const message =
@@ -43,6 +57,20 @@ export function createHttpClient(options: HttpClientOptions) {
           ? String((payload as { message: unknown }).message)
           : `Request failed with status ${response.status}`;
 
+      throw new HttpError(response.status, message, payload);
+    }
+
+    if (parseFailed) {
+      // Response 2xx nhưng body không phải JSON: vẫn coi là lỗi giao tiếp,
+      // surface qua HttpError để upstream (tenantClient) xử lý đồng nhất với 4xx/5xx
+      // thay vì để JSON.parse SyntaxError lan ra UI.
+      // Message dùng 200 ký tự đầu của raw text để debugger thấy ngay nội dung
+      // proxy/gateway trả (ví dụ snippet HTML 502 từ nginx) thay vì thông báo chung.
+      const trimmedText = text.trim();
+      const message =
+        trimmedText.length > 0
+          ? trimmedText.slice(0, 200)
+          : "Empty response body";
       throw new HttpError(response.status, message, payload);
     }
 
