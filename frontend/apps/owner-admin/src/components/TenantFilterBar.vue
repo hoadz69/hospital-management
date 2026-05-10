@@ -53,45 +53,81 @@ const moduleOptions: { value: TenantFilters["moduleCode"]; label: string }[] = [
   { value: "reports", label: formatModuleCode("reports") },
   { value: "notifications", label: formatModuleCode("notifications") }
 ];
+
+function setStatus(value: TenantFilters["status"]) {
+  filters.value.status = value;
+}
+
+function setPlan(value: TenantFilters["plan"]) {
+  filters.value.plan = value;
+}
+
+function setDomainStatus(value: TenantFilters["domainStatus"]) {
+  filters.value.domainStatus = value;
+}
+
+function setModuleCode(value: TenantFilters["moduleCode"]) {
+  filters.value.moduleCode = value;
+}
 </script>
 
 <template>
   <div class="filter-bar">
-    <label>
-      <span>Trạng thái</span>
-      <select v-model="filters.status">
-        <option v-for="opt in statusOptions" :key="opt.value" :value="opt.value">
-          {{ opt.label }}
-        </option>
-      </select>
-    </label>
+    <div class="chip-group chip-group-wide">
+      <span class="group-label">Trạng thái</span>
+      <button
+        v-for="opt in statusOptions"
+        :key="opt.value"
+        type="button"
+        class="filter-chip"
+        :class="{ active: filters.status === opt.value }"
+        @click="setStatus(opt.value)"
+      >
+        {{ opt.label }}
+      </button>
+    </div>
 
-    <label>
-      <span>Gói</span>
-      <select v-model="filters.plan">
-        <option v-for="opt in planOptions" :key="opt.value" :value="opt.value">
-          {{ opt.label }}
-        </option>
-      </select>
-    </label>
+    <div class="chip-group">
+      <span class="group-label">Gói</span>
+      <button
+        v-for="opt in planOptions"
+        :key="opt.value"
+        type="button"
+        class="filter-chip"
+        :class="{ active: filters.plan === opt.value }"
+        @click="setPlan(opt.value)"
+      >
+        {{ opt.label }}
+      </button>
+    </div>
 
-    <label>
-      <span>Tên miền</span>
-      <select v-model="filters.domainStatus">
-        <option v-for="opt in domainOptions" :key="opt.value" :value="opt.value">
-          {{ opt.label }}
-        </option>
-      </select>
-    </label>
+    <div class="chip-group">
+      <span class="group-label">Tên miền</span>
+      <button
+        v-for="opt in domainOptions"
+        :key="opt.value"
+        type="button"
+        class="filter-chip"
+        :class="{ active: filters.domainStatus === opt.value }"
+        @click="setDomainStatus(opt.value)"
+      >
+        {{ opt.label }}
+      </button>
+    </div>
 
-    <label>
-      <span>Module</span>
-      <select v-model="filters.moduleCode">
-        <option v-for="opt in moduleOptions" :key="opt.value" :value="opt.value">
-          {{ opt.label }}
-        </option>
-      </select>
-    </label>
+    <div class="chip-group chip-group-wide">
+      <span class="group-label">Module</span>
+      <button
+        v-for="opt in moduleOptions"
+        :key="opt.value"
+        type="button"
+        class="filter-chip"
+        :class="{ active: filters.moduleCode === opt.value }"
+        @click="setModuleCode(opt.value)"
+      >
+        {{ opt.label }}
+      </button>
+    </div>
 
     <div class="filter-actions">
       <AppButton label="Đặt lại" variant="secondary" @click="$emit('reset')" />
@@ -104,42 +140,68 @@ const moduleOptions: { value: TenantFilters["moduleCode"]; label: string }[] = [
 .filter-bar {
   display: flex;
   flex-wrap: wrap;
-  gap: var(--space-2);
+  gap: var(--space-3);
   align-items: center;
 }
 
-label {
+.chip-group {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
   gap: var(--space-2);
+  min-width: 0;
 }
 
-span {
+.chip-group-wide {
+  flex: 1 1 340px;
+}
+
+.group-label {
+  margin-right: var(--space-1);
   color: var(--color-text-muted);
   font-size: 11px;
   font-weight: 800;
+  text-transform: uppercase;
 }
 
-select {
-  min-height: 36px;
+.filter-chip {
+  min-height: 32px;
   border: 1px solid var(--color-border-subtle);
-  border-radius: var(--radius-input);
+  border-radius: var(--radius-pill);
   padding: 0 var(--space-3);
   background: var(--color-surface-elevated);
-  color: var(--color-text-primary);
+  color: var(--color-text-secondary);
+  cursor: pointer;
   font-size: 12px;
   font-weight: 700;
+}
+
+.filter-chip:hover,
+.filter-chip:focus-visible {
+  border-color: color-mix(in srgb, var(--color-brand-primary) 36%, var(--color-border-subtle));
+  outline: none;
+}
+
+.filter-chip.active {
+  border-color: var(--color-text-primary);
+  background: var(--color-text-primary);
+  color: var(--color-surface-elevated);
 }
 
 .filter-actions {
   display: flex;
   gap: var(--space-2);
   margin-left: auto;
+  white-space: nowrap;
 }
 
 @media (max-width: 1100px) {
   .filter-bar {
-    align-items: stretch;
+    align-items: start;
+  }
+
+  .filter-actions {
+    margin-left: 0;
   }
 }
 
@@ -147,6 +209,14 @@ select {
   .filter-bar {
     display: grid;
     grid-template-columns: 1fr;
+  }
+
+  .chip-group {
+    align-items: flex-start;
+  }
+
+  .group-label {
+    width: 100%;
   }
 
   .filter-actions {

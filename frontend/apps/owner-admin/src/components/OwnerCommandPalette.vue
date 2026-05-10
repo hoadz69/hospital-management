@@ -10,14 +10,15 @@ const emit = defineEmits<{
 }>();
 
 const recentTenants = [
-  { slug: "mat-saigon", label: "Phòng khám Mắt Sài Gòn" },
-  { slug: "rhm-hadong", label: "Răng Hàm Mặt Hà Đông" }
+  { slug: "mat-saigon", label: "Phòng khám Mắt Sài Gòn", meta: "Tenant" },
+  { slug: "rhm-hadong", label: "Răng Hàm Mặt Hà Đông", meta: "Tenant" }
 ];
 
 const actions = [
   { label: "Tạo phòng khám mới", hint: "Ctrl N", to: "/clinics/create", icon: "+" },
-  { label: "Mở danh sách phòng khám", hint: "Ctrl T", to: "/clinics", icon: "▦" },
-  { label: "Xuất báo cáo CSV", hint: "Ctrl E", to: "/clinics", icon: "⇩" }
+  { label: "Thêm domain", hint: "Ctrl D", to: "/clinics", icon: "◎" },
+  { label: "Xem audit log", hint: "Ctrl L", to: "/clinics", icon: "▤" },
+  { label: "Export report CSV", hint: "Ctrl E", to: "/clinics", icon: "⇩" }
 ];
 
 function handleKeydown(event: KeyboardEvent) {
@@ -58,26 +59,27 @@ onBeforeUnmount(() => {
         <header class="command-search">
           <span aria-hidden="true">⌕</span>
           <input autofocus type="search" placeholder="Tìm phòng khám, tên miền, thao tác..." />
-          <kbd>ESC</kbd>
+          <kbd>esc</kbd>
         </header>
 
         <div class="command-section">
-          <p>Gần đây</p>
+          <p>Recent</p>
           <RouterLink
             v-for="tenant in recentTenants"
             :key="tenant.slug"
-            class="command-row is-active"
+            class="command-row"
+            :class="{ 'is-active': tenant.slug === recentTenants[0]?.slug }"
             to="/clinics"
             @click="$emit('close')"
           >
-            <span aria-hidden="true">▣</span>
+            <span class="row-icon" aria-hidden="true">▣</span>
             <strong>{{ tenant.slug }}</strong>
-            <small>{{ tenant.label }}</small>
+            <small>{{ tenant.meta }}</small>
           </RouterLink>
         </div>
 
         <div class="command-section">
-          <p>Thao tác</p>
+          <p>Actions</p>
           <RouterLink
             v-for="action in actions"
             :key="action.label"
@@ -85,7 +87,7 @@ onBeforeUnmount(() => {
             :to="action.to"
             @click="$emit('close')"
           >
-            <span aria-hidden="true">{{ action.icon }}</span>
+            <span class="row-icon" aria-hidden="true">{{ action.icon }}</span>
             <strong>{{ action.label }}</strong>
             <small>{{ action.hint }}</small>
           </RouterLink>
@@ -103,8 +105,8 @@ onBeforeUnmount(() => {
   display: flex;
   align-items: flex-start;
   justify-content: center;
-  padding-top: min(14vh, 120px);
-  background: color-mix(in srgb, var(--color-text-primary) 60%, transparent);
+  padding-top: min(28vh, 250px);
+  background: color-mix(in srgb, var(--color-text-primary) 58%, transparent);
 }
 
 .command-panel {
@@ -121,7 +123,7 @@ onBeforeUnmount(() => {
   grid-template-columns: auto 1fr auto;
   gap: var(--space-3);
   align-items: center;
-  min-height: 60px;
+  min-height: 62px;
   border-bottom: 1px solid var(--color-border-subtle);
   padding: 0 var(--space-5);
   color: var(--color-text-secondary);
@@ -132,10 +134,11 @@ onBeforeUnmount(() => {
   border: 0;
   outline: 0;
   color: var(--color-text-primary);
+  font-size: 15px;
 }
 
 kbd {
-  border-radius: 6px;
+  border-radius: 7px;
   padding: 4px 8px;
   background: var(--color-surface-muted);
   color: var(--color-text-secondary);
@@ -144,7 +147,7 @@ kbd {
 }
 
 .command-section {
-  padding: var(--space-3) 0;
+  padding: var(--space-3) 0 var(--space-2);
 }
 
 .command-section p {
@@ -185,5 +188,16 @@ kbd {
 
 .command-row small {
   font-size: 11px;
+}
+
+.row-icon {
+  width: 18px;
+  text-align: center;
+}
+
+@media (max-width: 720px) {
+  .command-overlay {
+    padding-top: var(--space-6);
+  }
 }
 </style>

@@ -28,6 +28,38 @@ const nextStatus = computed<TenantStatus>(() => {
   return "Suspended";
 });
 
+const domainCards = computed(() => {
+  if (!props.tenant) {
+    return [];
+  }
+
+  const domains =
+    props.tenant.domains.length > 0
+      ? props.tenant.domains
+      : [
+          {
+            id: `${props.tenant.id}-default-domain`,
+            domainName: props.tenant.defaultDomainName || `${props.tenant.slug}.clinicos.vn`,
+            isPrimary: true,
+            status: props.tenant.domainStatus
+          }
+        ];
+
+  return domains.map((domain) => ({
+    ...domain,
+    helper: domain.isPrimary ? "Default subdomain" : domain.status === "verified" ? "Custom · CNAME OK" : domainHint(domain.status),
+    action: domainAction(domain.status)
+  }));
+});
+
+const domainCountLabel = computed(() => {
+  const count = domainCards.value.length;
+  const primaryCount = domainCards.value.filter((domain) => domain.isPrimary).length;
+  const customCount = Math.max(count - primaryCount, 0);
+
+  return `${count} domain · ${primaryCount} default + ${customCount} custom`;
+});
+
 function statusTone(status: TenantStatus) {
   if (status === "Active") {
     return "success";
@@ -38,6 +70,46 @@ function statusTone(status: TenantStatus) {
   }
 
   return "warning";
+}
+
+function domainTone(status: string) {
+  if (status === "verified") {
+    return "success";
+  }
+
+  if (status === "failed") {
+    return "danger";
+  }
+
+  if (status === "pending") {
+    return "warning";
+  }
+
+  return "info";
+}
+
+function domainHint(status: string) {
+  if (status === "pending") {
+    return "DNS đang propagate. Recheck khi bản ghi đã sẵn sàng.";
+  }
+
+  if (status === "failed") {
+    return "CNAME/TXT chưa khớp. Cần rà soát bản ghi.";
+  }
+
+  return "Chưa có dữ liệu DNS/SSL từ backend.";
+}
+
+function domainAction(status: string) {
+  if (status === "verified") {
+    return "View cert";
+  }
+
+  if (status === "failed") {
+    return "View error";
+  }
+
+  return "Recheck";
 }
 
 // Đóng drawer bằng phím Escape để tăng accessibility cho keyboard user.
@@ -75,12 +147,16 @@ onBeforeUnmount(() => {
     <div v-if="open" class="drawer-backdrop" role="dialog" aria-modal="true" @click.self="$emit('close')">
       <aside class="drawer" aria-label="Drawer chi tiết phòng khám">
         <header class="drawer-header">
-          <div>
-            <p>Chi tiết phòng khám</p>
-            <h2>{{ tenant?.displayName ?? "Đang tải phòng khám..." }}</h2>
+          <div class="drawer-title">
+            <div class="tenant-avatar" aria-hidden="true">✚</div>
+            <div>
+              <h2>{{ tenant?.displayName ?? "Đang tải phòng khám..." }}</h2>
+              <p v-if="tenant">tenants/{{ tenant.slug }} · {{ tenant.defaultDomainName || "chưa có domain" }}</p>
+              <p v-else>Đang đồng bộ hồ sơ tenant</p>
+            </div>
           </div>
           <button type="button" class="close-button" aria-label="Đóng drawer" @click="$emit('close')">
-            X
+            ×
           </button>
         </header>
 
@@ -92,12 +168,8 @@ onBeforeUnmount(() => {
             <StatusPill :label="formatDomainStatus(tenant.domainStatus)" tone="info" />
           </div>
 
-          <AppCard>
+          <AppCard class="summary-card">
             <dl class="detail-grid">
-              <div>
-                <dt>Mã phòng khám</dt>
-                <dd>{{ tenant.id }}</dd>
-              </div>
               <div>
                 <dt>Slug</dt>
                 <dd>{{ tenant.slug }}</dd>
@@ -122,18 +194,34 @@ onBeforeUnmount(() => {
             </dl>
           </AppCard>
 
-          <AppCard>
-            <h3>Tên miền</h3>
+          <AppCard class="domain-section">
+            <div class="section-heading">
+              <div>
+                <h3>Domains</h3>
+                <p>{{ domainCountLabel }}</p>
+              </div>
+              <AppButton label="+ Thêm domain" variant="primary" disabled />
+            </div>
+
             <ul class="domain-list">
-              <li v-for="domain in tenant.domains" :key="domain.id">
-                <span>{{ domain.domainName }}</span>
-                <StatusPill :label="formatDomainStatus(domain.status)" tone="info" />
+              <li v-for="domain in domainCards" :key="domain.id" class="domain-card">
+                <div>
+                  <strong>{{ domain.domainName }}</strong>
+                  <span>{{ domain.helper }}</span>
+                  <button type="button" disabled>{{ domain.action }}</button>
+                </div>
+                <StatusPill :label="formatDomainStatus(domain.status)" :tone="domainTone(domain.status)" />
               </li>
             </ul>
           </AppCard>
 
-          <AppCard>
-            <h3>Module</h3>
+          <AppCard class="module-card">
+            <div class="section-heading compact">
+              <div>
+                <h3>Module</h3>
+                <p>{{ tenant.moduleCodes.length }} module đang bật</p>
+              </div>
+            </div>
             <div class="module-list">
               <StatusPill
                 v-for="moduleCode in tenant.moduleCodes"
@@ -167,26 +255,48 @@ onBeforeUnmount(() => {
   z-index: 20;
   display: flex;
   justify-content: flex-end;
-  background: rgba(16, 42, 67, 0.28);
+  background: color-mix(in srgb, var(--color-text-primary) 32%, transparent);
 }
 
 .drawer {
-  width: min(520px, 100vw);
+  width: min(560px, 100vw);
   min-height: 100vh;
   display: grid;
   align-content: start;
-  gap: 16px;
+  gap: var(--space-4);
   overflow-y: auto;
-  padding: 22px;
-  background: #ffffff;
-  box-shadow: 0 24px 60px rgba(16, 42, 67, 0.18);
+  padding: var(--space-6);
+  background: var(--color-surface-elevated);
+  box-shadow: var(--shadow-elevation-3);
 }
 
 .drawer-header {
   display: flex;
-  align-items: start;
+  align-items: flex-start;
   justify-content: space-between;
-  gap: 16px;
+  gap: var(--space-4);
+  border-bottom: 1px solid var(--color-border-subtle);
+  margin: calc(var(--space-6) * -1) calc(var(--space-6) * -1) 0;
+  padding: var(--space-6);
+}
+
+.drawer-title {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  min-width: 0;
+}
+
+.tenant-avatar {
+  width: 48px;
+  height: 48px;
+  display: grid;
+  place-items: center;
+  flex: 0 0 auto;
+  border-radius: 14px;
+  background: color-mix(in srgb, var(--color-brand-primary) 10%, var(--color-surface-elevated));
+  color: var(--color-brand-primary);
+  font-weight: 900;
 }
 
 .drawer-header p,
@@ -197,23 +307,27 @@ dl {
 }
 
 .drawer-header p {
-  color: #0e7c86;
+  margin-top: var(--space-1);
+  color: var(--color-text-secondary);
   font-size: 12px;
-  font-weight: 800;
-  text-transform: uppercase;
+  font-weight: 600;
+  overflow-wrap: anywhere;
 }
 
 .drawer-header h2 {
-  margin-top: 4px;
-  font-size: 24px;
+  color: var(--color-text-primary);
+  font-size: 18px;
+  line-height: 1.25;
+  overflow-wrap: anywhere;
 }
 
 .close-button {
   width: 36px;
   height: 36px;
-  border: 1px solid #d9e2ec;
-  border-radius: 8px;
-  background: #ffffff;
+  border: 1px solid var(--color-border-subtle);
+  border-radius: var(--radius-input);
+  background: var(--color-surface-elevated);
+  color: var(--color-text-secondary);
   cursor: pointer;
   font-weight: 800;
 }
@@ -223,51 +337,132 @@ dl {
 .drawer-actions {
   display: flex;
   flex-wrap: wrap;
-  gap: 10px;
+  gap: var(--space-2);
+}
+
+.summary-card {
+  box-shadow: none;
 }
 
 .detail-grid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 14px;
+  gap: var(--space-4);
 }
 
 dt {
-  color: #627d98;
+  color: var(--color-text-muted);
   font-size: 12px;
   font-weight: 800;
 }
 
 dd {
-  margin: 4px 0 0;
-  color: #102a43;
+  margin: var(--space-1) 0 0;
+  color: var(--color-text-primary);
   overflow-wrap: anywhere;
+  font-weight: 700;
+}
+
+.domain-section,
+.module-card {
+  box-shadow: none;
+}
+
+.section-heading {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--space-3);
+}
+
+.section-heading.compact {
+  margin-bottom: var(--space-3);
+}
+
+.section-heading h3 {
+  color: var(--color-text-primary);
+  font-size: 18px;
+}
+
+.section-heading p {
+  margin: var(--space-1) 0 0;
+  color: var(--color-text-secondary);
+  font-size: 13px;
 }
 
 .domain-list {
   display: grid;
-  gap: 10px;
-  margin: 12px 0 0;
+  gap: var(--space-3);
+  margin: var(--space-4) 0 0;
   padding: 0;
   list-style: none;
 }
 
-.domain-list li {
+.domain-card {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   justify-content: space-between;
-  gap: 12px;
+  gap: var(--space-3);
+  border: 1px solid var(--color-border-subtle);
+  border-radius: var(--radius-card);
+  padding: var(--space-4);
+  background: var(--color-surface-elevated);
+}
+
+.domain-card div {
+  display: grid;
+  gap: var(--space-2);
+  min-width: 0;
+}
+
+.domain-card strong {
+  color: var(--color-text-primary);
+  overflow-wrap: anywhere;
+}
+
+.domain-card span {
+  color: var(--color-text-secondary);
+  font-size: 12px;
+}
+
+.domain-card button {
+  width: fit-content;
+  border: 0;
+  border-radius: var(--radius-input);
+  padding: 7px 12px;
+  background: var(--color-surface-muted);
+  color: var(--color-text-primary);
+  font-size: 12px;
+  font-weight: 800;
 }
 
 .drawer-state {
-  border: 1px dashed #d9e2ec;
-  border-radius: 8px;
+  border: 1px dashed var(--color-border-subtle);
+  border-radius: var(--radius-card);
   padding: 32px;
-  color: #627d98;
+  color: var(--color-text-secondary);
   text-align: center;
 }
 
 .drawer-actions a {
   text-decoration: none;
+}
+
+@media (max-width: 560px) {
+  .drawer {
+    padding: var(--space-5);
+  }
+
+  .drawer-header {
+    margin: calc(var(--space-5) * -1) calc(var(--space-5) * -1) 0;
+    padding: var(--space-5);
+  }
+
+  .detail-grid,
+  .section-heading,
+  .drawer-actions {
+    grid-template-columns: 1fr;
+    flex-direction: column;
+  }
 }
 </style>

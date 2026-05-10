@@ -190,8 +190,8 @@ function submit() {
           :class="{ active: activeStep === index, done: activeStep > index }"
           @click="activeStep = index"
         >
-          <span>{{ index + 1 }}</span>
-          {{ step }}
+          <span class="step-number">{{ activeStep > index ? "✓" : index + 1 }}</span>
+          <span class="step-label">Bước {{ index + 1 }}: {{ step }}</span>
         </button>
       </div>
 
@@ -253,6 +253,7 @@ function submit() {
               :class="{ selected: form.moduleCodes.includes(moduleItem.value) }"
               @click="toggleModule(moduleItem.value)"
             >
+              <span aria-hidden="true">{{ form.moduleCodes.includes(moduleItem.value) ? "✓" : "+" }}</span>
               {{ moduleItem.label }}
             </button>
           </div>
@@ -345,28 +346,71 @@ function submit() {
 .stepper {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: 8px;
+  gap: 0;
+  border: 1px solid #d9e2ec;
+  border-radius: 14px;
+  padding: 14px 18px;
+  background: #ffffff;
 }
 
 .stepper button {
-  min-height: 42px;
-  border: 1px solid #d9e2ec;
-  border-radius: 8px;
+  position: relative;
+  min-height: 36px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  border: 0;
   background: #ffffff;
   color: #627d98;
   cursor: pointer;
   font-weight: 800;
+  text-align: left;
+}
+
+.stepper button:not(:last-child)::after {
+  content: "";
+  position: absolute;
+  right: 12px;
+  left: 136px;
+  top: 50%;
+  height: 2px;
+  background: #d9e2ec;
+}
+
+.stepper button.done:not(:last-child)::after {
+  background: #2563eb;
 }
 
 .stepper button.active,
 .stepper button.done {
-  border-color: #0e7c86;
-  background: #d8f3f1;
-  color: #075e66;
+  color: #102a43;
 }
 
-.stepper span {
-  margin-right: 6px;
+.step-number {
+  width: 28px;
+  height: 28px;
+  display: grid;
+  place-items: center;
+  flex: 0 0 auto;
+  border-radius: 999px;
+  background: #dbe4f0;
+  color: #8194aa;
+  font-size: 12px;
+  font-weight: 900;
+}
+
+.stepper button.active .step-number,
+.stepper button.done .step-number {
+  background: #2563eb;
+  color: #ffffff;
+}
+
+.step-label {
+  position: relative;
+  z-index: 1;
+  max-width: 120px;
+  background: #ffffff;
+  padding-right: 10px;
 }
 
 .conflict {
@@ -427,11 +471,16 @@ label.conflict input {
   gap: 12px;
 }
 
+.module-options {
+  display: flex;
+  flex-wrap: wrap;
+}
+
 .plan-options button,
 .module-options button {
   min-height: 74px;
   border: 1px solid #d9e2ec;
-  border-radius: 8px;
+  border-radius: 10px;
   padding: 12px;
   background: #ffffff;
   color: #102a43;
@@ -440,15 +489,27 @@ label.conflict input {
 }
 
 .module-options button {
-  min-height: 44px;
+  min-height: 32px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  border-radius: 999px;
+  padding: 0 14px;
   text-align: center;
   font-weight: 800;
 }
 
 .plan-options button.selected,
 .module-options button.selected {
-  border-color: #0e7c86;
-  background: #d8f3f1;
+  border-color: #2563eb;
+  background: color-mix(in srgb, #2563eb 8%, #ffffff);
+  color: #0f172a;
+}
+
+.module-options button.selected {
+  background: #eff6ff;
+  color: #2563eb;
 }
 
 .plan-options strong,
@@ -549,9 +610,17 @@ label.conflict input {
 @media (max-width: 720px) {
   .stepper,
   .form-section,
-  .plan-options,
-  .module-options {
+  .plan-options {
     grid-template-columns: 1fr;
+  }
+
+  .stepper {
+    gap: 8px;
+    padding: 12px;
+  }
+
+  .stepper button:not(:last-child)::after {
+    display: none;
   }
 
   .wizard-actions {
