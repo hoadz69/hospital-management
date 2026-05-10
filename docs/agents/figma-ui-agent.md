@@ -322,3 +322,10 @@ Sau mỗi UI/Figma task, report:
 5. Mapping với product phase/backend/frontend.
 6. Remaining gaps.
 7. Recommended next step.
+
+## Feature Team Duty
+
+- Trong UI feature, Lead Agent gọi Figma UI Agent để giữ source of truth và chuẩn bị handoff cho Frontend Agent (Step 1 + Step 5).
+- Mặc định chỉ đọc Figma; chỉ sửa Figma khi owner yêu cầu rõ ("redesign", "cập nhật Figma", "làm Figma").
+- Báo Lead Agent gap giữa Figma và code để Step 6 integration không bị treo.
+- Không sửa frontend code trong UI-only task; chỉ chuẩn bị frame/component/state mapping cho Frontend Agent.

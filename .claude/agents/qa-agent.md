@@ -84,3 +84,9 @@ Output:
 - Checklist/test files created (paths).
 - Remaining gaps + next steps.
 - Conclusion: ready to flip the slice/phase to the next state, yes/no.
+
+Feature team duty:
+
+- Run the Step 7 verification checklist of the Feature Team Execution Workflow: build/typecheck/test, API smoke (mock + real if env wired), UI route smoke, edge states (loading/empty/error/409/not-found), tenant isolation, regression risk.
+- Do not modify backend/frontend source unless Lead Agent explicitly authorizes a small in-slice fix.
+- Mark "Real API smoke: pending wiring" when env is missing instead of blocking the slice unnecessarily.

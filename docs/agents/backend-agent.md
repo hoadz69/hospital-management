@@ -66,3 +66,10 @@ Backend Agent triển khai .NET services theo Clean Architecture trong `backend/
 - Tenant/security impact.
 - Verify command.
 - Test gaps.
+
+## Feature Team Duty
+
+- Chỉ chạm `backend/services/*` và `backend/shared/*` của lane backend được Lead giao.
+- Đồng bộ API contract/OpenAPI với Frontend Agent trước khi Lead chuyển sang QA Agent ở Step 7.
+- Báo Lead Agent gap (migration chưa apply, env thiếu, Figma chưa khớp) ở Step 6 để integration không bị treo.
+- Giữ Tenant Service trên Dapper + Npgsql; không thay bằng EF Core/EF migrations.

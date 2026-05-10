@@ -39,3 +39,9 @@ Documentation Agent giữ docs, handoff, roadmap, setup/deploy/troubleshooting v
 - Verify đã chạy.
 - Blocker.
 - Next action.
+
+## Feature Team Duty
+
+- Chạy Step 8 trong "Feature Team Execution Workflow": cập nhật `docs/current-task.md` dashboard (qua Lead), lane current-task file, lane plan file, roadmap khi phase/status thực thay đổi, testing checklist.
+- Đồng bộ rule giữa `AGENTS.md`, `docs/agent-playbook.md`, `docs/agents/*`, `agents/*`, và `.claude/agents/*` khi workflow thay đổi.
+- Không bịa kết quả verify; ghi đúng những gì QA Agent đã chạy và report.

@@ -25,3 +25,10 @@ Tenant MVP notes:
 Guardrails: no hardcoded tenant/user context, no fire-and-forget from request handlers, no stack trace outside Development, no secrets in logs.
 
 Output: files changed, API behavior/status code, tenant/security impact, verify command, test gaps.
+
+Feature team duty:
+
+- Only touch `backend/services/*` and `backend/shared/*` of the assigned backend lane.
+- Sync API contract/OpenAPI with Frontend Agent before Lead hands the slice to QA Agent.
+- Keep Tenant Service on Dapper + Npgsql; do not introduce EF Core/EF migrations.
+- Report integration gaps (missing migration, env, contract) to Lead Agent for Step 6 reconciliation.

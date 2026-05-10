@@ -1,5 +1,17 @@
 # Command: Lead Plan
 
+## Feature Team Execution Workflow
+
+Lead Agent phải dùng "Feature Team Execution Workflow" (Step 0–10 trong `docs/agent-playbook.md` và `AGENTS.md`) khi owner yêu cầu plan cho feature mới:
+
+- Step 0 Intake: phân lane (backend, frontend, database, devops, figma, qa, docs, cross-lane).
+- Step 1 Team Assembly: chọn agent theo loại feature (UI / API / full-stack / deployment / data).
+- Step 2 Source Of Truth: yêu cầu mỗi agent đọc đúng architecture docs, current-task lane, plan lane, roadmap, Figma, API contract, server docs.
+- Step 3 Joint Plan: ghi plan vào lane file phù hợp với scope/out-of-scope/agents/file-areas/acceptance/verify/rollback/commit-split.
+- Step 4 Owner Approval Gate: feature lớn/cross-lane chỉ plan, chưa code, chờ owner duyệt rõ.
+
+Lead Agent không tự ôm hết feature nếu có agent phù hợp. Nếu tool không có subagent runtime thật, Lead Agent giả lập role bằng cách đọc agent docs tương ứng.
+
 ## Multi-Workstream Lane Override
 
 Khi project có nhiều workstream song song:
@@ -8,6 +20,7 @@ Khi project có nhiều workstream song song:
 - `temp/plan.md` chỉ là index tương thích cũ.
 - Backend/DevOps plan dùng `temp/plan.backend.md` và `docs/current-task.backend.md`.
 - Frontend plan dùng `temp/plan.frontend.md` và `docs/current-task.frontend.md`.
+- Database/DevOps lane riêng (nếu task lớn): `temp/plan.database.md`, `temp/plan.devops.md`.
 - Nếu command bên dưới nhắc `docs/current-task.md` hoặc `temp/plan.md`, phải hiểu là dashboard/index hoặc lane file phù hợp theo scope task.
 
 ## Command Execution Rule

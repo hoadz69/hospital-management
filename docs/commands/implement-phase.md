@@ -1,5 +1,14 @@
 # Command: Implement Phase
 
+## Feature Team Execution Workflow
+
+Lead Agent phải dùng "Feature Team Execution Workflow" (Step 0–10 trong `docs/agent-playbook.md` và `AGENTS.md`) khi implement feature mới:
+
+- Step 5 Parallel Execution With Boundaries: mỗi agent chỉ chạm lane của mình; Frontend chỉ `frontend/`, Backend chỉ `backend/`, Database chỉ migration/schema, DevOps chỉ runtime/deploy, Figma chỉ Figma (đọc-trừ-khi-được-cho-phép-sửa), QA không sửa source trừ khi Lead cho phép vá nhỏ trong slice.
+- Step 6 Integration: Lead Agent gom kết quả các lane (API contract, FE mock/real mode, migration, env, Figma, docs).
+- Step 7 Verification: QA Agent chạy build/typecheck/test, API smoke, UI smoke, edge states, tenant isolation, regression.
+- Step 8 Status Update: Documentation Agent cập nhật dashboard/lane current-task/lane plan/roadmap/testing checklist.
+
 ## Multi-Workstream Lane Override
 
 Khi project có nhiều workstream song song:
@@ -8,6 +17,7 @@ Khi project có nhiều workstream song song:
 - `temp/plan.md` chỉ là index tương thích cũ.
 - Backend/DevOps implement theo `temp/plan.backend.md` và cập nhật `docs/current-task.backend.md`.
 - Frontend implement theo `temp/plan.frontend.md` và cập nhật `docs/current-task.frontend.md`.
+- Database/DevOps lane riêng (nếu task lớn): `temp/plan.database.md`, `temp/plan.devops.md`.
 - Không agent nào ghi task chi tiết của một lane vào `docs/current-task.md`.
 
 ## Command Execution Rule

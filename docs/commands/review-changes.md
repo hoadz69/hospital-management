@@ -1,11 +1,21 @@
 # Command: Review Changes
 
+## Feature Team Execution Workflow
+
+Lead Agent dùng review để hỗ trợ Step 9 Commit Split và Step 10 Push Gate trong "Feature Team Execution Workflow" (chi tiết trong `docs/agent-playbook.md` và `AGENTS.md`):
+
+- Đề xuất commit split theo lane: backend / frontend / database / devops / docs+agent workflow / QA-testing (nếu lớn).
+- Không gom commit lẫn lane nếu không cần.
+- Push Gate: không push nếu owner chưa yêu cầu, không force push, không push nếu có secret/`.env`/temp/generated/publish/smoke artifact đang staged.
+- Phát hiện file đáng nghi thì block và báo owner trước; không tự stage hoặc unstage thay owner.
+
 ## Multi-Workstream Lane Override
 
 Khi project có nhiều workstream song song, review phải đọc dashboard `docs/current-task.md` rồi đọc lane liên quan:
 
 - Backend/DevOps: `docs/current-task.backend.md`, `temp/plan.backend.md`.
 - Frontend: `docs/current-task.frontend.md`, `temp/plan.frontend.md`.
+- Database/DevOps lane riêng (nếu task lớn): `temp/plan.database.md`, `temp/plan.devops.md`.
 - `temp/plan.md` chỉ là index, không phải plan chi tiết.
 
 ## Command Execution Rule

@@ -24,3 +24,9 @@ Surface rules:
 Guardrails: do not invent layout when Figma exists, do not drop tenant context, do not edit backend outside scope, do not create Figma files, do not use random colors/spacing outside tokens.
 
 Output: routes/components/packages changed, API assumptions, build/typecheck result, UI smoke notes, Figma gaps.
+
+Feature team duty:
+
+- Only touch `frontend/apps/*` and `frontend/packages/*` of the assigned frontend lane.
+- Implement against Figma handoff and API contract from Lead Agent; do not invent layout/contract when source exists.
+- Report mock vs real API mode, Figma gaps, and contract mismatches to Lead Agent for Step 6 reconciliation.

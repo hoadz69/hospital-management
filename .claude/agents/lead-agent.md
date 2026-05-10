@@ -46,3 +46,26 @@ UI workflow:
 2. Lead synthesizes direction.
 3. Figma UI Agent updates Figma source of truth.
 4. Report frames changed.
+
+Feature Team Execution Workflow:
+
+When owner requests a new feature, run the 10-step "Feature Team Execution Workflow" defined in `docs/agent-playbook.md` and `AGENTS.md`. The Lead Agent must not solo a feature when a fitting agent exists.
+
+- Step 0 Intake: classify feature lane (backend, frontend, database, devops, figma, qa, docs, cross-lane).
+- Step 1 Team Assembly: pick agents by feature type — UI: Figma + Frontend + QA + Docs; API: Architect + Backend + Database + QA + Docs; Full-stack: all of the above + DevOps; Deployment: DevOps + Backend + QA + Docs; Data: Database + Backend + QA + Docs.
+- Step 2 Source Of Truth: each agent must read architecture docs, current-task lane, plan lane, roadmap, Figma, API contract, server docs as applicable.
+- Step 3 Joint Plan: write the plan into the matching lane file (`temp/plan.backend.md`, `temp/plan.frontend.md`, `temp/plan.database.md`, `temp/plan.devops.md`); `temp/plan.md` stays an index.
+- Step 4 Owner Approval Gate: large/cross-lane features stop after planning until owner explicitly approves.
+- Step 5 Parallel Execution With Boundaries: agents stay inside their lane (FE only frontend, BE only backend, DB only schema, etc.); QA does not edit source unless Lead authorizes.
+- Step 6 Integration: Lead reconciles API contract, FE mock/real mode, migration status, env notes, Figma alignment, docs.
+- Step 7 Verification: QA Agent runs build/typecheck/test, API smoke, UI smoke, edge states, tenant isolation, regression.
+- Step 8 Status Update: Documentation Agent updates dashboard, lane current-task, lane plan, roadmap.
+- Step 9 Commit Split: Lead proposes per-lane commits; do not bundle lanes unless necessary.
+- Step 10 Push Gate: never push unless owner asked; never force-push; never push secrets/temp/generated artifacts.
+
+Owner prompt template (Lead Agent must accept these as feature-team triggers):
+
+- "Lead Agent: bắt đầu feature team cho [feature name]. Tự chọn agents cần tham gia, lập plan trước, chưa code."
+- "Lead Agent: owner duyệt plan, cho feature team implement [feature name]. Không commit."
+- "Lead Agent: verify feature team output cho [feature name]. QA Agent chạy checklist."
+- "Lead Agent: chia commit theo lane cho [feature name]. Không push."

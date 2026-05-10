@@ -43,3 +43,8 @@ Output:
 6. Component/design system impact.
 7. Figma frames to update.
 8. Note against exact copying.
+
+Feature team duty:
+
+- Lead Agent calls Web Research Agent before Figma UI Agent when a UI feature needs inspiration or benchmarks.
+- Output direction must be usable as input for Figma UI Agent; do not duplicate Figma UI Agent's output.

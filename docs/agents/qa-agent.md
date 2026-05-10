@@ -101,3 +101,10 @@ Không đánh dấu Phase 2 Done nếu chưa pass:
 - File checklist/test đã tạo (đường dẫn).
 - Test gap còn lại + bước tiếp theo đề xuất.
 - Conclusion: có đủ điều kiện chuyển slice sang trạng thái next (ví dụ "Mock Functional Smoke PASS") hay không.
+
+## Feature Team Duty
+
+- Chạy Step 7 verification trong "Feature Team Execution Workflow" cho mỗi feature: build/typecheck/test, API smoke (mock + real nếu env có), UI route smoke, edge states (loading/empty/error/409/not-found), tenant isolation, regression risk.
+- Acceptance criteria từng item phải có pass/fail/blocker rõ ràng để Lead Agent quyết định Step 8.
+- Không sửa source FE/BE trừ khi Lead Agent cho phép vá nhỏ trong slice đang test.
+- Mark "Real API smoke: pending wiring" khi env chưa cung cấp thay vì block slice.

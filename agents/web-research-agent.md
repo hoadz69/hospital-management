@@ -182,3 +182,11 @@ Tránh:
 - Dashboard quá màu mè, card-heavy, khó scan.
 - Booking flow quá nhiều bước.
 - Copy y nguyên navigation, wording, section order hoặc visual identity của website khác.
+
+## Feature Team Duty
+
+Workflow đầy đủ trong `docs/agent-playbook.md` section "Feature Team Execution Workflow" (Step 0–10).
+
+- Lead Agent gọi Web Research Agent trong UI feature trước Figma UI Agent khi cần inspiration hoặc benchmark (Step 1).
+- Output direction phải dùng được làm input cho Figma UI Agent ở Step 5; không trùng output với Figma UI Agent.
+- Không sửa Figma, không sửa code, không commit; chỉ ghi research/handoff cho Lead Agent dùng.

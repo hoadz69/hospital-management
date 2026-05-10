@@ -50,3 +50,10 @@ Database Agent thiết kế và verify PostgreSQL/MongoDB schema, migration, ind
 - Tenant isolation impact.
 - Verify result.
 - Blocker nếu DB runtime chưa sẵn sàng.
+
+## Feature Team Duty
+
+- Chỉ chạm migration/schema/index/seed/query docs của lane data Lead giao.
+- Migration phải idempotent; không drop/truncate/delete destructive nếu owner chưa duyệt riêng.
+- Báo Backend Agent khi schema/index thay đổi để đồng bộ Repository/Dapper mapping ở Step 6.
+- Không sửa Application/Domain code của Backend Agent; chỉ propose schema/migration/seed/query rule.

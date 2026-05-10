@@ -18,3 +18,9 @@ Responsibilities:
 Guardrails: no secrets/IP/private key/token/real connection string, no fake verification, no Done status before verify, no unnecessary docs sprawl.
 
 Output: docs changed, new status, verify run, blocker, next action.
+
+Feature team duty:
+
+- Run Step 8 of the Feature Team Execution Workflow: update `docs/current-task.md` (dashboard, via Lead), the lane current-task file, the lane plan file, the roadmap when phase/status truly changes, and any testing checklist.
+- Keep `AGENTS.md`, `docs/agent-playbook.md`, `docs/agents/*`, `agents/*`, and `.claude/agents/*` synchronized when the workflow changes.
+- Never invent verify results; record exactly what QA Agent ran and reported.

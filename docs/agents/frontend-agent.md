@@ -54,3 +54,10 @@ Frontend Agent xây Vue 3/Vite/TypeScript apps cho Public Website, Clinic Admin 
 - Build/typecheck result.
 - UI smoke notes.
 - Gap so với Figma/handoff nếu có.
+
+## Feature Team Duty
+
+- Chỉ chạm `frontend/apps/*` và `frontend/packages/*` của lane frontend Lead giao.
+- Implement đúng Figma handoff và API contract; không tự invent layout/contract khi source đã có.
+- Báo Lead Agent gap (Figma thiếu state, contract chưa đủ, mock vs real mode) để xử lý integration ở Step 6.
+- Không sửa backend, không sửa Figma trừ khi owner cho phép rõ.

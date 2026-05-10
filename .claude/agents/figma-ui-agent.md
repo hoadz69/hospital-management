@@ -81,3 +81,9 @@ Report:
 5. Mapping to product phase/backend/frontend.
 6. Remaining gaps.
 7. Recommended next step.
+
+Feature team duty:
+
+- For UI features Lead Agent assembles Figma + Frontend + QA + Documentation; Figma UI Agent owns the UI source of truth and prepares handoff for Frontend Agent.
+- Default to read-only Figma access; only edit Figma when owner explicitly says "redesign", "cập nhật Figma", or "làm Figma".
+- Surface Figma vs code gaps to Lead Agent for Step 6 integration.

@@ -63,9 +63,39 @@ Quy ước hiện tại:
 - `temp/plan.md` là index tương thích cũ, không chứa plan chi tiết của backend hoặc frontend.
 - Backend Agent và DevOps Agent chỉ cập nhật `docs/current-task.backend.md` và `temp/plan.backend.md`.
 - Frontend Agent chỉ cập nhật `docs/current-task.frontend.md` và `temp/plan.frontend.md`.
+- Database lane riêng (nếu task lớn): `temp/plan.database.md`. DevOps lane riêng (nếu task lớn): `temp/plan.devops.md`. Mặc định DevOps đi cùng backend lane khi task nhỏ.
 - Lead Agent chịu trách nhiệm tạo lane mới hoặc phân lane khi owner nói chung chung.
 - Không agent nào overwrite `docs/current-task.md` bằng task chi tiết của một lane.
 - Nếu không chắc nội dung thuộc lane nào, ghi một note ngắn vào `docs/current-task.md` phần Notes/Unclassified và chờ Lead Agent phân loại.
+
+## Feature Team Execution Workflow
+
+Mọi feature mới phải chạy theo mô hình "feature team" do Lead Agent điều phối. Workflow này áp dụng cho cả Codex và Claude Code, kể cả khi tool không có subagent runtime thật (Lead Agent giả lập role bằng cách đọc agent docs tương ứng).
+
+Chi tiết đầy đủ Step 0–10, agent assembly theo loại feature, owner prompt template nằm trong `docs/agent-playbook.md` (section "Feature Team Execution Workflow").
+
+Quy trình tóm tắt:
+
+- Step 0 Intake: Lead Agent xác định feature lane và đọc dashboard/lane plan liên quan.
+- Step 1 Team Assembly: Lead Agent chọn agent theo loại feature (UI / API / full-stack / deployment / data).
+- Step 2 Source Of Truth: từng agent đọc đúng architecture docs, current-task lane, plan lane, roadmap, Figma, API contract, server docs khi cần.
+- Step 3 Joint Plan: Lead Agent ghi plan trong lane file phù hợp với scope/out-of-scope/agents/file-areas/acceptance/verify/rollback/commit-split.
+- Step 4 Owner Approval Gate: feature lớn hoặc cross-lane chỉ plan, chưa code; chờ owner duyệt rõ.
+- Step 5 Parallel Execution With Boundaries: mỗi agent chỉ chạm lane của mình, không overwrite lane khác.
+- Step 6 Integration: Lead Agent gom kết quả các lane (API contract, FE mode, migration, env, Figma, docs).
+- Step 7 Verification: QA Agent chạy build/typecheck/test, API smoke, UI smoke, edge states, tenant isolation, regression.
+- Step 8 Status Update: Documentation Agent cập nhật dashboard/lane current-task/lane plan/roadmap.
+- Step 9 Commit Split: Lead Agent đề xuất commit theo lane, không gom lẫn.
+- Step 10 Push Gate: không push nếu owner chưa yêu cầu, không force push, không push secret/temp/generated artifact.
+
+Owner prompt template ngắn:
+
+```txt
+Lead Agent: bắt đầu feature team cho [feature name]. Tự chọn agents cần tham gia, lập plan trước, chưa code.
+Lead Agent: owner duyệt plan, cho feature team implement [feature name]. Không commit.
+Lead Agent: verify feature team output cho [feature name]. QA Agent chạy checklist.
+Lead Agent: chia commit theo lane cho [feature name]. Không push.
+```
 
 ## Language Rule
 

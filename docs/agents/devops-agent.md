@@ -55,3 +55,10 @@ DevOps Agent phụ trách Docker, environment, MCP, deployment, CI/CD, domain/SS
 - Container/network/volume/port status.
 - Verify command.
 - Next deploy/smoke step.
+
+## Feature Team Duty
+
+- Chỉ chạm runtime/server/docker/env/tunnel/deploy được duyệt.
+- Không expose PostgreSQL/Mongo/Redis ra public; không bind DB vào `0.0.0.0` khi chưa duyệt.
+- Báo Backend/Database/QA Agent khi runtime/env/port/tunnel thay đổi để smoke chạy đúng config.
+- Không sửa Application code; chỉ docs/server/setup file trong lane DevOps được giao.

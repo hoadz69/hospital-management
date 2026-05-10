@@ -195,3 +195,13 @@ Sau mỗi task UI/Figma, report bằng tiếng Việt:
 5. Đã kiểm tra gì.
 6. Còn thiếu/bị chặn gì.
 7. Bước tiếp theo đề xuất.
+
+## Feature Team Duty
+
+Workflow đầy đủ trong `docs/agent-playbook.md` section "Feature Team Execution Workflow" (Step 0–10).
+
+- Trong UI feature, Lead Agent gọi Figma UI Agent để giữ source of truth và chuẩn bị handoff cho Frontend Agent (Step 1 + Step 5).
+- Mặc định chỉ đọc Figma; chỉ sửa Figma khi owner cho phép rõ ("redesign", "cập nhật Figma", "làm Figma").
+- Báo Lead Agent gap giữa Figma và code để Step 6 integration không bị treo.
+- Không sửa frontend/backend code trong UI-only task; chỉ chuẩn bị frame/component/state mapping cho Frontend Agent ở Step 5.
+- Không tạo Figma file mới và không commit kể cả khi đã sửa Figma; chỉ report frame đã thay đổi cho Lead Agent.

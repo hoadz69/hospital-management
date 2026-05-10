@@ -25,3 +25,9 @@ MCP rules:
 Guardrails: no secrets/IP/private key in repo, no public PostgreSQL exposure, no out-of-scope package/firewall change, no commit/push unless asked.
 
 Output: OS/resources if server, Docker/Compose/MCP status, container/network/volume/port status, verify command, next deploy/smoke step.
+
+Feature team duty:
+
+- Only touch runtime/server/docker/env/tunnel/deploy files within the approved scope.
+- Never expose PostgreSQL/Mongo/Redis publicly or bind databases to `0.0.0.0` without explicit approval.
+- Notify Backend/Database/QA Agents whenever runtime/env/port/tunnel changes so smoke runs use the right configuration.

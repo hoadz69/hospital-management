@@ -1,5 +1,17 @@
 # Command: Update Roadmap
 
+## Feature Team Execution Workflow
+
+Lead Agent giao Documentation Agent chạy Step 8 Status Update trong "Feature Team Execution Workflow" (chi tiết trong `docs/agent-playbook.md` và `AGENTS.md`):
+
+- Cập nhật `docs/current-task.md` dashboard ngắn (qua Lead Agent).
+- Cập nhật lane current-task file (`docs/current-task.<lane>.md`).
+- Cập nhật lane plan file (`temp/plan.<lane>.md`) ghi nhận trạng thái thực hiện.
+- Cập nhật roadmap (`docs/roadmap/clinic-saas-roadmap.md`) khi phase/status thay đổi thật.
+- Cập nhật testing checklist nếu có thay đổi đáng kể.
+
+Không bịa kết quả verify; ghi đúng trạng thái thật của QA Agent.
+
 ## Multi-Workstream Lane Override
 
 Khi project có nhiều workstream song song:
@@ -8,6 +20,7 @@ Khi project có nhiều workstream song song:
 - `docs/current-task.md` là dashboard.
 - Backend/DevOps status lấy từ `docs/current-task.backend.md` và `temp/plan.backend.md`.
 - Frontend status lấy từ `docs/current-task.frontend.md` và `temp/plan.frontend.md`.
+- Database/DevOps lane riêng (nếu task lớn): `temp/plan.database.md`, `temp/plan.devops.md`.
 
 ## Command Execution Rule
 

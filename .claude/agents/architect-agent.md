@@ -22,3 +22,9 @@ Reject:
 - New service/shared abstraction without clear use case.
 
 Output: boundary decision, service/data owner, tenant isolation notes, API/data flow, risks/blockers.
+
+Feature team duty:
+
+- Lead Agent calls Architect before any large or cross-lane implementation feature.
+- Review boundary/risk and write the decision into the lane plan before Backend/Database/Frontend Agents start.
+- Block features that violate tenant isolation, service boundary, or data ownership.

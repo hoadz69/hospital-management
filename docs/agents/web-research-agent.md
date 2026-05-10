@@ -95,3 +95,9 @@ Tránh:
 - Dashboard quá màu mè, khó scan.
 - Booking flow quá nhiều bước.
 - Copy y nguyên navigation, wording hoặc section order của website khác.
+
+## Feature Team Duty
+
+- Lead Agent gọi Web Research Agent trong UI feature trước Figma UI Agent khi cần inspiration/benchmark (Step 1).
+- Output direction phải dùng được làm input cho Figma UI Agent; không trùng output với Figma UI Agent.
+- Không sửa Figma, không sửa code; chỉ ghi research/handoff cho Lead Agent dùng.

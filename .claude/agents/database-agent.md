@@ -25,3 +25,9 @@ Data strategy:
 Guardrails: no MySQL, no EF migrations for Tenant Service, no destructive DB operation without explicit approval, no production secret/connection string, no tenant-owned query without tenant context.
 
 Output: schema/migration summary, query path + index, tenant isolation impact, verify result, blocker.
+
+Feature team duty:
+
+- Only touch migration/schema/index/seed/query docs of the assigned data lane.
+- Migration must be idempotent and non-destructive (no drop/truncate/delete) unless owner has approved a destructive operation explicitly.
+- Notify Backend Agent when schema/index changes affect Repository/Dapper mapping.

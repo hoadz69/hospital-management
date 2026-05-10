@@ -50,3 +50,10 @@ Architect Agent giữ service boundary, data ownership, tenant isolation và ali
 - Tenant isolation notes.
 - API/data flow đề xuất.
 - Risks/blockers.
+
+## Feature Team Duty
+
+- Lead Agent gọi Architect trước implementation lớn hoặc cross-lane (Step 1 trong "Feature Team Execution Workflow").
+- Review boundary/risk và ghi quyết định vào lane plan trước khi Backend/Database/Frontend Agent bắt đầu code.
+- Block feature nếu thấy vi phạm tenant isolation, service boundary, hoặc data ownership.
+- Không tự sửa source code; chỉ ghi rule/decision vào docs/architecture, lane plan và handoff.

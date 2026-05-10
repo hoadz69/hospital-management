@@ -5,6 +5,8 @@ Ngày cập nhật: 2026-05-10
 File này là dashboard điều phối project. Không ghi plan chi tiết của một lane vào đây.
 Lead Agent chỉ dùng file này để tóm tắt trạng thái tổng quan và trỏ sang task/plan lane riêng.
 
+Mọi feature mới phải chạy theo "Feature Team Execution Workflow" (Step 0–10) trong `docs/agent-playbook.md` và `AGENTS.md`. Lead Agent assemble team theo loại feature (UI / API / full-stack / deployment / data) và phân lane đúng.
+
 ## Workstream Đang Chạy Song Song
 
 | Workstream | Task file | Plan file | Trạng thái ngắn | Bước tiếp theo |
@@ -25,6 +27,7 @@ Lead Agent chỉ dùng file này để tóm tắt trạng thái tổng quan và 
 
 - Nội dung backend cũ từ `docs/current-task.md` đã được chuyển sang `docs/current-task.backend.md`.
 - Nội dung frontend/UI cũ từ `docs/current-task.md` đã được chuyển sang `docs/current-task.frontend.md`.
+- 2026-05-10: thêm "Feature Team Execution Workflow" vào `AGENTS.md`, `docs/agent-playbook.md`, `.claude/agents/*`, `docs/agents/*`, `agents/*`, và `docs/commands/*`. Workflow áp dụng cho cả Claude Code và Codex; Lead Agent giả lập role khi tool không có subagent runtime thật.
 - Không có task chi tiết chưa phân loại tại thời điểm cập nhật này.
 
 ## Prompt Ngắn Từ Giờ
@@ -45,6 +48,15 @@ Lead:
 
 ```txt
 Lead Agent: cập nhật dashboard multi-workstream, đồng bộ roadmap và phân lane task mới nếu cần.
+```
+
+Feature Team (mọi feature mới):
+
+```txt
+Lead Agent: bắt đầu feature team cho [feature name]. Tự chọn agents cần tham gia, lập plan trước, chưa code.
+Lead Agent: owner duyệt plan, cho feature team implement [feature name]. Không commit.
+Lead Agent: verify feature team output cho [feature name]. QA Agent chạy checklist.
+Lead Agent: chia commit theo lane cho [feature name]. Không push.
 ```
 
 ## Guardrail Chung
