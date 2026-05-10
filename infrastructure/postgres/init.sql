@@ -1,5 +1,32 @@
--- Bootstrap PostgreSQL local cho Clinic SaaS.
--- Phần platform mirror schema Tenant MVP để dev có thể smoke tenant lifecycle.
+-- =============================================================================
+-- File này là MIRROR (sao y) của
+--   backend/services/tenant-service/src/TenantService.Infrastructure/Migrations/0001_create_tenant_mvp.sql
+-- Mục đích: docker-compose dev mount file này vào /docker-entrypoint-initdb.d/
+--          để postgres container init lần đầu có sẵn schema Phase 2.
+--
+-- ⚠️ CẢNH BÁO DRIFT:
+--   - Khi backend/database thêm migration mới (0002_*.sql, 0003_*.sql, ...)
+--     PHẢI sync nội dung mới vào file này thủ công, hoặc convert sang
+--     migration runner (DbUp / FluentMigrator) ở Phase 4+.
+--   - Server production KHÔNG dùng file này — chỉ dùng migration file thật.
+--     Nếu init.sql lệch server, dev local sẽ phát sinh bug "schema mismatch"
+--     khó debug.
+--
+-- Quy ước:
+--   - Khi sync, copy y nguyên migration file (kể cả COMMENT ON, IF NOT EXISTS).
+--   - KHÔNG thêm seed data vào file này — đó là việc của
+--     infrastructure/postgres/seed/ hoặc migration data script.
+--   - KHÔNG thêm DROP/TRUNCATE/DELETE — postgres image chỉ chạy init khi
+--     volume rỗng, mọi destructive sẽ phá database hiện hữu.
+--
+-- Khác biệt cho phép so với migration 0001:
+--   - Giữ thêm `CREATE SCHEMA IF NOT EXISTS tenant` để bootstrap schema
+--     `tenant` cho service khác sẽ mount sau (Phase 3+). Đây là concern
+--     của dev container, không thuộc Tenant Service migration.
+-- =============================================================================
+
+-- Tạo schema Tenant MVP cho Owner Super Admin quản lý tenant/phòng khám.
+-- Migration này tạo tenant root, hồ sơ phòng khám, domain/subdomain và module enablement ban đầu.
 
 CREATE SCHEMA IF NOT EXISTS platform;
 CREATE SCHEMA IF NOT EXISTS tenant;
