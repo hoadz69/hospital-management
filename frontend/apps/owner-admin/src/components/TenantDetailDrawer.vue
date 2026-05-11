@@ -3,8 +3,14 @@
 // Component overlay-side, đóng được bằng click backdrop hoặc nút X, hỗ trợ Escape.
 import type { TenantDetail, TenantDomainStatus, TenantStatus } from "@clinic-saas/shared-types";
 import { AppButton, AppCard, DomainStateRow, ModuleChips, PlanBadge, StatusPill } from "@clinic-saas/ui";
-import { computed, onBeforeUnmount, watch } from "vue";
+import { computed, onBeforeUnmount, ref, watch } from "vue";
+import DomainDnsRetryState from "./DomainDnsRetryState.vue";
+import SslPendingState from "./SslPendingState.vue";
+import TenantLifecycleConfirmModal from "./TenantLifecycleConfirmModal.vue";
 import { formatDomainStatus, formatModuleCode, formatTenantStatus } from "../services/labels";
+
+type LifecycleAction = "suspend" | "archive" | "restore";
+type DomainSurface = "dns" | "ssl" | null;
 
 const props = defineProps<{
   /** Hồ sơ tenant đang được xem; có thể undefined trong lúc loading. */
@@ -27,6 +33,10 @@ const nextStatus = computed<TenantStatus>(() => {
 
   return "Suspended";
 });
+
+const lifecycleAction = ref<LifecycleAction>("suspend");
+const lifecycleModalOpen = ref(false);
+const activeDomainSurface = ref<DomainSurface>(null);
 
 const domainCards = computed(() => {
   if (!props.tenant) {
@@ -126,6 +136,18 @@ function domainAction(status: TenantDomainStatus) {
   return "Recheck";
 }
 
+function domainActionTone(status: TenantDomainStatus) {
+  if (status === "failed") {
+    return "danger" as const;
+  }
+
+  if (status === "pending") {
+    return "primary" as const;
+  }
+
+  return "secondary" as const;
+}
+
 function moduleChipItems(moduleCodes: TenantDetail["moduleCodes"]) {
   return moduleCodes.map((moduleCode) => ({
     key: moduleCode,
@@ -135,8 +157,44 @@ function moduleChipItems(moduleCodes: TenantDetail["moduleCodes"]) {
   }));
 }
 
+function openLifecycleModal(action: LifecycleAction) {
+  lifecycleAction.value = action;
+  lifecycleModalOpen.value = true;
+}
+
+function confirmLifecycle(action: LifecycleAction) {
+  lifecycleModalOpen.value = false;
+
+  if (action === "archive") {
+    emit("updateStatus", "Archived");
+    return;
+  }
+
+  if (action === "restore") {
+    emit("updateStatus", "Active");
+    return;
+  }
+
+  emit("updateStatus", "Suspended");
+}
+
+function handleDomainAction(status: TenantDomainStatus, key: string) {
+  if (status === "failed" || key === "View error") {
+    activeDomainSurface.value = "dns";
+    return;
+  }
+
+  if (status === "pending" || key === "Recheck") {
+    activeDomainSurface.value = "ssl";
+  }
+}
+
 // Đóng drawer bằng phím Escape để tăng accessibility cho keyboard user.
 function handleEscape(event: KeyboardEvent) {
+  if (lifecycleModalOpen.value) {
+    return;
+  }
+
   if (event.key === "Escape" && props.open) {
     emit("close");
   }
@@ -244,8 +302,15 @@ onBeforeUnmount(() => {
                 :value="formatDomainStatus(domain.status)"
                 :helper="domain.helper"
                 :tone="domainTone(domain.status)"
-                :actions="[{ key: domain.action, label: domain.action, disabled: true }]"
+                :actions="[{ key: domain.action, label: domain.action, disabled: domain.status === 'verified', tone: domainActionTone(domain.status) }]"
+                @action="handleDomainAction(domain.status, $event)"
               />
+            </div>
+
+            <div v-if="activeDomainSurface" class="domain-state-preview">
+              <button type="button" class="state-close" @click="activeDomainSurface = null">Ẩn state surface</button>
+              <DomainDnsRetryState v-if="activeDomainSurface === 'dns'" />
+              <SslPendingState v-else />
             </div>
           </AppCard>
 
@@ -266,11 +331,28 @@ onBeforeUnmount(() => {
             <AppButton
               :label="nextStatus === 'Active' ? 'Kích hoạt phòng khám' : 'Tạm ngưng phòng khám'"
               :variant="nextStatus === 'Active' ? 'primary' : 'danger'"
-              @click="$emit('updateStatus', nextStatus)"
+              @click="openLifecycleModal(nextStatus === 'Active' ? 'restore' : 'suspend')"
+            />
+            <AppButton
+              v-if="tenant.status !== 'Archived'"
+              label="Lưu trữ tenant"
+              variant="danger"
+              @click="openLifecycleModal('archive')"
             />
           </div>
         </template>
       </aside>
+
+      <TenantLifecycleConfirmModal
+        v-if="tenant"
+        :open="lifecycleModalOpen"
+        :action="lifecycleAction"
+        :tenant-name="tenant.displayName"
+        :tenant-slug="tenant.slug"
+        :loading="loading"
+        @close="lifecycleModalOpen = false"
+        @confirm="confirmLifecycle"
+      />
     </div>
   </Teleport>
 </template>
@@ -447,6 +529,31 @@ dd {
   display: grid;
   gap: var(--space-3);
   margin: var(--space-4) 0 0;
+}
+
+.domain-state-preview {
+  display: grid;
+  gap: var(--space-3);
+  margin-top: var(--space-4);
+}
+
+.state-close {
+  min-height: 32px;
+  justify-self: end;
+  border: 1px solid var(--color-border-subtle);
+  border-radius: var(--radius-input);
+  padding: 0 var(--space-3);
+  background: var(--color-surface-elevated);
+  color: var(--color-text-secondary);
+  cursor: pointer;
+  font: inherit;
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.state-close:focus-visible {
+  outline: 2px solid color-mix(in srgb, var(--color-brand-primary) 28%, transparent);
+  outline-offset: 2px;
 }
 
 .drawer-state {

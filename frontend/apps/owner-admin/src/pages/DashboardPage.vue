@@ -3,6 +3,8 @@
 import type { TenantSummary } from "@clinic-saas/shared-types";
 import { AppButton, AppCard, EmptyState, KPITile, StatusPill } from "@clinic-saas/ui";
 import { computed, onMounted, ref } from "vue";
+import DomainDnsRetryState from "../components/DomainDnsRetryState.vue";
+import SslPendingState from "../components/SslPendingState.vue";
 import { formatTenantStatus } from "../services/labels";
 import { tenantClient } from "../services/tenantClient";
 
@@ -233,6 +235,14 @@ onMounted(loadDashboard);
           </RouterLink>
         </div>
       </AppCard>
+
+      <AppCard class="state-card">
+        <DomainDnsRetryState />
+      </AppCard>
+
+      <AppCard class="state-card">
+        <SslPendingState />
+      </AppCard>
     </div>
   </div>
 </template>
@@ -295,6 +305,10 @@ onMounted(loadDashboard);
 
 .tenant-card {
   grid-column: 1 / -1;
+}
+
+.state-card {
+  min-width: 0;
 }
 
 .range-toggle {

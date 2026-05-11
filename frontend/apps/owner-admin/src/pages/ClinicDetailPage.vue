@@ -5,8 +5,14 @@
 import type { TenantDetail, TenantDomainStatus, TenantStatus } from "@clinic-saas/shared-types";
 import { AppButton, AppCard, DomainStateRow, ModuleChips, PlanBadge, StatusPill } from "@clinic-saas/ui";
 import { computed, onMounted, ref, watch } from "vue";
+import DomainDnsRetryState from "../components/DomainDnsRetryState.vue";
+import SslPendingState from "../components/SslPendingState.vue";
+import TenantLifecycleConfirmModal from "../components/TenantLifecycleConfirmModal.vue";
 import { formatDomainStatus, formatModuleCode, formatTenantStatus } from "../services/labels";
 import { tenantClient } from "../services/tenantClient";
+
+type LifecycleAction = "suspend" | "archive" | "restore";
+type DomainSurface = "dns" | "ssl" | null;
 
 const props = defineProps<{
   /** Tenant ID lấy từ route params, dùng để fetch chi tiết. */
@@ -16,6 +22,9 @@ const props = defineProps<{
 const tenant = ref<TenantDetail | undefined>();
 const loading = ref(false);
 const error = ref<string | null>(null);
+const lifecycleAction = ref<LifecycleAction>("suspend");
+const lifecycleModalOpen = ref(false);
+const activeDomainSurface = ref<DomainSurface>(null);
 
 const detailHeading = computed(() => {
   if (tenant.value) {
@@ -85,6 +94,30 @@ function domainHelper(domain: TenantDetail["domains"][number]) {
   return "Chưa có dữ liệu DNS/SSL từ backend.";
 }
 
+function domainAction(domain: TenantDetail["domains"][number]) {
+  if (domain.status === "verified") {
+    return "View cert";
+  }
+
+  if (domain.status === "failed") {
+    return "View error";
+  }
+
+  return "Recheck";
+}
+
+function domainActionTone(status: TenantDomainStatus) {
+  if (status === "failed") {
+    return "danger" as const;
+  }
+
+  if (status === "pending") {
+    return "primary" as const;
+  }
+
+  return "secondary" as const;
+}
+
 function planTone(planCode: TenantDetail["planCode"]) {
   if (planCode === "premium") {
     return "warning";
@@ -125,7 +158,23 @@ async function loadTenant() {
   }
 }
 
-async function updateStatus() {
+function updateCurrentStatus() {
+  openLifecycleModal(nextStatus.value === "Active" ? "restore" : "suspend");
+}
+
+function openLifecycleModal(action: LifecycleAction) {
+  lifecycleAction.value = action;
+  lifecycleModalOpen.value = true;
+}
+
+async function confirmLifecycle(action: LifecycleAction) {
+  lifecycleModalOpen.value = false;
+
+  const status: TenantStatus = action === "archive" ? "Archived" : action === "restore" ? "Active" : "Suspended";
+  await updateStatus(status);
+}
+
+async function updateStatus(status: TenantStatus) {
   if (!tenant.value) {
     return;
   }
@@ -133,11 +182,22 @@ async function updateStatus() {
   loading.value = true;
 
   try {
-    tenant.value = await tenantClient.updateTenantStatus(tenant.value.id, { status: nextStatus.value });
+    tenant.value = await tenantClient.updateTenantStatus(tenant.value.id, { status });
   } catch (updateError) {
-    error.value = updateError instanceof Error ? updateError.message : "Không cập nhật được trạng thái phòng khám.";
+    error.value = (updateError as { message?: string }).message ?? "Không cập nhật được trạng thái phòng khám.";
   } finally {
     loading.value = false;
+  }
+}
+
+function handleDomainAction(status: TenantDomainStatus, key: string) {
+  if (status === "failed" || key === "View error") {
+    activeDomainSurface.value = "dns";
+    return;
+  }
+
+  if (status === "pending" || key === "Recheck") {
+    activeDomainSurface.value = "ssl";
   }
 }
 
@@ -161,7 +221,14 @@ watch(() => props.tenantId, loadTenant);
           :label="nextStatus === 'Active' ? 'Kích hoạt phòng khám' : 'Tạm ngưng phòng khám'"
           :variant="nextStatus === 'Active' ? 'primary' : 'danger'"
           :loading="loading"
-          @click="updateStatus"
+          @click="updateCurrentStatus"
+        />
+        <AppButton
+          v-if="tenant && tenant.status !== 'Archived'"
+          label="Lưu trữ tenant"
+          variant="danger"
+          :loading="loading"
+          @click="openLifecycleModal('archive')"
         />
       </div>
     </section>
@@ -226,6 +293,8 @@ watch(() => props.tenantId, loadTenant);
               :value="formatDomainStatus(domain.status)"
               :helper="domainHelper(domain)"
               :tone="domainTone(domain.status)"
+              :actions="[{ key: domainAction(domain), label: domainAction(domain), disabled: domain.status === 'verified', tone: domainActionTone(domain.status) }]"
+              @action="handleDomainAction(domain.status, $event)"
             />
           </div>
         </AppCard>
@@ -235,7 +304,27 @@ watch(() => props.tenantId, loadTenant);
         <h3>Module đang bật</h3>
         <ModuleChips :items="moduleChipItems(tenant.moduleCodes)" :total="tenant.moduleCodes.length" />
       </AppCard>
+
+      <AppCard v-if="activeDomainSurface" class="state-surface-card">
+        <div class="state-surface-heading">
+          <h3>{{ activeDomainSurface === "dns" ? "DNS retry state" : "SSL pending state" }}</h3>
+          <button type="button" @click="activeDomainSurface = null">Ẩn state surface</button>
+        </div>
+        <DomainDnsRetryState v-if="activeDomainSurface === 'dns'" />
+        <SslPendingState v-else />
+      </AppCard>
     </template>
+
+    <TenantLifecycleConfirmModal
+      v-if="tenant"
+      :open="lifecycleModalOpen"
+      :action="lifecycleAction"
+      :tenant-name="tenant.displayName"
+      :tenant-slug="tenant.slug"
+      :loading="loading"
+      @close="lifecycleModalOpen = false"
+      @confirm="confirmLifecycle"
+    />
   </div>
 </template>
 
@@ -317,6 +406,36 @@ dd {
   display: grid;
   gap: var(--space-3);
   margin: var(--space-4) 0 0;
+}
+
+.state-surface-card {
+  min-width: 0;
+}
+
+.state-surface-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  margin-bottom: var(--space-4);
+}
+
+.state-surface-heading button {
+  min-height: 32px;
+  border: 1px solid var(--color-border-subtle);
+  border-radius: var(--radius-input);
+  padding: 0 var(--space-3);
+  background: var(--color-surface-elevated);
+  color: var(--color-text-secondary);
+  cursor: pointer;
+  font: inherit;
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.state-surface-heading button:focus-visible {
+  outline: 2px solid color-mix(in srgb, var(--color-brand-primary) 28%, transparent);
+  outline-offset: 2px;
 }
 
 .error-state,

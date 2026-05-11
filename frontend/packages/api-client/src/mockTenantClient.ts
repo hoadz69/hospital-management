@@ -110,6 +110,10 @@ function delay<T>(value: T): Promise<T> {
   });
 }
 
+function findMockTenant(tenantKey: string) {
+  return mockTenants.find((item) => item.id === tenantKey || item.slug === tenantKey);
+}
+
 export function createMockTenantClient() {
   return {
     async listTenants(): Promise<TenantSummary[]> {
@@ -117,7 +121,7 @@ export function createMockTenantClient() {
     },
 
     async getTenant(tenantId: string): Promise<TenantDetail> {
-      const tenant = mockTenants.find((item) => item.id === tenantId);
+      const tenant = findMockTenant(tenantId);
       if (!tenant) {
         throw new Error("Tenant not found.");
       }
@@ -167,7 +171,7 @@ export function createMockTenantClient() {
     },
 
     async updateTenantStatus(tenantId: string, payload: TenantStatusUpdateRequest): Promise<TenantDetail> {
-      const tenant = mockTenants.find((item) => item.id === tenantId);
+      const tenant = findMockTenant(tenantId);
       if (!tenant) {
         throw new Error("Tenant not found.");
       }
