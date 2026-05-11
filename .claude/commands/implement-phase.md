@@ -19,6 +19,8 @@ Implement đúng phase trong `temp/plan.md`.
 
 Nếu owner gọi ngắn `Lead Agent: bắt đầu <task>` hoặc `Lead Agent: làm tiếp <task>`, đây là action trigger thật. Không acknowledge-only. Trước khi implement phải chạy `git status --branch --short`, `git diff --stat`, tự chạy Feature Team Execution Workflow: phân lane, đọc lane current-task/plan/handoff, tự chọn agents theo scope. Nếu task đã có scope rõ trong lane plan/current-task/handoff/roadmap với allowed files/file areas và acceptance/verify rõ, xem là resumable/approved scope và implement/resume ngay. Owner không cần paste "Agents tham gia".
 
+Fast Mode là mặc định cho `làm/tiếp tục/fix/verify A7` hoặc `làm tiếp`: đọc tối thiểu, không gọi full subagents/Figma/screenshot nếu không cần, không paste log dài và report tóm tắt. Full Team Mode chỉ chạy khi owner nói rõ `chạy Feature Team`, `full team`, `completion gate`, `visual QA`, `Figma check`, `screenshot verify`, hoặc task chạm nhiều vùng/rủi ro cao.
+
 ## Quy trình
 
 1. Chạy `git status --short` trước khi sửa.
@@ -41,6 +43,7 @@ Nếu owner gọi ngắn `Lead Agent: bắt đầu <task>` hoặc `Lead Agent: l
 - Không push.
 - Không stage `.claude/settings.local.json`, screenshot/log/generated artifacts.
 - Không xóa source/docs/plan dirty nếu chưa rõ chủ sở hữu.
+- Token budget: PASS chỉ ghi PASS; FAIL chỉ paste lỗi liên quan; không paste full diff/log; docs update chỉ ghi file + section.
 - Không dùng secret thật.
 - Không hard-code connection string production.
 - Không tạo Figma file mới.

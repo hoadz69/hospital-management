@@ -51,6 +51,8 @@ docker compose -f infrastructure/docker/docker-compose.prod.yml config
 8. Không commit.
 9. Không stage/push; không stage screenshot/log/generated artifacts.
 10. Không xóa source/docs/plan dirty nếu chưa rõ chủ sở hữu.
+11. Fast Mode verify mặc định không gọi Figma/screenshot/full team nếu owner không yêu cầu visual QA; PASS chỉ ghi PASS, FAIL chỉ paste lỗi liên quan.
+12. Visual QA budget chỉ chụp tối đa 1 desktop chính + 1 mobile chính, thêm tối đa 2 ảnh nếu thật sự quan trọng; nhiều route thì tạo contact sheet/collage.
 
 ## Report format
 

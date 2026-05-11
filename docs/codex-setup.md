@@ -128,13 +128,20 @@ Các prompt trên là action trigger thật. Codex không được chỉ acknowl
 
 Guardrail mặc định: không commit, không push, không stage; không stage/commit artifact/log/screenshot/generated files; không stage `.claude/settings.local.json`; không sửa ngoài scope; không xóa source/docs/plan dirty nếu chưa rõ chủ sở hữu. Nếu task đã có scope rõ trong lane plan/current-task/handoff/roadmap thì `bắt đầu` hoặc `làm tiếp` phải implement/resume đúng scope. Chỉ dừng approval gate khi task mới, scope chưa rõ, cross-lane lớn chưa có plan, có rủi ro destructive/secret/security, hoặc owner nói rõ "chỉ lập plan", "chưa code", "đợi tôi duyệt".
 
+Fast Mode là mặc định cho `Lead Agent: làm/tiếp tục/fix/verify A7` hoặc `Lead Agent: làm tiếp`: đọc tối thiểu, không gọi full subagents/Figma/screenshot nếu không cần, không paste log dài và report tóm tắt. Full Team Mode chỉ chạy khi owner nói rõ `chạy Feature Team`, `full team`, `completion gate`, `visual QA`, `Figma check`, `screenshot verify`, hoặc task chạm nhiều vùng/rủi ro cao.
+
+Token budget: PASS chỉ ghi PASS; FAIL chỉ paste lỗi liên quan; không paste full diff/log; không tóm tắt lại `AGENTS.md`; docs update chỉ ghi file + section. Fast Mode final report mặc định gồm `Lane`, `Action`, `Files changed`, `Verify`, `Skipped/blocker`, `Dirty`, `Next`.
+
 Prompt ngắn chuẩn owner có thể dùng mà không cần lặp guardrail:
 
 ```txt
-Lead Agent: bắt đầu A5.2
-Lead Agent: làm tiếp A5.3
-Lead Agent: verify A5.4
-Lead Agent: chia commit A5.1b
+Lead Agent: tiếp tục A7 fast mode
+Lead Agent: làm A7 fast mode
+Lead Agent: fix lỗi A7
+Lead Agent: visual QA A7 budget mode
+Lead Agent: làm toàn bộ A7 full team
+Lead Agent: chạy Feature Team cho A7
+Lead Agent: finalize A7, cleanup artifacts và push
 ```
 
 ## Cách Codex Dùng QA Screenshot / Artifact Workflow
@@ -142,8 +149,9 @@ Lead Agent: chia commit A5.1b
 Workflow này không phải skill tự chạy. Khi Codex đóng vai Lead Agent hoặc QA Agent:
 
 1. Đọc `AGENTS.md`, `docs/agents/qa-agent.md` và `docs/agents/lead-agent.md`.
-2. Nếu chạy UI visual smoke/browser test/Figma compare cho phần UI vừa đổi hoặc cần owner review, chụp screenshot cho route/state chính.
-3. Lưu screenshot vào generated artifact folder, ưu tiên `frontend/test-results/`, đặt tên rõ route/task/state.
+2. Chỉ chụp screenshot khi owner yêu cầu visual QA, trước commit UI lớn, có lỗi visual cần chứng minh trước/sau, hoặc task là restyle/layout lớn; không chụp mọi route nhỏ.
+3. Mặc định tối đa 1 desktop chính + 1 mobile chính, thêm tối đa 2 ảnh nếu route thật sự quan trọng; nếu cần nhiều route, tạo contact sheet/collage như `frontend/test-results/a7-visual-contact-sheet.png`.
 4. Report route/state, viewport nếu có, screenshot path, component/UI state đã test, pass/fail và visual issue.
-5. Không stage/commit screenshot/log/generated artifacts.
-6. Sau khi owner đã review hoặc task/test hoàn tất, Lead Agent cleanup artifact untracked theo rule trong `AGENTS.md`; trước và sau cleanup chạy `git status --short`, và không xóa tracked/source/docs/plan dirty.
+5. Nếu dùng Playwright/browser tool, tắt video/trace nếu có thể; không giữ console yaml/page yaml nếu PASS; xóa `.playwright-mcp` artifacts nếu không cần.
+6. Không stage/commit screenshot/log/yaml/generated artifacts.
+7. Sau khi owner đã review hoặc task/test hoàn tất, Lead Agent cleanup artifact untracked theo rule trong `AGENTS.md`; trước và sau cleanup chạy `git status --short`, và không xóa tracked/source/docs/plan dirty.

@@ -70,6 +70,7 @@ Hard rules:
 - Do not modify frontend code unless UI-to-code implementation is explicitly requested.
 - Do not change architecture.
 - Do not copy another website exactly.
+- Trong Fast Mode/budget mode, không gọi Figma UI Agent trừ khi owner yêu cầu Figma, task là visual restyle lớn, screenshot cho thấy UI lệch, hoặc chuẩn bị commit UI lớn.
 - Always report frames created/updated.
 
 Report:

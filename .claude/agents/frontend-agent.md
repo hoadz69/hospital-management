@@ -21,9 +21,9 @@ Surface rules:
 - Clinic Admin: website settings, slider, services, doctors, appointments, reports.
 - Public Website: tenant-aware homepage, booking CTA, services, staff, contact/map.
 
-Guardrails: do not invent layout when Figma exists, do not drop tenant context, do not edit backend outside scope, do not create Figma files, do not use random colors/spacing outside tokens.
+Guardrails: do not invent layout when Figma exists, do not drop tenant context, do not edit backend outside scope, do not create Figma files, do not use random colors/spacing outside tokens. Với Fast Mode/budget mode, không tự gọi Figma, không tạo screenshot và không mở full visual QA nếu owner/Lead chưa yêu cầu; verify bằng typecheck/build/static/smoke tối thiểu phù hợp.
 
-Output: routes/components/packages changed, API assumptions, build/typecheck result, UI smoke notes, Figma gaps.
+Output: routes/components/packages changed, API assumptions, build/typecheck result, UI smoke notes, Figma gaps. Nếu verify PASS, report ngắn; nếu FAIL, chỉ nêu lỗi liên quan và file/command fail.
 
 Feature team duty:
 

@@ -49,6 +49,10 @@ Lead Agent: chia commit <task>
 - `verify`: Lead + QA chạy checklist phù hợp, không code thêm nếu owner chưa cho phép vá.
 - `chia commit`: Lead review dirty/staged files và đề xuất commit split; chỉ stage/commit khi owner yêu cầu rõ.
 - Nếu owner nói "làm luôn", "implement luôn", "tiếp tục từ worktree hiện tại", "đã duyệt implement" hoặc "không hỏi lại approval", Lead bỏ approval gate và làm đúng scope, trừ khi có blocker an toàn/secret/destructive.
+- Fast Mode là mặc định cho `Lead Agent: làm A7`, `tiếp tục A7`, `fix A7`, `verify A7` hoặc `làm tiếp`: đọc tối thiểu, không gọi full subagents/Figma/screenshot nếu không cần, không paste log dài và report tóm tắt.
+- Full Team Mode chỉ chạy khi owner nói rõ `chạy Feature Team`, `full team`, `completion gate`, `visual QA`, `Figma check`, `screenshot verify`, hoặc task chạm nhiều vùng/rủi ro cao.
+- Token budget: PASS chỉ ghi PASS; FAIL chỉ paste lỗi liên quan; không paste full diff/log; subagent report tối đa 3-5 dòng; docs update chỉ ghi file + section.
+- Fast Mode final report mặc định gồm `Lane`, `Action`, `Files changed`, `Verify`, `Skipped/blocker`, `Dirty`, `Next`.
 - Nếu Claude Code có subagent runtime thì dùng agents phù hợp; nếu không có, Lead giả lập tuần tự bằng cách đọc `.claude/agents/*` và `docs/agents/*`.
 - Report phải ghi lane, agents đã chọn, action đã làm, file sửa/tạo hoặc file đã review, verify pass/fail nếu có, docs cập nhật nếu có, dirty/untracked còn lại, artifact/log không commit, và xác nhận không commit/push/stage theo guardrail mặc định.
 
@@ -63,14 +67,18 @@ Ví dụ đúng: Lead chạy git status/diff, đọc lane plan/current-task/hand
 ## QA Screenshots and Artifact Cleanup
 
 - Đây là workflow bắt buộc cho Claude Code khi chạy QA Agent hoặc Lead Agent trong UI visual smoke/browser test/Figma compare; không phải chỉ là skill được thêm vào mà không dùng.
-- Khi QA Agent chạy UI visual smoke, browser test hoặc Figma compare và có thay đổi UI hoặc cần owner review, phải chụp screenshot.
-- Screenshot lưu vào generated artifact folder, ưu tiên `frontend/test-results/`, đặt tên rõ route/task/state như `owner-dashboard-smoke.png`, `owner-clinics-smoke.png`, `owner-clinics-drawer-smoke.png`, `owner-clinics-empty-smoke.png`.
+- Visual QA Budget: chỉ chụp screenshot khi owner yêu cầu visual QA, trước commit UI lớn, có lỗi visual cần chứng minh trước/sau, hoặc task là restyle/layout lớn; không chụp mọi route nhỏ.
+- Screenshot mặc định tối đa 1 desktop chính + 1 mobile chính, thêm tối đa 2 ảnh nếu route thật sự quan trọng. Nếu cần nhiều route, tạo contact sheet/collage như `frontend/test-results/a7-visual-contact-sheet.png`.
+- Route sampling: dashboard, list/table chính, form/wizard chính, detail/modal chính nếu task có modal/detail.
+- Figma UI Agent chỉ chạy khi owner yêu cầu Figma, task là visual restyle lớn, screenshot cho thấy UI lệch, hoặc chuẩn bị commit UI lớn.
+- Screenshot lưu vào generated artifact folder, ưu tiên `frontend/test-results/`, đặt tên rõ route/task/state.
 - QA report phải ghi route/state đã check, screenshot path, component/UI state đã test, pass/fail và visual issue nếu có.
-- Screenshot, log và generated artifacts chỉ là artifact review; không stage/commit trừ khi owner yêu cầu rõ.
+- Nếu dùng Playwright/browser tool, tắt video/trace nếu có thể; không giữ console yaml/page yaml nếu PASS; xóa `.playwright-mcp` artifacts nếu không cần.
+- Screenshot, log, yaml và generated artifacts chỉ là artifact review; không stage/commit trừ khi owner yêu cầu rõ.
 - Lead Agent chịu trách nhiệm cleanup generated artifacts sau khi task/test/review hoàn tất để worktree không bẩn.
 - Cleanup chỉ được xóa untracked/generated artifacts; không xóa source code, docs/handoff/plan dirty, tracked files hoặc file owner chưa xác nhận.
 - Trước và sau cleanup phải chạy `git status --short`. Nếu nghi ngờ path có tracked file, kiểm tra `git ls-files --error-unmatch <path>`; nếu tracked thì không xóa.
-- Artifact mặc định có thể cleanup khi untracked: `frontend/test-results/`, `frontend/playwright-report/`, `frontend/blob-report/`, `test-results/`, `playwright-report/`, `temp/*-vite.log`, `.last-run.json`, `frontend/.last-run.json`.
+- Artifact mặc định có thể cleanup khi untracked: `frontend/test-results/`, `frontend/playwright-report/`, `frontend/blob-report/`, `test-results/`, `playwright-report/`, `.playwright-mcp/`, `temp/*-vite.log`, `.last-run.json`, `frontend/.last-run.json`.
 - Không commit screenshot/log/generated artifacts; không stage/commit/push trong cleanup step.
 
 ## Language Rule

@@ -327,6 +327,7 @@ Sau mỗi UI/Figma task, report:
 
 - Trong UI feature, Lead Agent gọi Figma UI Agent để giữ source of truth và chuẩn bị handoff cho Frontend Agent (Step 1 + Step 5).
 - Mặc định chỉ đọc Figma; chỉ sửa Figma khi owner yêu cầu rõ ("redesign", "cập nhật Figma", "làm Figma").
+- Trong Fast Mode/budget mode, không gọi Figma UI Agent trừ khi owner yêu cầu Figma, task là visual restyle lớn, screenshot cho thấy UI lệch, hoặc chuẩn bị commit UI lớn.
 - Báo Lead Agent gap giữa Figma và code để Step 6 integration không bị treo.
 - Không sửa frontend code trong UI-only task; chỉ chuẩn bị frame/component/state mapping cho Frontend Agent.
 

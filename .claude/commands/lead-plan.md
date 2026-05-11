@@ -21,6 +21,12 @@
    - Với `bắt đầu <task>` hoặc `làm tiếp <task>`, Lead phải implement/resume đúng scope.
    - Chỉ dừng approval gate nếu task hoàn toàn mới, scope chưa rõ, cross-lane lớn chưa có plan, có rủi ro destructive/secret/security, hoặc owner nói rõ "chỉ lập plan", "chưa code", "đợi tôi duyệt".
 
+0bb. Fast Mode / Full Team / token budget:
+   - Fast Mode là mặc định cho `làm/tiếp tục/fix/verify A7` hoặc `làm tiếp`: đọc tối thiểu, không gọi full subagents/Figma/screenshot nếu không cần, không paste log dài, report tóm tắt.
+   - Full Team Mode chỉ chạy khi owner nói rõ `chạy Feature Team`, `full team`, `completion gate`, `visual QA`, `Figma check`, `screenshot verify`, hoặc task chạm nhiều vùng/rủi ro cao.
+   - PASS chỉ ghi PASS; FAIL chỉ paste lỗi liên quan; không paste full diff/log; docs update chỉ ghi file + section.
+   - Fast Mode final report mặc định: `Lane`, `Action`, `Files changed`, `Verify`, `Skipped/blocker`, `Dirty`, `Next`.
+
 0c. Owner explicit override:
    - Nếu owner nói "làm luôn", "implement luôn", "tiếp tục từ worktree hiện tại", "đã duyệt implement" hoặc "không hỏi lại approval", Lead bỏ approval gate và làm đúng scope, trừ khi có blocker an toàn/secret/destructive.
 

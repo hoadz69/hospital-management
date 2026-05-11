@@ -113,6 +113,14 @@ Plan exists means resumable: nếu `<task>` đã xuất hiện trong lane plan/c
 
 Owner explicit override: nếu owner nói "làm luôn", "implement luôn", "tiếp tục từ worktree hiện tại", "đã duyệt implement" hoặc "không hỏi lại approval", Lead phải bỏ approval gate và làm đúng scope, trừ khi có blocker an toàn/secret/destructive.
 
+Fast Mode là mặc định cho short prompt như `Lead Agent: làm A7`, `Lead Agent: tiếp tục A7`, `Lead Agent: fix A7`, `Lead Agent: verify A7` hoặc `Lead Agent: làm tiếp`. Fast Mode đọc tối thiểu source of truth cần thiết, không gọi toàn bộ subagents nếu không cần, không gọi Figma nếu không cần visual/pixel review, không chạy screenshot nếu không phải UI visual QA, không paste log dài và chỉ report tóm tắt.
+
+Full Team Mode chỉ chạy khi owner nói rõ `chạy Feature Team`, `full team`, `làm toàn bộ`, `làm thật nhiều`, `completion gate`, `visual QA`, `Figma check`, `screenshot verify`, hoặc task chạm nhiều vùng lớn/rủi ro cao. Full Team Mode mới dùng Lead + Architect + Figma UI + Frontend + QA + Documentation, subagent runtime, screenshot/Figma/smoke đầy đủ và report chi tiết.
+
+Token budget rule: không paste full logs/diff nếu PASS, PASS chỉ ghi PASS, FAIL chỉ paste lỗi liên quan, không tóm tắt lại toàn bộ `AGENTS.md`, không nhắc lại guardrail dài, subagent report tối đa 3-5 dòng mỗi agent, docs update chỉ ghi file + section.
+
+Fast Mode final report mặc định chỉ gồm: `Lane`, `Action`, `Files changed`, `Verify`, `Skipped/blocker`, `Dirty`, `Next`.
+
 Nếu chưa đủ dữ kiện, Lead phải tạo/update lane plan với scope, out of scope, agents, allowed files/file areas, acceptance criteria, verify commands, rollback/cleanup notes và cần owner duyệt gì. Sau đó mới dừng; không được chỉ ghi "đã ghi nhận".
 
 Agent assembly mặc định:
@@ -544,7 +552,11 @@ Nhiệm vụ:
 Feature team duty:
 
 - Chạy verification checklist Step 7: build/typecheck/test, API smoke (mock + real nếu có), UI route smoke, edge states, tenant isolation, regression.
-- Khi chạy UI visual smoke/browser test/Figma compare và UI vừa thay đổi hoặc cần owner review, QA Agent phải chụp screenshot, lưu vào `frontend/test-results/` hoặc generated artifact folder tương ứng, và ghi rõ screenshot path + route/state trong report.
+- Visual QA Budget: QA chỉ chụp screenshot khi owner yêu cầu visual QA, trước commit UI lớn, có lỗi visual cần chứng minh trước/sau, hoặc task là restyle/layout lớn; không chụp mọi route nhỏ.
+- Screenshot mặc định tối đa 1 desktop chính + 1 mobile chính, thêm tối đa 2 ảnh nếu route thật sự quan trọng. Nếu cần nhiều route, tạo contact sheet/collage như `frontend/test-results/a7-visual-contact-sheet.png`.
+- Route sampling cho visual QA lớn: dashboard, list/table chính, form/wizard chính, detail/modal chính nếu task có modal/detail.
+- Figma UI Agent chỉ chạy khi owner yêu cầu Figma, task là visual restyle lớn, screenshot cho thấy UI lệch, hoặc chuẩn bị commit UI lớn.
+- Nếu dùng Playwright/browser tool, tắt video/trace nếu có thể; không giữ console yaml/page yaml nếu PASS; xóa `.playwright-mcp` artifacts nếu không cần.
 - Không sửa source (FE/BE) trừ khi Lead Agent cho phép vá nhỏ trong slice đang test.
 - Nếu thiếu env real-API, mark "Real API smoke: pending wiring" và tiếp tục mock smoke; không chặn Lead vô lý.
 - Screenshot/log/generated artifacts không được stage/commit; Lead Agent cleanup artifact untracked sau khi review/test hoàn tất theo `AGENTS.md`.

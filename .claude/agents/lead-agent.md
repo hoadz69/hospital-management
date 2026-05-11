@@ -70,6 +70,14 @@ Minimum action checklist: run `git status --branch --short`, run `git diff --sta
 
 Owner override: if owner says "làm luôn", "implement luôn", "tiếp tục từ worktree hiện tại", "đã duyệt implement", or "không hỏi lại approval", skip the approval gate and work in scope unless blocked by safety/secret/destructive risk.
 
+Fast Mode là mặc định cho `Lead Agent: làm A7`, `Lead Agent: tiếp tục A7`, `Lead Agent: fix A7`, `Lead Agent: verify A7` hoặc `Lead Agent: làm tiếp`: đọc tối thiểu, không gọi full subagents/Figma/screenshot nếu không cần, không paste log dài và report tóm tắt.
+
+Full Team Mode chỉ chạy khi owner nói rõ `chạy Feature Team`, `full team`, `làm toàn bộ`, `làm thật nhiều`, `completion gate`, `visual QA`, `Figma check`, `screenshot verify`, hoặc task chạm nhiều vùng lớn/rủi ro cao. Full Team Mode mới dùng Lead + Architect + Figma UI + Frontend + QA + Documentation, subagent runtime, screenshot/Figma/smoke đầy đủ và report chi tiết.
+
+Token budget rule: PASS chỉ ghi PASS; FAIL chỉ paste lỗi liên quan; không paste full diff/log; không tóm tắt lại toàn bộ `AGENTS.md`; không nhắc lại guardrail dài; subagent report tối đa 3-5 dòng; docs update chỉ ghi file + section.
+
+Fast Mode final report mặc định chỉ gồm: `Lane`, `Action`, `Files changed`, `Verify`, `Skipped/blocker`, `Dirty`, `Next`.
+
 If scope is insufficient, create/update a lane plan with scope, out of scope, agents, allowed files/file areas, acceptance criteria, verify commands, rollback/cleanup notes, and what needs owner approval. Then stop; do not acknowledge only.
 
 Default assembly:
@@ -112,11 +120,16 @@ Crash recovery:
 
 Áp dụng bắt buộc khi Claude QA Agent tạo screenshot/log/browser artifact:
 
-- Lead Agent phải đảm bảo QA report có route/state, screenshot path, viewport nếu có, pass/fail và visual issue.
+- Visual QA Budget: QA chỉ chụp screenshot khi owner yêu cầu visual QA, trước commit UI lớn, có lỗi visual cần chứng minh trước/sau, hoặc task là restyle/layout lớn; không chụp mọi route nhỏ.
+- Screenshot mặc định tối đa 1 desktop chính + 1 mobile chính, thêm tối đa 2 ảnh nếu route thật sự quan trọng. Nếu cần nhiều route, tạo contact sheet/collage như `frontend/test-results/a7-visual-contact-sheet.png`.
+- Route sampling cho visual QA lớn: dashboard, list/table chính, form/wizard chính, detail/modal chính nếu task có modal/detail.
+- Figma UI Agent chỉ chạy khi owner yêu cầu Figma, task là visual restyle lớn, screenshot cho thấy UI lệch, hoặc chuẩn bị commit UI lớn.
+- Nếu dùng Playwright/browser tool, tắt video/trace nếu có thể; không giữ console yaml/page yaml nếu PASS; xóa `.playwright-mcp` artifacts nếu không cần.
+- Lead Agent phải đảm bảo QA report có route/state, screenshot path, viewport nếu có, pass/fail và visual issue khi thật sự có screenshot/visual QA.
 - Sau khi task/test/review hoàn tất, Lead Agent cleanup generated artifacts để worktree không bẩn nếu artifact chỉ là untracked review output.
 - Trước và sau cleanup chạy `git status --short`.
 - Nếu nghi ngờ path có tracked file, kiểm tra `git ls-files --error-unmatch <path>`; tracked file thì không xóa.
-- Chỉ cleanup artifact mặc định khi untracked: `frontend/test-results/`, `frontend/playwright-report/`, `frontend/blob-report/`, `test-results/`, `playwright-report/`, `temp/*-vite.log`, `.last-run.json`, `frontend/.last-run.json`.
+- Chỉ cleanup artifact mặc định khi untracked: `frontend/test-results/`, `frontend/playwright-report/`, `frontend/blob-report/`, `test-results/`, `playwright-report/`, `.playwright-mcp/`, `temp/*-vite.log`, `.last-run.json`, `frontend/.last-run.json`.
 - Không stage/commit screenshot/log/generated artifacts, không push artifact, không xóa source/docs/plan dirty của owner.
 
 UI workflow:

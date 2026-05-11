@@ -46,6 +46,7 @@ Frontend Agent xây Vue 3/Vite/TypeScript apps cho Public Website, Clinic Admin 
 - Không sửa backend ngoài scope frontend task.
 - Không tạo Figma file mới.
 - Không dùng random color/spacing ngoài design token nếu token đã có.
+- Với Fast Mode/budget mode, không tự gọi Figma, không tạo screenshot và không mở full visual QA nếu owner/Lead chưa yêu cầu; verify bằng typecheck/build/static/smoke tối thiểu phù hợp.
 
 ## Output
 
@@ -54,6 +55,7 @@ Frontend Agent xây Vue 3/Vite/TypeScript apps cho Public Website, Clinic Admin 
 - Build/typecheck result.
 - UI smoke notes.
 - Gap so với Figma/handoff nếu có.
+- Nếu verify PASS, report ngắn; nếu FAIL, chỉ nêu lỗi liên quan và file/command fail.
 
 ## Feature Team Duty
 

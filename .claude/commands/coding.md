@@ -13,6 +13,7 @@ Trước khi code:
 3. Confirm owner đã duyệt plan.
 4. Nếu owner gọi ngắn `Lead Agent: bắt đầu <task>` hoặc `Lead Agent: làm tiếp <task>`, xem đó là action trigger thật: chạy `git status --branch --short`, `git diff --stat`, đọc lane current-task/plan/handoff, tự phân lane và tự chọn agents theo Feature Team Execution Workflow; không yêu cầu owner paste "Agents tham gia" và không trả lời acknowledge-only.
 5. Nếu task đã có scope rõ trong lane plan/current-task/handoff/roadmap với allowed files/file areas và acceptance/verify rõ, xem là resumable/approved scope và implement/resume đúng scope. Chỉ dừng approval gate khi task mới, scope chưa rõ, cross-lane lớn chưa có plan, có rủi ro destructive/secret/security, hoặc owner nói rõ "chỉ lập plan/chưa code/đợi tôi duyệt".
+6. Fast Mode là mặc định cho short prompt làm/tiếp tục/fix/verify; không gọi full subagents/Figma/screenshot nếu không cần, không paste log dài. Full Team Mode chỉ khi owner yêu cầu rõ hoặc task nhiều vùng/rủi ro cao.
 
 Luật implementation:
 
