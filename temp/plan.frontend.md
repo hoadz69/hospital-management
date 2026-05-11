@@ -1196,3 +1196,291 @@ Chưa sửa backend/Figma.
 Chưa push.
 Không stage .claude/settings.local.json.
 ```
+
+## 19. Wave A Step A5 - Shared UI Components Foundation (2026-05-11)
+
+Trạng thái: 🟡 **A5.1 đã implement + verify PASS; A5.2 còn pending**.
+
+Lead Agent đã điều phối Frontend Agent, Figma UI Agent, Architect Agent và QA Agent theo workflow owner yêu cầu. Step A5 được tách nhỏ để giảm risk: A5.1 chỉ thêm 5 display component shared UI trong `packages/ui`; A5.2 còn lại cho `CommandPalette`, `TenantSwitcher` và adoption vào Owner Admin wrapper nếu owner duyệt tiếp.
+
+### 19.1 Resume / Git Check
+
+```txt
+git status --branch --short -> ## main...origin/main
+git log -12 --oneline ->
+  9489124 docs(frontend): mark wave a composables complete
+  b87dad4 feat(ui): add shared composable foundation
+  025fa8f feat(api-client): split http client surfaces
+  f85ac23 style(owner-admin): polish v3 tenant operations smoke fixes
+  d91d19f style(owner-admin): restyle tenant operations with v3 tokens
+  6876576 docs: add crash recovery checkpoint protocol
+  9eb0487 feat(design-tokens): add v3 token foundation
+  67beeab docs: sync UI Redesign V3 handoff for Phase 4
+  98d2513 docs: sync pre-phase 4 hardening status
+  6d65dcb chore(database): pre-phase 4 hardening
+  ee4ce03 chore(devops): pre-phase 4 hardening
+  ee0c773 fix(frontend): pre-phase 4 hardening
+```
+
+Kết luận: Wave A progress đã push/commit đủ các mốc A1-A4 liên quan:
+
+```txt
+- Token V3 foundation: commit 9eb0487.
+- Owner Admin V3 restyle: commit d91d19f.
+- Owner Admin polish smoke fixes: commit f85ac23.
+- httpClient surface split: commit 025fa8f.
+- Shared composables foundation: commit b87dad4 + handoff 9489124.
+```
+
+### 19.2 Source Đã Đọc / Inspect
+
+Docs/lane:
+
+```txt
+AGENTS.md
+docs/session-continuity.md
+docs/current-task.md
+docs/current-task.frontend.md
+temp/plan.frontend.md
+docs/roadmap/clinic-saas-roadmap.md section 7.1 UI Redesign V3 / Phase 4
+docs/agent-playbook.md
+docs/agents/lead-agent.md
+docs/agents/figma-ui-agent.md
+```
+
+Code:
+
+```txt
+frontend/packages/ui/src/components
+frontend/packages/ui/src/index.ts
+frontend/apps/owner-admin/src/components
+frontend/apps/owner-admin/src/pages
+frontend/packages/design-tokens/src/v3
+frontend/packages/ui/src/composables
+frontend/package.json
+```
+
+Figma MCP read-only inspect đã đọc được:
+
+```txt
+66:2   Design Tokens Reference
+85:2   Owner Admin Tenant Operations
+87:2   Tenant Detail Drawer
+88:112 Empty State
+88:127 Command Palette
+127:2  Component Inventory
+```
+
+Không sửa Figma. Các frame `124:*` / `125:*` thuộc A6/A7 state surfaces, không đưa vào implement A5 trừ khi owner mở scope sau.
+
+### 19.3 Hiện Trạng Component
+
+`frontend/packages/ui` hiện có:
+
+```txt
+AppButton
+AppCard
+MetricCard
+StatusPill
+useReducedMotion
+useViewTransition
+useFocusTrap
+useTenantContext
+```
+
+Sau A5.1, component A5 trong `packages/ui`:
+
+```txt
+DONE:
+- KPITile
+- ModuleChips
+- PlanBadge
+- EmptyState
+- DomainStateRow
+
+PENDING A5.2:
+- TenantSwitcher
+- CommandPalette
+```
+
+Component tương đương / nguồn extract:
+
+| Component A5 | Tương đương hiện có | Quyết định |
+|---|---|---|
+| `KPITile` | `MetricCard` trong `packages/ui`, đang dùng ở `DashboardPage` và `ClinicsPage` | Tạo mới trong `packages/ui` nếu cần sparkline/trend đúng V3; không thay `MetricCard` ngay. |
+| `ModuleChips` | `module-meter` trong `TenantTable`, `module-list` trong `TenantDetailDrawer`/`ClinicDetailPage`, chip chọn module trong wizard | Tạo mới trong `packages/ui`, extract phần display module. Props generic, không import tenant type. |
+| `PlanBadge` | `StatusPill` + `planTone()` trong `TenantTable`, plan option cards trong wizard | Tạo mới trong `packages/ui` nếu dùng visual V3 riêng cho plan; props nhận `label`/`tone`. |
+| `EmptyState` | Inline `.empty-state` ở `ClinicsPage`, `.empty` ở `DashboardPage`, `state-cell` ở `TenantTable` | Tạo mới trong `packages/ui`, dùng props/slot/action. |
+| `TenantSwitcher` | Chưa có component tương đương; có `useTenantContext` foundation | **Không đưa shared behavior tenant thật vào A5**. Nếu vẫn phải có tên A5, tạo presentational controlled component trong `packages/ui`, không route/API/storage. Architect khuyến nghị tên generic hơn về sau. |
+| `CommandPalette` | `OwnerCommandPalette.vue` app-local | Extract shared base vào `packages/ui`; app giữ wrapper/data/route/action. |
+| `DomainStateRow` | `domainCards` + `.domain-card` trong `TenantDetailDrawer`, domain list trong `ClinicDetailPage` | Tạo mới trong `packages/ui`; chỉ render status/helper/action và emit event, không polling. |
+
+### 19.4 Boundary / Behavior Rule
+
+Step A5 là **presentational shared UI foundation**:
+
+```txt
+- Không đổi API client, route, store, tenant lifecycle, DNS retry/polling, auth/RBAC.
+- Không import tenantClient, vue-router, Pinia, @clinic-saas/api-client trong packages/ui.
+- Không import @clinic-saas/shared-types trong packages/ui; app map enum/type -> label/tone trước.
+- Không hardcode tenant id/role; không đọc env/localStorage/sessionStorage.
+- CommandPalette shared chỉ quản lý overlay/search/list/focus; route action do Owner Admin wrapper truyền.
+- DomainStateRow chỉ emit retry/view/copy; không gọi API, không poll DNS.
+- TenantSwitcher nếu tạo shared chỉ là controlled UI props/events, không là tenant authority.
+```
+
+### 19.5 File Dự Kiến Tạo/Sửa
+
+Shared UI A5.1 đã tạo mới:
+
+```txt
+frontend/packages/ui/src/components/KPITile.vue
+frontend/packages/ui/src/components/ModuleChips.vue
+frontend/packages/ui/src/components/PlanBadge.vue
+frontend/packages/ui/src/components/EmptyState.vue
+frontend/packages/ui/src/components/DomainStateRow.vue
+```
+
+Shared UI sửa:
+
+```txt
+frontend/packages/ui/src/index.ts
+```
+
+Shared UI còn pending A5.2:
+
+```txt
+frontend/packages/ui/src/components/TenantSwitcher.vue
+frontend/packages/ui/src/components/CommandPalette.vue
+```
+
+Owner Admin chỉ sửa nếu integrate usage ngay trong A5:
+
+```txt
+frontend/apps/owner-admin/src/pages/DashboardPage.vue
+frontend/apps/owner-admin/src/pages/ClinicsPage.vue
+frontend/apps/owner-admin/src/components/TenantTable.vue
+frontend/apps/owner-admin/src/components/TenantDetailDrawer.vue
+frontend/apps/owner-admin/src/components/OwnerCommandPalette.vue
+frontend/apps/owner-admin/src/layouts/OwnerAdminLayout.vue
+frontend/apps/owner-admin/src/pages/ClinicDetailPage.vue
+```
+
+Không sửa trong A5:
+
+```txt
+backend/
+frontend/apps/public-web/
+frontend/apps/clinic-admin/
+frontend/packages/api-client/
+frontend/package.json
+frontend/package-lock.json
+Figma
+.env*
+.claude/settings.local.json
+```
+
+### 19.6 Token V3 Theo Component
+
+Tất cả component A5 dùng CSS variables từ `frontend/packages/design-tokens/src/v3/v3.css`; không thêm hex literal mới.
+
+| Component | Token chính |
+|---|---|
+| `KPITile` | `--color-surface-elevated`, `--color-border-subtle`, `--color-text-primary`, `--color-text-muted`, `--color-status-*`, `--radius-card`, `--shadow-elevation-1`, `--motion-duration-xs`. |
+| `ModuleChips` | `--color-status-success`, `--color-surface-muted`, `--color-text-secondary`, `--radius-input`, `--space-1/2/3`. |
+| `PlanBadge` | `--color-brand-primary`, `--color-status-warning`, `--color-status-specialty`, `--color-surface-muted`, `--radius-input` hoặc `--radius-pill`. |
+| `EmptyState` | `--color-surface-elevated`, `--color-border-subtle`, `--color-brand-primary`, `--color-text-primary/secondary/muted`, `--radius-card`, `--space-6/10/14`. |
+| `TenantSwitcher` | `--color-surface-elevated`, `--color-surface-muted`, `--color-border-subtle`, `--color-text-primary/secondary`, `--radius-input`, `--shadow-elevation-2`. |
+| `CommandPalette` | `--color-text-primary` overlay mix, `--color-surface-elevated`, `--color-surface-muted`, `--color-border-subtle`, `--color-brand-primary`, `--radius-card`, `--shadow-elevation-3`, `--motion-duration-md`, `--motion-ease-standard`. |
+| `DomainStateRow` | `--color-status-success/info/warning/danger/specialty`, `--color-surface-elevated`, `--color-surface-muted`, `--color-border-subtle`, `--radius-card`, `--radius-pill`. |
+
+### 19.7 Acceptance Criteria
+
+```txt
+1. A5.1: `packages/ui/src/index.ts` export đủ 5 display component: `KPITile`, `ModuleChips`, `PlanBadge`, `EmptyState`, `DomainStateRow`.
+2. A5.2: `packages/ui/src/index.ts` export thêm `CommandPalette`, `TenantSwitcher` khi owner duyệt scope tiếp.
+3. Shared components dùng props/events/slot, không biết route/API/tenant business enum.
+4. Owner Admin wrapper có thể dùng shared CommandPalette mà không đổi shortcut/close behavior hiện tại sau A5.2.
+5. Domain/module/plan display nhất quán với Figma V3 frame 85:2, 87:2, 88:112, 88:127.
+6. Không thêm dependency, không thêm Histoire/axe/Lighthouse trong A5.
+7. Không đổi behavior hiện có trên /dashboard, /clinics, /clinics/create, /clinics/:tenantId.
+8. Không tạo polling DNS thật; DNS retry tolerance vẫn chờ owner decision.
+```
+
+### 19.8 Verify Đã Chạy Cho A5.1
+
+```powershell
+cd frontend
+npm run typecheck
+npm run build
+```
+
+Kết quả:
+
+```txt
+- npm run typecheck -> PASS cả 3 app: clinic-admin, owner-admin, public-web.
+- npm run build -> PASS cả 3 app.
+  - clinic-admin JS 62.23 kB.
+  - owner-admin JS 150.57 kB, CSS 37.24 kB.
+  - public-web JS 62.57 kB.
+- git diff --check -> không có whitespace error; chỉ warning CRLF cho `temp/plan.frontend.md`.
+```
+
+Static check A5.1:
+
+```powershell
+rg "#[0-9a-fA-F]{3,8}|rgb\(|rgba\(" 5 file component A5.1 -> no match.
+git show --check --stat HEAD -> no whitespace error.
+```
+
+Chưa chạy:
+
+```txt
+- npm run dev:owner và manual browser smoke, vì A5.1 chỉ thêm/export shared components, chưa integrate vào route hiện tại.
+- Manual QA CommandPalette/TenantSwitcher, vì 2 component này thuộc A5.2 pending.
+```
+
+### 19.9 Risk
+
+```txt
+MEDIUM - KPITile trùng MetricCard:
+  Mitigation: giữ MetricCard, tạo KPITile chỉ cho V3 sparkline/trend; không migrate rộng nếu chưa cần.
+
+MEDIUM - PlanBadge trùng StatusPill:
+  Mitigation: PlanBadge chỉ dùng cho plan visual riêng; status vẫn dùng StatusPill.
+
+HIGH - Shared UI bị lẫn nghiệp vụ tenant:
+  Mitigation: packages/ui không import shared-types/api-client/router; app map data trước.
+
+MEDIUM - CommandPalette extract làm đổi behavior hiện có:
+  Mitigation: OwnerCommandPalette giữ wrapper/data/shortcut; shared base chỉ nhận props/events.
+
+MEDIUM - TenantSwitcher naming dễ hiểu nhầm là tenant authority:
+  Mitigation: A5 chỉ presentational controlled component; tenant isolation/auth vẫn thuộc app/API/backend.
+
+MEDIUM - Token drift:
+  Mitigation: chỉ dùng CSS var V3; không thêm hex literal mới trong shared components.
+
+LOW/MEDIUM - Không có test runner/a11y automation:
+  Mitigation: typecheck/build + manual keyboard/a11y smoke; không thêm dependency khi owner chưa duyệt.
+```
+
+### 19.10 Commit / Worktree
+
+A5.1 source code đã nằm trong commit:
+
+```txt
+eca5086 feat(ui): add v3 shared display components
+```
+
+Worktree sau verify chỉ còn dirty `temp/plan.frontend.md` để cập nhật handoff. Không push.
+
+### 19.11 Điểm Dừng / Owner Approval Gate
+
+```txt
+Dừng tại đây sau A5.1.
+Đã code 5 display component shared UI, đã verify typecheck/build.
+Chưa sửa Figma, chưa sửa backend, chưa thêm dependency, chưa integrate Owner Admin route.
+Còn pending A5.2: CommandPalette shared base + TenantSwitcher presentational + optional Owner Admin adoption.
+Frontend Agent chỉ làm A5.2 khi owner duyệt tiếp scope A5.2.
+```
