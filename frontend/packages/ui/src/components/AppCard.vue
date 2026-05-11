@@ -19,23 +19,24 @@ withDefaults(
 
 <style scoped>
 .app-card {
-  border: 1px solid var(--color-border-subtle, #d9e2ec);
-  border-radius: var(--radius-card, 8px);
-  background: var(--color-surface-elevated, #ffffff);
-  box-shadow: var(--shadow-elevation-1, 0 12px 30px rgba(16, 42, 67, 0.08));
+  box-sizing: border-box;
+  border: 1px solid var(--color-border-subtle, #d8d2c5);
+  border-radius: var(--radius-card, 16px);
+  background: var(--color-surface-elevated, #fffdf8);
+  box-shadow: var(--shadow-elevation-1, 0 10px 24px rgba(57, 50, 40, 0.07));
 }
 
 .app-card.is-padded {
-  padding: var(--space-5, 20px);
+  padding: var(--space-5, 18px);
 }
 
 .app-card[data-tone="muted"] {
-  background: var(--color-surface-muted, #f8fafc);
+  background: var(--color-surface-muted, #f6f1e8);
   box-shadow: none;
 }
 
 .app-card[data-tone="danger"] {
   border-color: var(--color-status-danger, #fca5a5);
-  background: color-mix(in srgb, var(--color-status-danger, #b42318) 8%, var(--color-surface-elevated, #ffffff));
+  background: color-mix(in srgb, var(--color-status-danger, #b42318) 8%, var(--color-surface-elevated, #fffdf8));
 }
 </style>

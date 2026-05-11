@@ -23,20 +23,21 @@ defineProps<{
   display: grid;
   gap: var(--space-2, 8px);
   position: relative;
-  min-height: 120px;
-  border: 1px solid var(--color-border-subtle, #d9e2ec);
-  border-radius: var(--radius-card, 8px);
-  padding: 18px 20px;
-  background: var(--color-surface-elevated, #ffffff);
-  box-shadow: var(--shadow-elevation-1, 0 12px 30px rgba(16, 42, 67, 0.08));
+  min-height: 112px;
+  border: 1px solid var(--color-border-subtle, #d8d2c5);
+  border-radius: var(--radius-card, 16px);
+  padding: 16px 18px;
+  background: var(--color-surface-elevated, #fffdf8);
+  box-shadow: var(--shadow-elevation-1, 0 10px 24px rgba(57, 50, 40, 0.07));
   transition:
     transform var(--motion-duration-xs, 120ms) var(--motion-ease-standard, ease),
     box-shadow var(--motion-duration-xs, 120ms) var(--motion-ease-standard, ease);
 }
 
 .metric-card:hover {
-  box-shadow: var(--shadow-elevation-2, 0 12px 30px rgba(16, 42, 67, 0.08));
-  transform: translateY(-1px) scale(1.01);
+  border-color: var(--color-border-strong, #c9bfad);
+  box-shadow: var(--shadow-elevation-2, 0 14px 30px rgba(57, 50, 40, 0.1));
+  transform: translateY(-1px);
 }
 
 .metric-card > div {
@@ -45,8 +46,8 @@ defineProps<{
 
 .metric-mark {
   position: absolute;
-  top: 18px;
-  right: 20px;
+  top: 16px;
+  right: 18px;
   width: 60px;
   height: 24px;
   border-radius: 4px;
@@ -93,13 +94,23 @@ defineProps<{
 
 .metric-value {
   display: block;
-  margin-top: 8px;
+  margin-top: 6px;
   color: var(--color-text-primary, #102a43);
-  font-size: 28px;
-  line-height: 36px;
+  font-size: 26px;
+  line-height: 34px;
 }
 
 .metric-meta {
-  margin-top: 8px;
+  margin-top: 6px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .metric-card {
+    transition: none;
+  }
+
+  .metric-card:hover {
+    transform: none;
+  }
 }
 </style>

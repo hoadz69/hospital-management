@@ -29,12 +29,13 @@ withDefaults(
   min-height: 26px;
   display: inline-flex;
   align-items: center;
-  gap: var(--space-2);
-  border: 1px solid color-mix(in srgb, var(--plan-color, var(--color-brand-primary)) 30%, transparent);
-  border-radius: var(--radius-input);
-  padding: var(--space-1) var(--space-3);
-  background: color-mix(in srgb, var(--plan-color, var(--color-brand-primary)) 10%, var(--color-surface-elevated));
-  color: var(--plan-color, var(--color-brand-primary));
+  gap: var(--space-2, 8px);
+  max-width: 100%;
+  border: 1px solid color-mix(in srgb, var(--plan-color, var(--color-brand-primary, #0e7c86)) 28%, transparent);
+  border-radius: var(--radius-input, 12px);
+  padding: var(--space-1, 4px) var(--space-3, 12px);
+  background: color-mix(in srgb, var(--plan-color, var(--color-brand-primary, #0e7c86)) 10%, var(--color-surface-elevated, #fffdf8));
+  color: var(--plan-color, var(--color-brand-primary, #0e7c86));
   font-size: 11px;
   font-weight: 800;
   line-height: 14px;
@@ -49,35 +50,35 @@ withDefaults(
 }
 
 .plan-badge__value {
-  color: var(--color-text-secondary);
+  color: var(--color-text-secondary, #486581);
   font-weight: 700;
 }
 
 .plan-badge[data-tone="primary"] {
-  --plan-color: var(--color-brand-primary);
+  --plan-color: var(--color-brand-primary, #0e7c86);
 }
 
 .plan-badge[data-tone="success"] {
-  --plan-color: var(--color-status-success);
+  --plan-color: var(--color-status-success, #047857);
 }
 
 .plan-badge[data-tone="warning"] {
-  --plan-color: var(--color-status-warning);
+  --plan-color: var(--color-status-warning, #b45309);
 }
 
 .plan-badge[data-tone="danger"] {
-  --plan-color: var(--color-status-danger);
+  --plan-color: var(--color-status-danger, #b42318);
 }
 
 .plan-badge[data-tone="info"] {
-  --plan-color: var(--color-status-info);
+  --plan-color: var(--color-status-info, #1d4ed8);
 }
 
 .plan-badge[data-tone="neutral"] {
-  --plan-color: var(--color-status-draft);
+  --plan-color: var(--color-status-draft, #475569);
 }
 
 .plan-badge[data-tone="specialty"] {
-  --plan-color: var(--color-status-specialty);
+  --plan-color: var(--color-status-specialty, #7c3aed);
 }
 </style>

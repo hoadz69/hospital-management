@@ -63,7 +63,7 @@ const totalCount = computed(() => props.total ?? props.items.length);
 <style scoped>
 .module-chips {
   display: grid;
-  gap: var(--space-2);
+  gap: var(--space-2, 8px);
   min-width: 0;
 }
 
@@ -71,7 +71,7 @@ const totalCount = computed(() => props.total ?? props.items.length);
   display: flex;
   align-items: flex-start;
   justify-content: space-between;
-  gap: var(--space-3);
+  gap: var(--space-3, 12px);
 }
 
 .module-chips__label,
@@ -80,21 +80,21 @@ const totalCount = computed(() => props.total ?? props.items.length);
 }
 
 .module-chips__label {
-  color: var(--color-text-primary);
-  font-size: var(--text-caption-size);
+  color: var(--color-text-primary, #102a43);
+  font-size: var(--text-caption-size, 12px);
   font-weight: 800;
-  line-height: var(--text-caption-line-height);
+  line-height: var(--text-caption-line-height, 16px);
 }
 
 .module-chips__helper {
-  margin-top: var(--space-1);
-  color: var(--color-text-secondary);
+  margin-top: var(--space-1, 4px);
+  color: var(--color-text-secondary, #486581);
   font-size: 11px;
   line-height: 14px;
 }
 
 .module-chips__count {
-  color: var(--color-text-secondary);
+  color: var(--color-text-secondary, #486581);
   font-size: 11px;
   font-weight: 800;
   line-height: 16px;
@@ -104,7 +104,7 @@ const totalCount = computed(() => props.total ?? props.items.length);
 .module-chips__list {
   display: flex;
   flex-wrap: wrap;
-  gap: var(--space-2);
+  gap: var(--space-2, 8px);
   min-width: 0;
 }
 
@@ -112,12 +112,13 @@ const totalCount = computed(() => props.total ?? props.items.length);
   min-height: 26px;
   display: inline-flex;
   align-items: center;
-  gap: var(--space-2);
-  border: 1px solid color-mix(in srgb, var(--chip-color, var(--color-status-success)) 28%, transparent);
-  border-radius: var(--radius-pill);
-  padding: var(--space-1) var(--space-3);
-  background: color-mix(in srgb, var(--chip-color, var(--color-status-success)) 12%, transparent);
-  color: var(--chip-color, var(--color-status-success));
+  gap: var(--space-2, 8px);
+  max-width: 100%;
+  border: 1px solid color-mix(in srgb, var(--chip-color, var(--color-status-success, #047857)) 28%, transparent);
+  border-radius: var(--radius-pill, 999px);
+  padding: var(--space-1, 4px) var(--space-3, 12px);
+  background: color-mix(in srgb, var(--chip-color, var(--color-status-success, #047857)) 12%, var(--color-surface-elevated, #fffdf8));
+  color: var(--chip-color, var(--color-status-success, #047857));
   font-size: 11px;
   font-weight: 800;
   line-height: 14px;
@@ -129,20 +130,20 @@ const totalCount = computed(() => props.total ?? props.items.length);
   border: 0;
   border-radius: 2px;
   padding: 0;
-  background: var(--chip-color, var(--color-status-success));
+  background: var(--chip-color, var(--color-status-success, #047857));
 }
 
 .module-chips__item[data-enabled="false"] {
   border-color: transparent;
-  background: var(--color-surface-muted);
-  color: var(--color-text-muted);
+  background: var(--color-surface-muted, #f6f1e8);
+  color: var(--color-text-muted, #627d98);
 }
 
 .module-chips__dot {
   width: 6px;
   height: 6px;
   flex: 0 0 auto;
-  border-radius: var(--radius-pill);
+  border-radius: var(--radius-pill, 999px);
   background: currentColor;
 }
 
@@ -158,26 +159,26 @@ const totalCount = computed(() => props.total ?? props.items.length);
 }
 
 .module-chips__item[data-tone="success"] {
-  --chip-color: var(--color-status-success);
+  --chip-color: var(--color-status-success, #047857);
 }
 
 .module-chips__item[data-tone="info"] {
-  --chip-color: var(--color-status-info);
+  --chip-color: var(--color-status-info, #1d4ed8);
 }
 
 .module-chips__item[data-tone="warning"] {
-  --chip-color: var(--color-status-warning);
+  --chip-color: var(--color-status-warning, #b45309);
 }
 
 .module-chips__item[data-tone="danger"] {
-  --chip-color: var(--color-status-danger);
+  --chip-color: var(--color-status-danger, #b42318);
 }
 
 .module-chips__item[data-tone="neutral"] {
-  --chip-color: var(--color-status-draft);
+  --chip-color: var(--color-status-draft, #475569);
 }
 
 .module-chips__item[data-tone="specialty"] {
-  --chip-color: var(--color-status-specialty);
+  --chip-color: var(--color-status-specialty, #7c3aed);
 }
 </style>

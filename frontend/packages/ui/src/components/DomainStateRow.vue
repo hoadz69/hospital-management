@@ -52,6 +52,7 @@ defineEmits<{
           class="domain-state-row__action"
           :data-variant="action.tone ?? 'secondary'"
           :disabled="action.disabled"
+          :aria-disabled="action.disabled"
           @click="$emit('action', action.key)"
         >
           {{ action.label }}
@@ -68,25 +69,26 @@ defineEmits<{
   display: flex;
   align-items: flex-start;
   justify-content: space-between;
-  gap: var(--space-4);
-  border: 1px solid var(--color-border-subtle);
-  border-radius: var(--radius-card);
-  padding: var(--space-4);
-  background: var(--color-surface-elevated);
-  color: var(--color-text-primary);
+  gap: var(--space-4, 16px);
+  border: 1px solid var(--color-border-subtle, #d8d2c5);
+  border-radius: var(--radius-card, 16px);
+  padding: var(--space-4, 16px);
+  background: var(--color-surface-elevated, #fffdf8);
+  color: var(--color-text-primary, #102a43);
 }
 
 .domain-state-row__main {
   display: grid;
-  gap: var(--space-2);
+  gap: var(--space-2, 8px);
   min-width: 0;
 }
 
 .domain-state-row__heading {
   display: flex;
   align-items: center;
-  gap: var(--space-3);
+  gap: var(--space-3, 12px);
   min-width: 0;
+  flex-wrap: wrap;
 }
 
 .domain-state-row__heading strong {
@@ -99,7 +101,7 @@ defineEmits<{
 .domain-state-row__main p,
 .domain-state-row__main :deep(p) {
   margin: 0;
-  color: var(--color-text-secondary);
+  color: var(--color-text-secondary, #486581);
   font-size: 11px;
   line-height: 16px;
 }
@@ -108,12 +110,12 @@ defineEmits<{
   min-height: 24px;
   display: inline-flex;
   align-items: center;
-  gap: var(--space-2);
-  border: 1px solid color-mix(in srgb, var(--domain-color, var(--color-status-info)) 30%, transparent);
-  border-radius: var(--radius-pill);
-  padding: var(--space-1) var(--space-2);
-  background: color-mix(in srgb, var(--domain-color, var(--color-status-info)) 12%, transparent);
-  color: var(--domain-color, var(--color-status-info));
+  gap: var(--space-2, 8px);
+  border: 1px solid color-mix(in srgb, var(--domain-color, var(--color-status-info, #1d4ed8)) 30%, transparent);
+  border-radius: var(--radius-pill, 999px);
+  padding: var(--space-1, 4px) var(--space-2, 8px);
+  background: color-mix(in srgb, var(--domain-color, var(--color-status-info, #1d4ed8)) 12%, var(--color-surface-elevated, #fffdf8));
+  color: var(--domain-color, var(--color-status-info, #1d4ed8));
   font-size: 10px;
   font-weight: 800;
   line-height: 12px;
@@ -123,7 +125,7 @@ defineEmits<{
 .domain-state-row__badge span {
   width: 6px;
   height: 6px;
-  border-radius: var(--radius-pill);
+  border-radius: var(--radius-pill, 999px);
   background: currentColor;
 }
 
@@ -131,39 +133,53 @@ defineEmits<{
   display: flex;
   flex-wrap: wrap;
   justify-content: flex-end;
-  gap: var(--space-2);
+  gap: var(--space-2, 8px);
   flex: 0 0 auto;
 }
 
 .domain-state-row__action {
   min-height: 30px;
-  border: 1px solid var(--color-border-subtle);
-  border-radius: var(--radius-input);
-  padding: 0 var(--space-3);
-  background: var(--color-surface-muted);
-  color: var(--color-text-primary);
+  border: 1px solid var(--color-border-subtle, #d8d2c5);
+  border-radius: var(--radius-input, 12px);
+  padding: 0 var(--space-3, 12px);
+  background: var(--color-surface-muted, #f6f1e8);
+  color: var(--color-text-primary, #102a43);
   cursor: pointer;
   font: inherit;
   font-size: 12px;
   font-weight: 800;
+  transition:
+    background var(--motion-duration-xs, 120ms) var(--motion-ease-standard, ease),
+    border-color var(--motion-duration-xs, 120ms) var(--motion-ease-standard, ease),
+    color var(--motion-duration-xs, 120ms) var(--motion-ease-standard, ease);
 }
 
 .domain-state-row__action[data-variant="primary"] {
-  border-color: var(--color-brand-primary);
-  background: var(--color-brand-primary);
-  color: var(--color-surface-elevated);
+  border-color: var(--color-brand-primary, #0e7c86);
+  background: var(--color-brand-primary, #0e7c86);
+  color: var(--color-on-brand, #ffffff);
 }
 
 .domain-state-row__action[data-variant="danger"] {
-  border-color: var(--color-status-danger);
-  background: color-mix(in srgb, var(--color-status-danger) 10%, var(--color-surface-elevated));
-  color: var(--color-status-danger);
+  border-color: var(--color-status-danger, #b42318);
+  background: color-mix(in srgb, var(--color-status-danger, #b42318) 10%, var(--color-surface-elevated, #fffdf8));
+  color: var(--color-status-danger, #b42318);
 }
 
 .domain-state-row__action[data-variant="ghost"] {
   border-color: transparent;
   background: transparent;
-  color: var(--color-brand-primary);
+  color: var(--color-brand-primary, #0e7c86);
+}
+
+.domain-state-row__action:hover:not(:disabled) {
+  border-color: var(--color-border-strong, #c9bfad);
+  background: var(--color-surface-elevated, #fffdf8);
+}
+
+.domain-state-row__action:focus-visible {
+  outline: 3px solid color-mix(in srgb, var(--color-brand-primary, #0e7c86) 28%, transparent);
+  outline-offset: 2px;
 }
 
 .domain-state-row__action:disabled {
@@ -172,27 +188,27 @@ defineEmits<{
 }
 
 .domain-state-row[data-tone="success"] {
-  --domain-color: var(--color-status-success);
+  --domain-color: var(--color-status-success, #047857);
 }
 
 .domain-state-row[data-tone="info"] {
-  --domain-color: var(--color-status-info);
+  --domain-color: var(--color-status-info, #1d4ed8);
 }
 
 .domain-state-row[data-tone="warning"] {
-  --domain-color: var(--color-status-warning);
+  --domain-color: var(--color-status-warning, #b45309);
 }
 
 .domain-state-row[data-tone="danger"] {
-  --domain-color: var(--color-status-danger);
+  --domain-color: var(--color-status-danger, #b42318);
 }
 
 .domain-state-row[data-tone="neutral"] {
-  --domain-color: var(--color-status-draft);
+  --domain-color: var(--color-status-draft, #475569);
 }
 
 .domain-state-row[data-tone="specialty"] {
-  --domain-color: var(--color-status-specialty);
+  --domain-color: var(--color-status-specialty, #7c3aed);
 }
 
 @media (max-width: 640px) {
@@ -202,6 +218,12 @@ defineEmits<{
 
   .domain-state-row__actions {
     justify-content: flex-start;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .domain-state-row__action {
+    transition: none;
   }
 }
 </style>

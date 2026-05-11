@@ -81,23 +81,25 @@ const sparklinePoints = computed(() => {
 
 <style scoped>
 .kpi-tile {
-  min-height: 120px;
+  min-height: 112px;
   display: grid;
   align-content: start;
-  gap: var(--space-2);
-  border: 1px solid var(--color-border-subtle);
-  border-radius: var(--radius-card);
-  padding: var(--space-5);
-  background: var(--color-surface-elevated);
-  box-shadow: var(--shadow-elevation-1);
-  color: var(--color-text-primary);
+  gap: var(--space-2, 8px);
+  border: 1px solid var(--color-border-subtle, #d8d2c5);
+  border-radius: var(--radius-card, 16px);
+  padding: var(--space-5, 18px);
+  background: var(--color-surface-elevated, #fffdf8);
+  box-shadow: var(--shadow-elevation-1, 0 10px 24px rgba(57, 50, 40, 0.07));
+  color: var(--color-text-primary, #102a43);
   transition:
-    transform var(--motion-duration-xs) var(--motion-ease-standard),
-    box-shadow var(--motion-duration-xs) var(--motion-ease-standard);
+    border-color var(--motion-duration-xs, 120ms) var(--motion-ease-standard, ease),
+    transform var(--motion-duration-xs, 120ms) var(--motion-ease-standard, ease),
+    box-shadow var(--motion-duration-xs, 120ms) var(--motion-ease-standard, ease);
 }
 
 .kpi-tile:hover {
-  box-shadow: var(--shadow-elevation-2);
+  border-color: var(--color-border-strong, #c9bfad);
+  box-shadow: var(--shadow-elevation-2, 0 14px 30px rgba(57, 50, 40, 0.1));
   transform: translateY(-1px);
 }
 
@@ -106,7 +108,7 @@ const sparklinePoints = computed(() => {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: var(--space-3);
+  gap: var(--space-3, 12px);
   min-width: 0;
 }
 
@@ -114,9 +116,9 @@ const sparklinePoints = computed(() => {
 .kpi-tile__meta,
 .kpi-tile__helper {
   margin: 0;
-  color: var(--color-text-muted);
-  font-size: var(--text-caption-size);
-  line-height: var(--text-caption-line-height);
+  color: var(--color-text-muted, #627d98);
+  font-size: var(--text-caption-size, 12px);
+  line-height: var(--text-caption-line-height, 16px);
 }
 
 .kpi-tile__label {
@@ -125,28 +127,28 @@ const sparklinePoints = computed(() => {
 
 .kpi-tile__value {
   display: block;
-  color: var(--tone-color, var(--color-text-primary));
-  font-size: 28px;
-  line-height: 36px;
+  color: var(--tone-color, var(--color-text-primary, #102a43));
+  font-size: 26px;
+  line-height: 34px;
 }
 
 .kpi-tile__helper {
-  color: var(--color-text-secondary);
+  color: var(--color-text-secondary, #486581);
 }
 
 .kpi-tile__mark {
   width: 60px;
   height: 24px;
-  border-radius: calc(var(--radius-input) / 2);
+  border-radius: calc(var(--radius-input, 12px) / 2);
   background:
-    linear-gradient(var(--tone-color, var(--color-brand-primary)), var(--tone-color, var(--color-brand-primary))) var(--space-1) 16px / 52px 2px no-repeat,
-    color-mix(in srgb, var(--tone-color, var(--color-brand-primary)) 10%, transparent);
+    linear-gradient(var(--tone-color, var(--color-brand-primary, #0e7c86)), var(--tone-color, var(--color-brand-primary, #0e7c86))) var(--space-1, 4px) 16px / 52px 2px no-repeat,
+    color-mix(in srgb, var(--tone-color, var(--color-brand-primary, #0e7c86)) 10%, transparent);
 }
 
 .kpi-tile__sparkline {
   width: 64px;
   height: 24px;
-  color: var(--tone-color, var(--color-brand-primary));
+  color: var(--tone-color, var(--color-brand-primary, #0e7c86));
 }
 
 .kpi-tile__sparkline polyline {
@@ -158,65 +160,75 @@ const sparklinePoints = computed(() => {
 }
 
 .kpi-tile__trend {
-  color: var(--trend-color, var(--color-status-success));
+  color: var(--trend-color, var(--color-status-success, #047857));
   font-size: 11px;
   font-weight: 800;
   line-height: 14px;
 }
 
 .kpi-tile__trend[data-tone="primary"] {
-  --trend-color: var(--color-brand-primary);
+  --trend-color: var(--color-brand-primary, #0e7c86);
 }
 
 .kpi-tile__trend[data-tone="success"] {
-  --trend-color: var(--color-status-success);
+  --trend-color: var(--color-status-success, #047857);
 }
 
 .kpi-tile__trend[data-tone="warning"] {
-  --trend-color: var(--color-status-warning);
+  --trend-color: var(--color-status-warning, #b45309);
 }
 
 .kpi-tile__trend[data-tone="danger"] {
-  --trend-color: var(--color-status-danger);
+  --trend-color: var(--color-status-danger, #b42318);
 }
 
 .kpi-tile__trend[data-tone="info"] {
-  --trend-color: var(--color-status-info);
+  --trend-color: var(--color-status-info, #1d4ed8);
 }
 
 .kpi-tile__trend[data-tone="neutral"] {
-  --trend-color: var(--color-status-draft);
+  --trend-color: var(--color-status-draft, #475569);
 }
 
 .kpi-tile__trend[data-tone="specialty"] {
-  --trend-color: var(--color-status-specialty);
+  --trend-color: var(--color-status-specialty, #7c3aed);
 }
 
 .kpi-tile[data-tone="primary"] {
-  --tone-color: var(--color-brand-primary);
+  --tone-color: var(--color-brand-primary, #0e7c86);
 }
 
 .kpi-tile[data-tone="success"] {
-  --tone-color: var(--color-status-success);
+  --tone-color: var(--color-status-success, #047857);
 }
 
 .kpi-tile[data-tone="warning"] {
-  --tone-color: var(--color-status-warning);
+  --tone-color: var(--color-status-warning, #b45309);
 }
 
 .kpi-tile[data-tone="danger"] {
-  --tone-color: var(--color-status-danger);
+  --tone-color: var(--color-status-danger, #b42318);
 }
 
 .kpi-tile[data-tone="info"] {
-  --tone-color: var(--color-status-info);
+  --tone-color: var(--color-status-info, #1d4ed8);
 }
 
 .kpi-tile[data-tone="neutral"] {
-  --tone-color: var(--color-status-draft);
+  --tone-color: var(--color-status-draft, #475569);
 }
 
 .kpi-tile[data-tone="specialty"] {
-  --tone-color: var(--color-status-specialty);
+  --tone-color: var(--color-status-specialty, #7c3aed);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .kpi-tile {
+    transition: none;
+  }
+
+  .kpi-tile:hover {
+    transform: none;
+  }
 }
 </style>

@@ -67,6 +67,7 @@ function selectTenant(tenant: TenantSwitcherItem): void {
       class="tenant-switcher__trigger"
       :aria-expanded="open"
       aria-haspopup="listbox"
+      :aria-label="currentTenant ? `${label}: ${currentTenant.label}` : label"
       @click="setOpen(!open)"
     >
       <span class="tenant-switcher__avatar" aria-hidden="true">
@@ -92,6 +93,7 @@ function selectTenant(tenant: TenantSwitcherItem): void {
         role="option"
         :aria-selected="tenant.id === currentTenantId"
         :disabled="tenant.disabled"
+        :aria-disabled="tenant.disabled"
         @click="selectTenant(tenant)"
       >
         <span class="tenant-switcher__avatar" aria-hidden="true">
@@ -110,6 +112,7 @@ function selectTenant(tenant: TenantSwitcherItem): void {
 .tenant-switcher {
   position: relative;
   min-width: 220px;
+  color: var(--color-text-primary, #102a43);
 }
 
 .tenant-switcher__trigger,
@@ -117,20 +120,37 @@ function selectTenant(tenant: TenantSwitcherItem): void {
   width: 100%;
   display: flex;
   align-items: center;
-  gap: var(--space-3);
-  border: 1px solid var(--color-border-subtle);
-  background: var(--color-surface-elevated);
-  color: var(--color-text-primary);
+  gap: var(--space-3, 12px);
+  border: 1px solid var(--color-border-subtle, #d8d2c5);
+  background: var(--color-surface-elevated, #fffdf8);
+  color: var(--color-text-primary, #102a43);
   cursor: pointer;
   font: inherit;
   text-align: left;
+  transition:
+    background var(--motion-duration-xs, 120ms) var(--motion-ease-standard, ease),
+    border-color var(--motion-duration-xs, 120ms) var(--motion-ease-standard, ease),
+    box-shadow var(--motion-duration-xs, 120ms) var(--motion-ease-standard, ease);
 }
 
 .tenant-switcher__trigger {
-  min-height: 54px;
-  border-radius: var(--radius-card);
-  padding: var(--space-2) var(--space-3);
-  box-shadow: var(--shadow-elevation-1);
+  min-height: 52px;
+  border-radius: var(--radius-card, 16px);
+  padding: var(--space-2, 8px) var(--space-3, 12px);
+  box-shadow: var(--shadow-elevation-1, 0 10px 24px rgba(57, 50, 40, 0.07));
+}
+
+.tenant-switcher__trigger:hover,
+.tenant-switcher__trigger:focus-visible,
+.tenant-switcher[data-open="true"] .tenant-switcher__trigger {
+  border-color: var(--color-border-strong, #c9bfad);
+  box-shadow: var(--shadow-elevation-2, 0 14px 30px rgba(57, 50, 40, 0.1));
+  outline: none;
+}
+
+.tenant-switcher__trigger:focus-visible {
+  outline: 3px solid color-mix(in srgb, var(--color-brand-primary, #0e7c86) 28%, transparent);
+  outline-offset: 2px;
 }
 
 .tenant-switcher__avatar {
@@ -139,9 +159,9 @@ function selectTenant(tenant: TenantSwitcherItem): void {
   display: grid;
   place-items: center;
   flex: 0 0 auto;
-  border-radius: var(--radius-input);
-  background: color-mix(in srgb, var(--color-brand-primary) 10%, var(--color-surface-elevated));
-  color: var(--color-brand-primary);
+  border-radius: var(--radius-input, 12px);
+  background: color-mix(in srgb, var(--color-brand-primary, #0e7c86) 10%, var(--color-surface-elevated, #fffdf8));
+  color: var(--color-brand-primary, #0e7c86);
   font-size: 11px;
   font-weight: 900;
   text-transform: uppercase;
@@ -156,7 +176,7 @@ function selectTenant(tenant: TenantSwitcherItem): void {
 
 .tenant-switcher__label,
 .tenant-switcher small {
-  color: var(--color-text-secondary);
+  color: var(--color-text-secondary, #486581);
   font-size: 11px;
   font-weight: 700;
   line-height: 14px;
@@ -173,7 +193,7 @@ function selectTenant(tenant: TenantSwitcherItem): void {
 
 .tenant-switcher__chevron {
   margin-left: auto;
-  color: var(--color-text-muted);
+  color: var(--color-text-muted, #627d98);
 }
 
 .tenant-switcher__menu {
@@ -182,26 +202,26 @@ function selectTenant(tenant: TenantSwitcherItem): void {
   left: 0;
   z-index: 30;
   display: grid;
-  gap: var(--space-1);
-  margin-top: var(--space-2);
-  border: 1px solid var(--color-border-subtle);
-  border-radius: var(--radius-card);
-  padding: var(--space-2);
-  background: var(--color-surface-elevated);
-  box-shadow: var(--shadow-elevation-3);
+  gap: var(--space-1, 4px);
+  margin-top: var(--space-2, 8px);
+  border: 1px solid var(--color-border-subtle, #d8d2c5);
+  border-radius: var(--radius-card, 16px);
+  padding: var(--space-2, 8px);
+  background: var(--color-surface-elevated, #fffdf8);
+  box-shadow: var(--shadow-elevation-3, 0 28px 70px rgba(57, 50, 40, 0.18));
 }
 
 .tenant-switcher__option {
   min-height: 48px;
   border-color: transparent;
-  border-radius: var(--radius-input);
-  padding: var(--space-2);
+  border-radius: var(--radius-input, 12px);
+  padding: var(--space-2, 8px);
 }
 
 .tenant-switcher__option:hover,
 .tenant-switcher__option:focus-visible,
 .tenant-switcher__option[aria-selected="true"] {
-  background: color-mix(in srgb, var(--color-brand-primary) 8%, var(--color-surface-elevated));
+  background: color-mix(in srgb, var(--color-brand-primary, #0e7c86) 8%, var(--color-surface-elevated, #fffdf8));
   outline: none;
 }
 
@@ -211,9 +231,16 @@ function selectTenant(tenant: TenantSwitcherItem): void {
 }
 
 .tenant-switcher__state {
-  padding: var(--space-4);
-  color: var(--color-text-secondary);
+  padding: var(--space-4, 16px);
+  color: var(--color-text-secondary, #486581);
   font-size: 12px;
   text-align: center;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .tenant-switcher__trigger,
+  .tenant-switcher__option {
+    transition: none;
+  }
 }
 </style>

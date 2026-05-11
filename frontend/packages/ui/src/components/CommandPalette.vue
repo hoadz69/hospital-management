@@ -176,6 +176,7 @@ onBeforeUnmount(() => {
             ref="inputRef"
             :autofocus="autofocus"
             type="search"
+            aria-label="Tìm kiếm trong bảng lệnh"
             :value="query"
             :placeholder="placeholder"
             @input="$emit('update:query', ($event.target as HTMLInputElement).value)"
@@ -191,7 +192,7 @@ onBeforeUnmount(() => {
           <p v-if="emptyHelper">{{ emptyHelper }}</p>
         </div>
 
-        <div v-else class="command-palette__body">
+        <div v-else class="command-palette__body" role="listbox" aria-label="Danh sách lệnh">
           <section v-for="section in sections" :key="section.id" class="command-palette__section">
             <p v-if="section.items.length > 0">{{ section.label }}</p>
             <button
@@ -202,8 +203,11 @@ onBeforeUnmount(() => {
               :class="{ 'is-active': itemActiveIndex(item) === activeIndex }"
               :data-tone="item.tone ?? 'default'"
               :disabled="item.disabled"
+              :aria-disabled="item.disabled"
+              :aria-selected="itemActiveIndex(item) === activeIndex"
+              role="option"
               @click="selectItem(item)"
-              @mouseenter="activeIndex = Math.max(itemActiveIndex(item), 0)"
+              @mouseenter="!item.disabled && (activeIndex = Math.max(itemActiveIndex(item), 0))"
             >
               <span class="command-palette__icon" aria-hidden="true">{{ item.icon ?? "▣" }}</span>
               <strong>{{ item.label }}</strong>
@@ -225,28 +229,29 @@ onBeforeUnmount(() => {
   align-items: flex-start;
   justify-content: center;
   padding-top: min(28vh, 250px);
-  background: color-mix(in srgb, var(--color-text-primary) 58%, transparent);
+  background: color-mix(in srgb, var(--color-text-primary, #102a43) 58%, transparent);
 }
 
 .command-palette__panel {
   width: min(640px, calc(100vw - 32px));
   max-height: min(520px, calc(100vh - 80px));
   overflow: hidden auto;
-  border-radius: var(--radius-card);
-  background: var(--color-surface-elevated);
-  box-shadow: var(--shadow-elevation-3);
+  border: 1px solid var(--color-border-subtle, #d8d2c5);
+  border-radius: var(--radius-card, 16px);
+  background: var(--color-surface-elevated, #fffdf8);
+  box-shadow: var(--shadow-elevation-3, 0 28px 70px rgba(57, 50, 40, 0.22));
   outline: none;
 }
 
 .command-palette__search {
   display: grid;
   grid-template-columns: auto 1fr auto;
-  gap: var(--space-3);
+  gap: var(--space-3, 12px);
   align-items: center;
   min-height: 62px;
-  border-bottom: 1px solid var(--color-border-subtle);
-  padding: 0 var(--space-5);
-  color: var(--color-text-secondary);
+  border-bottom: 1px solid var(--color-border-subtle, #d8d2c5);
+  padding: 0 var(--space-5, 18px);
+  color: var(--color-text-secondary, #486581);
 }
 
 .command-palette__search input {
@@ -254,27 +259,31 @@ onBeforeUnmount(() => {
   border: 0;
   outline: 0;
   background: transparent;
-  color: var(--color-text-primary);
+  color: var(--color-text-primary, #102a43);
   font-size: 15px;
+}
+
+.command-palette__search input:focus-visible {
+  outline: none;
 }
 
 kbd {
   border-radius: 7px;
   padding: 4px 8px;
-  background: var(--color-surface-muted);
-  color: var(--color-text-secondary);
+  background: var(--color-surface-muted, #f6f1e8);
+  color: var(--color-text-secondary, #486581);
   font-size: 11px;
   font-weight: 800;
 }
 
 .command-palette__section {
-  padding: var(--space-3) 0 var(--space-2);
+  padding: var(--space-3, 12px) 0 var(--space-2, 8px);
 }
 
 .command-palette__section p {
   margin: 0;
-  padding: 0 var(--space-5) var(--space-2);
-  color: var(--color-text-muted);
+  padding: 0 var(--space-5, 18px) var(--space-2, 8px);
+  color: var(--color-text-muted, #627d98);
   font-size: 10px;
   font-weight: 800;
   text-transform: uppercase;
@@ -285,12 +294,12 @@ kbd {
   min-height: 40px;
   display: grid;
   grid-template-columns: 18px 1fr auto;
-  gap: var(--space-3);
+  gap: var(--space-3, 12px);
   align-items: center;
   border: 0;
-  padding: 0 var(--space-5);
+  padding: 0 var(--space-5, 18px);
   background: transparent;
-  color: var(--color-text-primary);
+  color: var(--color-text-primary, #102a43);
   cursor: pointer;
   font: inherit;
   text-align: left;
@@ -299,7 +308,7 @@ kbd {
 .command-palette__row:hover,
 .command-palette__row:focus-visible,
 .command-palette__row.is-active {
-  background: color-mix(in srgb, var(--row-color, var(--color-brand-primary)) 8%, var(--color-surface-elevated));
+  background: color-mix(in srgb, var(--row-color, var(--color-brand-primary, #0e7c86)) 8%, var(--color-surface-elevated, #fffdf8));
   outline: none;
 }
 
@@ -318,7 +327,7 @@ kbd {
 
 .command-palette__icon,
 .command-palette__row small {
-  color: var(--color-text-muted);
+  color: var(--color-text-muted, #627d98);
 }
 
 .command-palette__icon {
@@ -333,9 +342,9 @@ kbd {
 
 .command-palette__state {
   display: grid;
-  gap: var(--space-2);
-  padding: var(--space-8) var(--space-5);
-  color: var(--color-text-secondary);
+  gap: var(--space-2, 8px);
+  padding: var(--space-8, 32px) var(--space-5, 18px);
+  color: var(--color-text-secondary, #486581);
   text-align: center;
 }
 
@@ -345,32 +354,32 @@ kbd {
 }
 
 .command-palette__row[data-tone="primary"] {
-  --row-color: var(--color-brand-primary);
+  --row-color: var(--color-brand-primary, #0e7c86);
 }
 
 .command-palette__row[data-tone="success"] {
-  --row-color: var(--color-status-success);
+  --row-color: var(--color-status-success, #047857);
 }
 
 .command-palette__row[data-tone="warning"] {
-  --row-color: var(--color-status-warning);
+  --row-color: var(--color-status-warning, #b45309);
 }
 
 .command-palette__row[data-tone="danger"] {
-  --row-color: var(--color-status-danger);
+  --row-color: var(--color-status-danger, #b42318);
 }
 
 .command-palette__row[data-tone="info"] {
-  --row-color: var(--color-status-info);
+  --row-color: var(--color-status-info, #1d4ed8);
 }
 
 .command-palette__row[data-tone="neutral"] {
-  --row-color: var(--color-status-draft);
+  --row-color: var(--color-status-draft, #475569);
 }
 
 @media (max-width: 720px) {
   .command-palette {
-    padding-top: var(--space-6);
+    padding-top: var(--space-6, 24px);
   }
 }
 
