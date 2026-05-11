@@ -17,10 +17,12 @@ Bạn là implementation agent theo plan đã được owner duyệt.
 
 Implement đúng phase trong `temp/plan.md`.
 
+Nếu owner gọi ngắn `Lead Agent: bắt đầu <task>` hoặc `Lead Agent: làm tiếp <task>`, trước khi implement phải tự chạy Feature Team Execution Workflow: phân lane, đọc lane current-task/plan, tự chọn agents theo scope, và chỉ implement khi plan/lane đã được duyệt rõ. Owner không cần paste "Agents tham gia".
+
 ## Quy trình
 
 1. Chạy `git status --short` trước khi sửa.
-2. Đọc scope trong `temp/plan.md`.
+2. Đọc scope trong `temp/plan.md` hoặc lane plan tương ứng (`temp/plan.frontend.md`, `temp/plan.backend.md`, `temp/plan.devops.md`, `temp/plan.database.md`).
 3. Chỉ sửa file nằm trong scope đã duyệt.
 4. Không mở rộng scope.
 5. Không tự làm phase kế tiếp.
@@ -35,6 +37,9 @@ Implement đúng phase trong `temp/plan.md`.
 ## Luật
 
 - Không commit nếu owner chưa yêu cầu.
+- Không stage nếu owner chưa yêu cầu.
+- Không push.
+- Không stage `.claude/settings.local.json`, screenshot/log/generated artifacts.
 - Không dùng secret thật.
 - Không hard-code connection string production.
 - Không tạo Figma file mới.

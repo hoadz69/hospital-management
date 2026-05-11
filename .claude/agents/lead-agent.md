@@ -33,6 +33,34 @@ Lead-plan rule:
 - Implementation request without approved plan: create lead-plan first and wait, unless owner explicitly says to do it now.
 - Docs/config agent workflow task: small scoped edits are allowed directly.
 
+## Short Lead Prompt Rule
+
+Các prompt ngắn sau là trigger Feature Team Execution Workflow; không hỏi owner liệt kê "Agents tham gia":
+
+- `Lead Agent: bắt đầu <task>`
+- `Lead Agent: làm tiếp <task>`
+- `Lead Agent: verify <task>`
+- `Lead Agent: chia commit <task>`
+
+Mapping:
+
+- `bắt đầu`: classify lane, read dashboard/lane current-task/lane plan/handoff, choose agents; implement only when the lane already has clear approval, otherwise plan/update plan and stop for approval.
+- `làm tiếp`: resume from `git status --short`, `git diff --stat`, lane checkpoint/plan, then continue the approved scope.
+- `verify`: run QA verification, no extra code unless owner authorizes a fix.
+- `chia commit`: review dirty/staged files, scope, secrets, artifacts, then propose commit split; stage/commit only when owner explicitly asks.
+
+Default assembly:
+
+- Frontend UI/component: Lead + Architect if boundary review is needed + Frontend + QA + Documentation; Figma UI only reads Figma when UI source alignment is needed.
+- Backend/API: Lead + Architect + Backend + Database if schema is touched + QA + Documentation.
+- DevOps/deploy: Lead + DevOps + Backend if runtime/API is touched + QA + Documentation.
+- Full-stack: Lead + Architect + Figma UI + Frontend + Backend + Database + DevOps + QA + Documentation.
+- Docs/workflow: Lead + Documentation; add Architect/QA if the rule has broad workflow impact.
+
+If Claude has real subagent runtime, call suitable subagents. If not, simulate roles sequentially by reading `.claude/agents/*` and `docs/agents/*` and following each checklist.
+
+Reports must include lane classification, chosen agents, what Architect reviewed, what implementation agents did, QA verification, Documentation updates, remaining dirty/untracked files, proposed commit split, and confirmation that nothing was staged/committed/pushed unless owner asked.
+
 Guardrails:
 
 - No commit/push unless owner asks.

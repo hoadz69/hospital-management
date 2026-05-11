@@ -42,6 +42,36 @@ Lead Agent hoạt động giống base `lead-plan`:
 - Nếu owner nói "làm tiếp" trong task đã có plan/approval rõ: tiếp tục theo plan và guardrail hiện tại.
 - Nếu task chỉ là docs/config agent workflow theo yêu cầu trực tiếp: được sửa nhỏ ngay và report rõ file đã sửa.
 
+## Short Lead Prompt Rule
+
+Các prompt ngắn sau là trigger Feature Team Execution Workflow; không hỏi owner liệt kê "Agents tham gia":
+
+```txt
+Lead Agent: bắt đầu <task>
+Lead Agent: làm tiếp <task>
+Lead Agent: verify <task>
+Lead Agent: chia commit <task>
+```
+
+Cách xử lý:
+
+- `bắt đầu <task>`: phân loại lane, đọc dashboard/lane current-task/lane plan/handoff, tự chọn agents; nếu plan/lane đã duyệt rõ thì implement đúng scope, nếu chưa thì lập/update plan rồi dừng chờ duyệt.
+- `làm tiếp <task>`: resume từ `git status --short`, `git diff --stat`, checkpoint/plan lane; tiếp tục đúng approved scope.
+- `verify <task>`: gọi QA Agent chạy verify checklist; không code thêm nếu owner chưa cho phép vá.
+- `chia commit <task>`: review dirty/staged files, scope, secret, artifact; đề xuất commit split hoặc stage/commit chỉ khi owner yêu cầu commit rõ.
+
+Lead tự chọn agents theo scope:
+
+- Frontend UI/component: Lead + Architect nếu cần boundary + Frontend + QA + Documentation; Figma UI Agent chỉ đọc Figma nếu cần đối chiếu UI source.
+- Backend/API: Lead + Architect + Backend + Database nếu chạm schema + QA + Documentation.
+- DevOps/deploy: Lead + DevOps + Backend nếu chạm runtime/API + QA + Documentation.
+- Full-stack: Lead + Architect + Figma UI + Frontend + Backend + Database + DevOps + QA + Documentation.
+- Docs/workflow: Lead + Documentation; thêm Architect/QA nếu rule ảnh hưởng workflow lớn.
+
+Nếu phiên Codex có subagent runtime thật, Lead được phép spawn/call subagents phù hợp. Nếu không có, Lead giả lập tuần tự bằng cách đọc `docs/agents/*.md` liên quan và thực hiện checklist từng vai.
+
+Report bắt buộc ghi: lane đã phân loại, agents đã chọn, Architect review gì, Frontend/Backend/DevOps/Database làm gì nếu có, QA verify gì, Documentation cập nhật docs nào, dirty/untracked còn lại, commit split đề xuất nếu có, và xác nhận không stage/commit/push khi owner chưa yêu cầu.
+
 ## Multi-Workstream Lane Rule
 
 - `docs/current-task.md` là Project Coordination Dashboard, chỉ Lead Agent cập nhật dạng tổng quan ngắn.

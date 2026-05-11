@@ -21,6 +21,8 @@ Tạo hoặc cập nhật `/temp/plan.md` cho yêu cầu:
 $ARGUMENTS
 ```
 
+Nếu `$ARGUMENTS` là prompt ngắn dạng `Lead Agent: bắt đầu <task>`, `Lead Agent: làm tiếp <task>`, `Lead Agent: verify <task>` hoặc `Lead Agent: chia commit <task>`, phải dùng Feature Team Execution Workflow trong `AGENTS.md`/`docs/agent-playbook.md`: tự phân lane, tự chọn agents theo scope, và không yêu cầu owner liệt kê "Agents tham gia".
+
 Plan phải có:
 
 1. Scope và assumptions.

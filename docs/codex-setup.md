@@ -110,6 +110,20 @@ Nếu owner yêu cầu chạy nhiều agent/parallel work, dùng role tương �
 
 Nếu owner không yêu cầu parallel/subagent, dùng các role này như checklist tư duy trong cùng một phiên Codex.
 
+## Prompt Ngắn Cho Lead Agent Trong Codex
+
+Codex phải xử lý các prompt ngắn sau như Feature Team Execution Workflow triggers:
+
+```txt
+Lead Agent: bắt đầu A5.2
+Lead Agent: bắt đầu A5.3
+Lead Agent: làm tiếp A5.4
+Lead Agent: verify A5.2
+Lead Agent: chia commit A5.1b
+```
+
+Owner không cần paste danh sách "Agents tham gia". Codex Lead tự đọc `docs/agent-playbook.md` + `docs/agents/lead-agent.md`, tự phân lane, tự chọn agents theo scope, rồi report rõ lane/agents/verify/docs/dirty files. Nếu phiên có subagent runtime thì có thể spawn; nếu không, giả lập tuần tự bằng checklist agent docs.
+
 ## Cách Codex Dùng QA Screenshot / Artifact Workflow
 
 Workflow này không phải skill tự chạy. Khi Codex đóng vai Lead Agent hoặc QA Agent:

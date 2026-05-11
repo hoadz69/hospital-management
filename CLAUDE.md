@@ -28,6 +28,23 @@ Claude Code phải tuân thủ cùng luật dự án với Codex. File này là 
 - Với task dài hơn 30 phút, sửa/tạo từ 5 file trở lên, hoặc có nguy cơ context compact/chết session, phải ghi checkpoint ngắn vào lane current-task phù hợp theo `docs/session-continuity.md`.
 - Sau mỗi lần làm xong phải report lại cho owner: đã làm gì, sửa file nào, kiểm tra gì, còn thiếu/bị chặn gì, bước tiếp theo là gì. Không được im lặng sau khi chạy tool hoặc sửa file.
 
+## Short Lead Prompt Rule
+
+Khi owner gọi ngắn, Claude Code phải để Lead Agent tự chạy Feature Team Execution Workflow, không hỏi owner liệt kê "Agents tham gia":
+
+```txt
+Lead Agent: bắt đầu <task>
+Lead Agent: làm tiếp <task>
+Lead Agent: verify <task>
+Lead Agent: chia commit <task>
+```
+
+- `bắt đầu` / `làm tiếp`: Lead tự phân lane, tự đọc plan/current-task/handoff, tự assemble agents theo loại task; nếu task đã có plan/approval rõ thì implement đúng scope, nếu chưa có plan thì lập/update plan rồi dừng chờ duyệt.
+- `verify`: Lead + QA chạy checklist phù hợp, không code thêm nếu owner chưa cho phép vá.
+- `chia commit`: Lead review dirty/staged files và đề xuất commit split; chỉ stage/commit khi owner yêu cầu rõ.
+- Nếu Claude Code có subagent runtime thì dùng agents phù hợp; nếu không có, Lead giả lập tuần tự bằng cách đọc `.claude/agents/*` và `docs/agents/*`.
+- Report phải ghi lane, agents đã chọn, mỗi agent làm/verify gì, docs cập nhật, dirty/untracked còn lại và commit split đề xuất nếu có.
+
 ## QA Screenshots and Artifact Cleanup
 
 - Đây là workflow bắt buộc cho Claude Code khi chạy QA Agent hoặc Lead Agent trong UI visual smoke/browser test/Figma compare; không phải chỉ là skill được thêm vào mà không dùng.

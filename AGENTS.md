@@ -75,6 +75,32 @@ Mọi feature mới phải chạy theo mô hình "feature team" do Lead Agent đ
 
 Chi tiết đầy đủ Step 0–10, agent assembly theo loại feature, owner prompt template nằm trong `docs/agent-playbook.md` (section "Feature Team Execution Workflow").
 
+### Short Lead Prompt Rule
+
+Khi owner gọi ngắn, Lead Agent phải tự hiểu là yêu cầu chạy Feature Team Execution Workflow tương ứng, không bắt owner liệt kê thủ công "Agents tham gia":
+
+```txt
+Lead Agent: bắt đầu <task>
+Lead Agent: làm tiếp <task>
+Lead Agent: verify <task>
+Lead Agent: chia commit <task>
+```
+
+Quy ước:
+- `bắt đầu <task>`: Lead phân lane, đọc lane plan/current-task, tự chọn agents, nếu task đã có plan/approval rõ thì implement đúng scope; nếu task lớn/chưa có plan thì lập/update plan rồi dừng chờ duyệt.
+- `làm tiếp <task>`: Lead resume từ `git status` + lane checkpoint/plan, tự chọn agents, tiếp tục đúng approved scope.
+- `verify <task>`: Lead gọi QA checklist phù hợp, không code thêm nếu không có lỗi được owner cho phép vá.
+- `chia commit <task>`: Lead review dirty/staged files, đề xuất hoặc thực hiện commit split chỉ khi owner yêu cầu commit rõ; không stage/commit/push nếu owner chưa yêu cầu.
+
+Owner không cần ghi "Agents tham gia". Lead Agent tự assemble:
+- Frontend UI/component task: Lead + Architect nếu cần boundary + Frontend + QA + Documentation; Figma UI Agent chỉ đọc Figma nếu cần đối chiếu UI source.
+- Backend/API task: Lead + Architect + Backend + Database nếu chạm schema + QA + Documentation.
+- DevOps/deploy task: Lead + DevOps + Backend nếu chạm runtime/API + QA + Documentation.
+- Full-stack task: Lead + Architect + Figma UI + Frontend + Backend + Database + DevOps + QA + Documentation.
+- Docs/workflow task: Lead + Documentation; Architect/QA nếu rule ảnh hưởng workflow lớn.
+
+Nếu có subagent runtime thật, Lead Agent được phép spawn/call subagents phù hợp. Nếu không có, Lead vẫn phải giả lập tuần tự đầy đủ các vai bằng cách đọc agent docs tương ứng và thực hiện checklist của từng vai.
+
 Quy trình tóm tắt:
 
 - Step 0 Intake: Lead Agent xác định feature lane và đọc dashboard/lane plan liên quan.
@@ -253,6 +279,8 @@ Codex và Claude Code dùng cùng khung phân vai sau:
 - Documentation Agent: giữ README, architecture docs, setup, deployment, troubleshooting luôn cập nhật.
 
 Khi owner gọi "Lead Agent", "Lead / Orchestrator Agent", "lead-plan", "giao việc", "điều phối", "làm việc này", "làm tiếp", "chạy workflow" hoặc yêu cầu tương đương, đó là quyền rõ ràng cho Codex tự điều phối theo team agent trong phạm vi task. Nếu tool hỗ trợ subagent/parallel agent, Lead Agent được phép tự tạo, giao việc, chờ kết quả và tổng hợp các subagent phù hợp mà không cần hỏi lại từng lần.
+
+Các prompt ngắn như `Lead Agent: bắt đầu A5.2`, `Lead Agent: làm tiếp A5.4`, `Lead Agent: verify A5.2`, `Lead Agent: chia commit A5.1b` cũng là trigger điều phối feature-team. Lead Agent phải tự phân loại lane, tự chọn agents, tự đọc lane plan/handoff, rồi report agents đã chọn và phần việc từng vai; owner không cần paste danh sách "Agents tham gia".
 
 Lead Agent dùng cùng logic nền với `lead-plan`:
 

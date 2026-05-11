@@ -4,6 +4,8 @@
 
 Review toàn bộ changes hiện tại trước khi owner commit hoặc chuyển phase.
 
+Nếu owner gọi ngắn `Lead Agent: chia commit <task>`, Lead Agent phải tự chạy review/scope/secret/artifact check, tự chọn Documentation/QA nếu cần, rồi đề xuất commit split theo lane. Chỉ stage/commit khi owner yêu cầu rõ; nếu owner chỉ hỏi "chia commit" thì không tự stage.
+
 ## Luôn đọc trước
 
 - docs/current-task.md
@@ -46,9 +48,11 @@ git diff --cached | Select-String -Pattern "sk-|api_key|password|connectionStrin
    - Có vượt scope không
    - Có nên commit checkpoint không
    - Commit message đề xuất nếu owner muốn commit
+   - File nào tuyệt đối không stage: `.claude/settings.local.json`, screenshot/log/generated artifacts, file ngoài scope.
 
 ## Luật
 
 - Không code thêm.
 - Không commit.
+- Không stage/push nếu owner chưa yêu cầu rõ.
 - Không tự sửa file nếu chưa được yêu cầu.

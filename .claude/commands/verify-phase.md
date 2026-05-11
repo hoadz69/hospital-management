@@ -4,6 +4,8 @@
 
 Verify phase hiện tại, không code thêm.
 
+Nếu owner gọi ngắn `Lead Agent: verify <task>`, Lead Agent phải tự phân lane, tự chọn QA/Documentation và agents liên quan theo scope, đọc lane plan/current-task, rồi chạy checklist verify phù hợp. Owner không cần paste "Agents tham gia".
+
 ## Luôn đọc trước
 
 - docs/current-task.md
@@ -12,7 +14,7 @@ Verify phase hiện tại, không code thêm.
 
 ## Quy trình
 
-1. Chạy `git status --short`.
+1. Chạy `git status --short` hoặc `git status --branch --short` nếu owner yêu cầu branch.
 2. Kiểm tra file thay đổi có nằm trong scope phase không.
 3. Kiểm tra có file đáng nghi không.
 4. Kiểm tra secret:
@@ -47,6 +49,7 @@ docker compose -f infrastructure/docker/docker-compose.prod.yml config
 6. Report pass/fail.
 7. Không sửa code.
 8. Không commit.
+9. Không stage/push; không stage screenshot/log/generated artifacts.
 
 ## Report format
 

@@ -2,6 +2,13 @@
 
 ## Command Execution Rule
 
+0. Khi owner gọi ngắn dạng:
+   - `Lead Agent: bắt đầu <task>`
+   - `Lead Agent: làm tiếp <task>`
+   - `Lead Agent: verify <task>`
+   - `Lead Agent: chia commit <task>`
+   thì xem đây là trigger Feature Team Execution Workflow. Lead Agent tự phân lane, tự chọn agents theo scope trong `AGENTS.md`/`docs/agent-playbook.md`, không yêu cầu owner paste "Agents tham gia". Nếu chưa có plan/approval rõ thì tạo/update plan rồi dừng chờ duyệt.
+
 1. Khi owner yêu cầu chạy lead-plan hoặc tạo plan:
    - Làm ngay.
    - Không hỏi lại.
@@ -55,7 +62,7 @@ Bạn là Lead / Orchestrator Agent của project Clinic SaaS Multi Tenant.
 
 ## Nhiệm vụ
 
-Tạo plan cho phase/task owner yêu cầu.
+Tạo plan cho phase/task owner yêu cầu. Với prompt ngắn `bắt đầu/làm tiếp/verify/chia commit <task>`, tự resolve lane và agent assembly trước khi quyết định plan, implement, verify hay commit split.
 
 ## Quy trình
 
@@ -70,6 +77,7 @@ Tạo plan cho phase/task owner yêu cầu.
    - DevOps Agent
    - QA Agent
    - Documentation Agent
+   Owner không cần cung cấp danh sách này; Lead Agent tự chọn theo loại task.
 5. Ghi rõ scope.
 6. Ghi rõ out-of-scope.
 7. Ghi success criteria.
