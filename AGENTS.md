@@ -187,6 +187,22 @@ temp/
    - bước tiếp theo cụ thể,
    - file đã thay đổi.
 
+## QA Screenshots and Artifact Cleanup
+
+- Đây là workflow bắt buộc cho QA/Lead khi chạy UI visual smoke/browser test/Figma compare; không phải chỉ là "skill" được cài sẵn rồi tự chạy.
+- Codex phải áp dụng workflow này qua `AGENTS.md`, `docs/agents/qa-agent.md` và `docs/agents/lead-agent.md`.
+- Claude Code phải áp dụng workflow này qua `CLAUDE.md` và `.claude/agents/qa-agent.md`, `.claude/agents/lead-agent.md`.
+
+- Khi QA Agent chạy UI visual smoke, browser test hoặc Figma compare và có thay đổi UI hoặc cần owner review, QA Agent phải chụp screenshot.
+- Screenshot lưu vào generated artifact folder, ưu tiên `frontend/test-results/`, đặt tên rõ route/task/state như `owner-dashboard-smoke.png`, `owner-clinics-smoke.png`, `owner-clinics-drawer-smoke.png`, `owner-clinics-empty-smoke.png`.
+- QA report phải ghi route/state đã check, screenshot path, component/UI state đã test, pass/fail và visual issue nếu có.
+- Screenshot, log và generated artifacts chỉ là artifact review; không stage/commit trừ khi owner yêu cầu rõ.
+- Lead Agent chịu trách nhiệm cleanup generated artifacts sau khi task/test/review hoàn tất để worktree không bẩn.
+- Cleanup chỉ được xóa untracked/generated artifacts; không xóa source code, docs/handoff/plan dirty, tracked files hoặc file owner chưa xác nhận.
+- Trước và sau cleanup phải chạy `git status --short`. Nếu nghi ngờ path có tracked file, kiểm tra `git ls-files --error-unmatch <path>`; nếu tracked thì không xóa.
+- Artifact mặc định có thể cleanup khi untracked: `frontend/test-results/`, `frontend/playwright-report/`, `frontend/blob-report/`, `test-results/`, `playwright-report/`, `temp/*-vite.log`, `.last-run.json`, `frontend/.last-run.json`.
+- Không commit screenshot/log/generated artifacts; không stage/commit/push trong cleanup step.
+
 ## Luật Kiến Trúc Bắt Buộc
 
 - Multi-tenant là bắt buộc.

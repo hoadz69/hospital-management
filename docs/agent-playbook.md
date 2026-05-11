@@ -447,8 +447,10 @@ Nhiệm vụ:
 Feature team duty:
 
 - Chạy verification checklist Step 7: build/typecheck/test, API smoke (mock + real nếu có), UI route smoke, edge states, tenant isolation, regression.
+- Khi chạy UI visual smoke/browser test/Figma compare và UI vừa thay đổi hoặc cần owner review, QA Agent phải chụp screenshot, lưu vào `frontend/test-results/` hoặc generated artifact folder tương ứng, và ghi rõ screenshot path + route/state trong report.
 - Không sửa source (FE/BE) trừ khi Lead Agent cho phép vá nhỏ trong slice đang test.
 - Nếu thiếu env real-API, mark "Real API smoke: pending wiring" và tiếp tục mock smoke; không chặn Lead vô lý.
+- Screenshot/log/generated artifacts không được stage/commit; Lead Agent cleanup artifact untracked sau khi review/test hoàn tất theo `AGENTS.md`.
 
 Prompt nền:
 

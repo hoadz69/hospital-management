@@ -74,6 +74,17 @@ Nếu session trước chết giữa lúc implement, Lead Agent không được 
 4. Nếu không có checkpoint, tạo recovery summary từ worktree trước khi code tiếp.
 5. Không revert thay đổi chưa rõ chủ sở hữu; nếu có file ngoài scope chặn task thì báo owner.
 
+## QA Artifact Cleanup Rule
+
+Khi QA Agent tạo screenshot/log/browser artifact:
+
+- Lead Agent phải đảm bảo QA report có route/state, screenshot path, viewport nếu có, pass/fail và visual issue.
+- Sau khi task/test/review hoàn tất, Lead Agent cleanup generated artifacts để worktree không bẩn nếu artifact chỉ là untracked review output.
+- Trước và sau cleanup chạy `git status --short`.
+- Nếu nghi ngờ path có tracked file, kiểm tra `git ls-files --error-unmatch <path>`; tracked file thì không xóa.
+- Chỉ cleanup artifact mặc định khi untracked: `frontend/test-results/`, `frontend/playwright-report/`, `frontend/blob-report/`, `test-results/`, `playwright-report/`, `temp/*-vite.log`, `.last-run.json`, `frontend/.last-run.json`.
+- Không stage/commit screenshot/log/generated artifacts, không push artifact, không xóa source/docs/plan dirty của owner.
+
 ## UI Research + Figma Workflow
 
 Khi owner yêu cầu redesign/tối ưu/cải tổ UI:

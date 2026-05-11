@@ -109,3 +109,14 @@ Nếu owner yêu cầu chạy nhiều agent/parallel work, dùng role tương �
 - Documentation Agent
 
 Nếu owner không yêu cầu parallel/subagent, dùng các role này như checklist tư duy trong cùng một phiên Codex.
+
+## Cách Codex Dùng QA Screenshot / Artifact Workflow
+
+Workflow này không phải skill tự chạy. Khi Codex đóng vai Lead Agent hoặc QA Agent:
+
+1. Đọc `AGENTS.md`, `docs/agents/qa-agent.md` và `docs/agents/lead-agent.md`.
+2. Nếu chạy UI visual smoke/browser test/Figma compare cho phần UI vừa đổi hoặc cần owner review, chụp screenshot cho route/state chính.
+3. Lưu screenshot vào generated artifact folder, ưu tiên `frontend/test-results/`, đặt tên rõ route/task/state.
+4. Report route/state, viewport nếu có, screenshot path, component/UI state đã test, pass/fail và visual issue.
+5. Không stage/commit screenshot/log/generated artifacts.
+6. Sau khi owner đã review hoặc task/test hoàn tất, Lead Agent cleanup artifact untracked theo rule trong `AGENTS.md`; trước và sau cleanup chạy `git status --short`, và không xóa tracked/source/docs/plan dirty.

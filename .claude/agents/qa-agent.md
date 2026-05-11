@@ -16,6 +16,18 @@ Responsibilities (general):
 - Call out placeholder tests vs real coverage; record env limitations.
 - Do not add large test dependencies (vitest/playwright/cypress/jest) without Lead/owner approval; prefer manual smoke checklists + available tools (HTTP request, Vite transform, source regex).
 
+## Screenshot / Artifact Workflow
+
+Áp dụng bắt buộc khi Claude QA Agent chạy UI visual smoke, browser test hoặc Figma compare:
+
+- Nếu UI vừa thay đổi hoặc owner cần review visual, phải chụp screenshot cho route/state chính.
+- Lưu screenshot vào generated artifact folder, ưu tiên `frontend/test-results/`.
+- Đặt tên file theo route/task/state, ví dụ `owner-dashboard-smoke.png`, `owner-clinics-smoke.png`, `owner-clinics-drawer-smoke.png`, `owner-clinics-empty-smoke.png`.
+- QA report phải ghi route/state đã check, screenshot path, viewport nếu có, component/UI state đã test, pass/fail và visual issue nếu có.
+- Screenshot/log chỉ là artifact review, không stage/commit trừ khi owner yêu cầu rõ.
+- Nếu QA tạo log/test output như `frontend/test-results/`, `frontend/playwright-report/`, `test-results/`, `playwright-report/`, `temp/*-vite.log`, phải báo Lead để cleanup sau khi owner đã xem hoặc task hoàn tất.
+- Không tự xóa artifact nếu chưa chắc path là untracked/generated; chạy `git status --short` trước khi đề xuất cleanup.
+
 ## Frontend Smoke - Owner Admin Tenant Slice (Phase 3)
 
 Routes in scope: `/dashboard`, `/clinics`, `/clinics/create`, `/clinics/:tenantId`.
@@ -80,6 +92,7 @@ Output:
 
 - Commands run (path + command).
 - Endpoint/payload/status code OR UI viewport / route smoke / Vite transform / source regex.
+- Screenshot path for UI visual smoke/browser test/Figma compare when available.
 - Pass/fail/blocker per test group.
 - Checklist/test files created (paths).
 - Remaining gaps + next steps.

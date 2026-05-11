@@ -28,6 +28,19 @@ Claude Code phải tuân thủ cùng luật dự án với Codex. File này là 
 - Với task dài hơn 30 phút, sửa/tạo từ 5 file trở lên, hoặc có nguy cơ context compact/chết session, phải ghi checkpoint ngắn vào lane current-task phù hợp theo `docs/session-continuity.md`.
 - Sau mỗi lần làm xong phải report lại cho owner: đã làm gì, sửa file nào, kiểm tra gì, còn thiếu/bị chặn gì, bước tiếp theo là gì. Không được im lặng sau khi chạy tool hoặc sửa file.
 
+## QA Screenshots and Artifact Cleanup
+
+- Đây là workflow bắt buộc cho Claude Code khi chạy QA Agent hoặc Lead Agent trong UI visual smoke/browser test/Figma compare; không phải chỉ là skill được thêm vào mà không dùng.
+- Khi QA Agent chạy UI visual smoke, browser test hoặc Figma compare và có thay đổi UI hoặc cần owner review, phải chụp screenshot.
+- Screenshot lưu vào generated artifact folder, ưu tiên `frontend/test-results/`, đặt tên rõ route/task/state như `owner-dashboard-smoke.png`, `owner-clinics-smoke.png`, `owner-clinics-drawer-smoke.png`, `owner-clinics-empty-smoke.png`.
+- QA report phải ghi route/state đã check, screenshot path, component/UI state đã test, pass/fail và visual issue nếu có.
+- Screenshot, log và generated artifacts chỉ là artifact review; không stage/commit trừ khi owner yêu cầu rõ.
+- Lead Agent chịu trách nhiệm cleanup generated artifacts sau khi task/test/review hoàn tất để worktree không bẩn.
+- Cleanup chỉ được xóa untracked/generated artifacts; không xóa source code, docs/handoff/plan dirty, tracked files hoặc file owner chưa xác nhận.
+- Trước và sau cleanup phải chạy `git status --short`. Nếu nghi ngờ path có tracked file, kiểm tra `git ls-files --error-unmatch <path>`; nếu tracked thì không xóa.
+- Artifact mặc định có thể cleanup khi untracked: `frontend/test-results/`, `frontend/playwright-report/`, `frontend/blob-report/`, `test-results/`, `playwright-report/`, `temp/*-vite.log`, `.last-run.json`, `frontend/.last-run.json`.
+- Không commit screenshot/log/generated artifacts; không stage/commit/push trong cleanup step.
+
 ## Language Rule
 
 - Mọi câu trả lời cho owner, plan, report, handoff, roadmap update và tài liệu hướng dẫn agent phải viết bằng tiếng Việt.

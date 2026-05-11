@@ -27,6 +27,18 @@ QA Agent kiểm tra regression risk, tenant isolation, auth/permission, API/UI s
 - Ghi rõ test gap nếu test project chỉ là placeholder hoặc môi trường thiếu tool.
 - Không tự thêm dependency test lớn (vitest/playwright/cypress/jest) nếu chưa được Lead/owner duyệt; ưu tiên manual smoke checklist + tool có sẵn (HTTP request, Vite transform, source regex check).
 
+## Screenshot / Artifact Workflow
+
+Áp dụng bắt buộc khi QA Agent chạy UI visual smoke, browser test hoặc Figma compare:
+
+- Nếu UI vừa thay đổi hoặc owner cần review visual, phải chụp screenshot cho route/state chính.
+- Lưu screenshot vào generated artifact folder, ưu tiên `frontend/test-results/`.
+- Đặt tên file theo route/task/state, ví dụ `owner-dashboard-smoke.png`, `owner-clinics-smoke.png`, `owner-clinics-drawer-smoke.png`, `owner-clinics-empty-smoke.png`.
+- QA report phải ghi route/state đã check, screenshot path, viewport nếu có, component/UI state đã test, pass/fail và visual issue nếu có.
+- Screenshot/log chỉ là artifact review, không stage/commit trừ khi owner yêu cầu rõ.
+- Nếu QA tạo log/test output như `frontend/test-results/`, `frontend/playwright-report/`, `test-results/`, `playwright-report/`, `temp/*-vite.log`, phải báo Lead để cleanup sau khi owner đã xem hoặc task hoàn tất.
+- Không tự xóa artifact nếu chưa chắc path là untracked/generated; chạy `git status --short` trước khi đề xuất cleanup.
+
 ## Trách Nhiệm Frontend Smoke - Owner Admin Tenant Slice
 
 Áp dụng khi Lead giao smoke FE cho Phase 3 Owner Admin Tenant Slice (`/dashboard`, `/clinics`, `/clinics/create`, `/clinics/:tenantId`).
@@ -97,6 +109,7 @@ Không đánh dấu Phase 2 Done nếu chưa pass:
 
 - Lệnh test đã chạy (path + command).
 - Endpoint/payload/status code hoặc UI viewport / route smoke / Vite transform / source regex.
+- Screenshot path cho UI visual smoke/browser test/Figma compare khi có.
 - Pass/fail/blocker từng nhóm test case.
 - File checklist/test đã tạo (đường dẫn).
 - Test gap còn lại + bước tiếp theo đề xuất.
