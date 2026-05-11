@@ -1484,3 +1484,770 @@ Chưa sửa Figma, chưa sửa backend, chưa thêm dependency, chưa integrate 
 Còn pending A5.2: CommandPalette shared base + TenantSwitcher presentational + optional Owner Admin adoption.
 Frontend Agent chỉ làm A5.2 khi owner duyệt tiếp scope A5.2.
 ```
+
+## 20. Wave A Step A5.1b - Adopt Shared Display Components vào Owner Admin (2026-05-11)
+
+Trạng thái: 🟡 **Plan ready - dừng tại owner approval gate, chưa code**.
+
+Lead Agent điều phối theo workflow owner yêu cầu:
+- Frontend Agent: đã review usage hiện tại trong Owner Admin.
+- Architect Agent: kiểm tra boundary để adoption không đổi API/router/store/business logic.
+- Figma UI Agent: inspect read-only frame V3 `85:2`, `87:2`, `88:2`, `88:112`.
+- QA Agent: đề xuất smoke UI/manual visual sau khi owner duyệt implement.
+- Documentation Agent: chưa cần checkpoint riêng vì plan chỉ cập nhật `temp/plan.frontend.md`; `docs/current-task.frontend.md` đang dirty từ handoff trước, không đụng trong lượt plan này.
+
+### 20.1 Mục Tiêu
+
+Gắn 5 component A5.1 đã có vào Owner Admin để có UI thật cho manual visual smoke/Figma review:
+
+```txt
+KPITile
+ModuleChips
+PlanBadge
+EmptyState
+DomainStateRow
+```
+
+Phạm vi là adoption presentation-only trong `frontend/apps/owner-admin`. Không đổi contract API, route, store, tenant lifecycle, status update, wizard validation, filter logic hoặc data fetching.
+
+### 20.2 Source Đã Đọc
+
+Shared UI:
+
+```txt
+frontend/packages/ui/src/components/KPITile.vue
+frontend/packages/ui/src/components/ModuleChips.vue
+frontend/packages/ui/src/components/PlanBadge.vue
+frontend/packages/ui/src/components/EmptyState.vue
+frontend/packages/ui/src/components/DomainStateRow.vue
+```
+
+Owner Admin:
+
+```txt
+frontend/apps/owner-admin/src/pages/DashboardPage.vue
+frontend/apps/owner-admin/src/pages/ClinicsPage.vue
+frontend/apps/owner-admin/src/components/TenantTable.vue
+frontend/apps/owner-admin/src/components/TenantDetailDrawer.vue
+frontend/apps/owner-admin/src/components/CreateTenantWizard.vue
+frontend/apps/owner-admin/src/pages/ClinicDetailPage.vue
+```
+
+Figma read-only:
+
+```txt
+85:2   V3 - Owner Admin Tenant Operations
+87:2   V3 - Owner Admin Tenant Detail Drawer
+88:2   V3 - Owner Admin Create Tenant Wizard
+88:112 V3 - Owner Admin Empty state
+```
+
+### 20.3 Component Nên Adopt Trước
+
+Thứ tự khuyến nghị:
+
+1. `KPITile` vào `DashboardPage.vue` và `ClinicsPage.vue`.
+   - Lý do: hiện hai page đang dùng `MetricCard` cho KPI strip, map trực tiếp sang props `KPITile` gần frame `85:2`.
+   - Risk thấp vì chỉ thay component hiển thị, giữ computed `activeCount`, `verifiedDomains`, `suspendedCount`, `supportCount`.
+
+2. `PlanBadge` và `ModuleChips` vào `TenantTable.vue`.
+   - Lý do: frame `85:2` table có `PlanBadge` và module 8-dot indicator; hiện table dùng `StatusPill` cho plan và inline `.module-meter`.
+   - Risk trung bình thấp vì chỉ thay cell render, không đổi row click/keyboard/select.
+
+3. `EmptyState` vào `ClinicsPage.vue`.
+   - Lý do: inline `.empty-state` hiện khớp frame `88:112`, component shared đã có slot action.
+   - Risk thấp nếu giữ nguyên CTA `RouterLink` và điều kiện `isEmpty`.
+
+4. `DomainStateRow` vào `TenantDetailDrawer.vue`.
+   - Lý do: frame `87:2` domain cards chính là domain state rows; hiện drawer có `domainCards` computed, helper/action/status sẵn.
+   - Risk trung bình vì có disabled action button trong row; phải giữ action disabled/placeholder, không gọi API/poll DNS.
+
+5. `ModuleChips` và `PlanBadge` vào `CreateTenantWizard.vue` preview/summary nhẹ.
+   - Lý do: frame `88:2` nhấn mạnh plan/module ở step 2 và summary; hiện wizard dùng inline plan cards, module option button và `StatusPill` trong preview.
+   - Risk trung bình vì wizard có validation/focus/conflict; adoption chỉ nên áp dụng vào preview/sidebar hoặc non-interactive module display trước, tránh thay module option button interactive trong lượt đầu.
+
+6. `DomainStateRow`, `ModuleChips`, `PlanBadge` vào `ClinicDetailPage.vue` sau drawer.
+   - Lý do: page detail là surface phụ cùng data với drawer.
+   - Risk trung bình thấp; nên chỉ thay domain list/module display/plan display, giữ update status và load route nguyên.
+
+### 20.4 File Dự Kiến Sửa
+
+Ưu tiên sửa:
+
+```txt
+frontend/apps/owner-admin/src/pages/DashboardPage.vue
+frontend/apps/owner-admin/src/pages/ClinicsPage.vue
+frontend/apps/owner-admin/src/components/TenantTable.vue
+frontend/apps/owner-admin/src/components/TenantDetailDrawer.vue
+```
+
+Sửa nếu còn trong timebox và không phát sinh behavior risk:
+
+```txt
+frontend/apps/owner-admin/src/components/CreateTenantWizard.vue
+frontend/apps/owner-admin/src/pages/ClinicDetailPage.vue
+```
+
+Không sửa:
+
+```txt
+frontend/packages/ui/src/components/*
+frontend/packages/api-client/*
+frontend/packages/shared-types/*
+frontend/apps/public-web/*
+frontend/apps/clinic-admin/*
+backend/*
+Figma
+package.json
+package-lock.json
+.claude/settings.local.json
+```
+
+### 20.5 Mapping Data Hiện Tại Sang Props Component
+
+`KPITile`:
+
+```txt
+DashboardPage / ClinicsPage:
+- label: text label hiện đang truyền vào MetricCard.
+- value: activeCount / verifiedDomains / suspendedCount / supportCount.
+- helper hoặc meta: copy meta hiện tại.
+- tone:
+  activeCount -> success
+  verifiedDomains -> primary hoặc info
+  suspendedCount -> danger
+  supportCount -> warning
+- sparkline: optional static demo array nhỏ nếu muốn nhìn giống frame 85:2; chỉ dùng presentation, không derive business logic mới.
+```
+
+`PlanBadge`:
+
+```txt
+TenantTable:
+- label: tenant.planDisplayName.
+- tone: reuse `planTone(tenant.planCode)` hiện có.
+- helper: optional `Gói ${tenant.planDisplayName}` nếu cần aria-label rõ hơn.
+
+CreateTenantWizard:
+- label: form.planCode hoặc display label Starter/Growth/Premium.
+- value: optional summary value nếu không thêm pricing data mới.
+- tone: map planCode bằng helper local, không đổi setPlan().
+
+ClinicDetailPage / TenantDetailDrawer:
+- label: tenant.planDisplayName.
+- tone: map từ tenant.planCode nếu field có sẵn ở TenantDetail; nếu chưa chắc type detail có planCode thì giữ text cũ hoặc kiểm tra type trước khi implement.
+```
+
+`ModuleChips`:
+
+```txt
+TenantTable:
+- items: tạo từ tenant.moduleCodes map thành { key: code, label: formatModuleCode(code), enabled: true, tone: "success" }.
+- total: moduleTotal hiện tại, đang là 6.
+- compact: true để giữ table row gọn như dot indicator.
+- showCount: true.
+
+TenantDetailDrawer / ClinicDetailPage:
+- items: tenant.moduleCodes map label bằng formatModuleCode.
+- total: moduleTotal nếu có constant local; nếu không có, dùng tenant.moduleCodes.length để tránh nói sai số tổng.
+- compact: false cho chip label đầy đủ.
+
+CreateTenantWizard:
+- preview/side preview: form.moduleCodes map label bằng formatModuleCode.
+- total: moduleOptions.length.
+- compact: false.
+- Không thay button chọn module ở `.module-options` trong lượt đầu để không đổi toggle behavior.
+```
+
+`EmptyState`:
+
+```txt
+ClinicsPage:
+- label: "Chưa có phòng khám nào trong hệ thống."
+- helper: copy paragraph hiện tại.
+- tone: primary.
+- action slot: giữ RouterLink + AppButton "Thêm phòng khám đầu tiên".
+
+DashboardPage:
+- Có thể thay `.empty` bằng EmptyState nhỏ, nhưng nên để sau nếu cần vì dashboard empty copy đang nằm trong AppCard recent tenants, không phải frame 88:112 chính.
+```
+
+`DomainStateRow`:
+
+```txt
+TenantDetailDrawer:
+- label: domain.domainName.
+- value: formatDomainStatus(domain.status).
+- helper: domain.helper từ computed hiện tại.
+- tone: domainTone(domain.status), cần đảm bảo return type nằm trong DomainStateTone.
+- actions: [{ key: domain.action, label: domain.action, disabled: true, tone: "secondary" }]
+- @action: không cần handler hoặc handler no-op vì action disabled.
+
+ClinicDetailPage:
+- label: domain.domainName.
+- value: formatDomainStatus(domain.status).
+- helper: domain.isPrimary ? "Default subdomain" : domain status hint nếu có helper local.
+- tone: map domain.status tương tự drawer.
+```
+
+### 20.6 Có Đổi Behavior Không
+
+Không đổi behavior nếu implement đúng scope:
+
+```txt
+- Không đổi `tenantClient.listTenants/getTenant/updateTenantStatus`.
+- Không đổi computed filter, selection, drawerOpen/detailLoading, conflict focus, step validation.
+- Không đổi route `/dashboard`, `/clinics`, `/clinics/create`, `/clinics/:tenantId`.
+- Không đổi payload submit `TenantCreateRequest`.
+- Không đổi status update emit/handler.
+- Không thêm DNS retry/polling; DomainStateRow action trong drawer vẫn disabled/placeholder.
+- Không thêm dependency và không sửa package/lockfile.
+```
+
+Behavior được phép thay đổi chỉ ở presentation:
+
+```txt
+- Card/chip/row markup class thay đổi để dùng shared components.
+- Một số CSS inline cũ như `.module-meter`, `.empty-state`, `.domain-card` có thể bị xoá nếu không còn dùng.
+- Visible appearance sẽ gần Figma V3 hơn, nhưng interaction phải giữ nguyên.
+```
+
+### 20.7 Risk Từng File
+
+`DashboardPage.vue`:
+- Risk: `KPITile` height/min-height khác `MetricCard`, có thể làm grid cao hơn.
+- Mitigation: giữ `.metrics-grid` hiện tại, không đổi layout ngoài import/component.
+
+`ClinicsPage.vue`:
+- Risk: thay `MetricCard` và `EmptyState` cùng lúc có thể làm visual diff rộng.
+- Mitigation: làm KPI trước, EmptyState sau; giữ điều kiện `isEmpty`, `isFiltered`.
+
+`TenantTable.vue`:
+- Risk: `ModuleChips compact` có thể làm cell width/height lệch table `min-width: 1040px`.
+- Mitigation: giữ `moduleTotal`, kiểm tra row height 64px, không đổi table columns/click/keydown.
+
+`TenantDetailDrawer.vue`:
+- Risk: `DomainStateRow` emit action có thể vô tình tạo click behavior mới.
+- Mitigation: action disabled hoặc không truyền handler; không gọi API; giữ `domainCards` computed.
+
+`CreateTenantWizard.vue`:
+- Risk: thay interactive module buttons bằng `ModuleChips` có thể phá toggle/validation/focus.
+- Mitigation: chỉ adopt `ModuleChips` trong preview/sidebar và review step; không thay `.module-options` trong implement đầu.
+
+`ClinicDetailPage.vue`:
+- Risk: detail page hiện thiếu helper/action domain như drawer, nếu tự thêm logic có thể drift.
+- Mitigation: dùng mapper đơn giản hoặc reuse local helper tương tự drawer nhưng không gọi API.
+
+### 20.8 Verify Command
+
+Sau khi owner duyệt implement:
+
+```powershell
+cd frontend
+npm run typecheck
+npm run build
+npm run dev:owner
+```
+
+Static checks:
+
+```powershell
+rg "KPITile|ModuleChips|PlanBadge|EmptyState|DomainStateRow" frontend\apps\owner-admin\src
+rg "MetricCard|module-meter|empty-state|domain-card" frontend\apps\owner-admin\src\pages frontend\apps\owner-admin\src\components
+git diff --check
+git status --short
+```
+
+Expected:
+
+```txt
+- typecheck PASS cả 3 app.
+- build PASS cả 3 app.
+- Các component A5.1 xuất hiện trong Owner Admin source.
+- Không có thay đổi package/lockfile/backend/api-client/shared-types.
+```
+
+### 20.9 Khi Nào Run Frontend/Backend Để Test UI
+
+Plan phase:
+
+```txt
+- Không run UI visual test trong plan phase theo yêu cầu owner.
+- Không cần backend trong plan phase.
+```
+
+Implementation phase sau owner approval:
+
+```txt
+1. Run `npm run typecheck` và `npm run build` ngay sau khi sửa.
+2. Run `npm run dev:owner` sau build PASS để manual visual smoke.
+3. Nếu test bằng mock/offline: không cần backend, dùng mock fallback hiện có.
+4. Nếu owner muốn smoke real data: chỉ run frontend dev server sau khi backend/gateway/tunnel real API đã sẵn sàng; không tự sửa backend.
+5. Manual route smoke:
+   - /dashboard: KPI tile render, recent tenant strip không vỡ.
+   - /clinics: KPI tile, table PlanBadge/ModuleChips, empty state nếu mock data rỗng.
+   - /clinics/create: wizard preview/sidebar module chips không phá next/back/submit/conflict.
+   - /clinics/:tenantId: plan/module/domain display render, update status vẫn hoạt động.
+   - /clinics row click: drawer mở, DomainStateRow render, close/Escape/status update vẫn giữ.
+```
+
+### 20.10 Out Of Scope
+
+```txt
+- Không CommandPalette.
+- Không TenantSwitcher.
+- Không sửa API client.
+- Không đổi route/store/business logic.
+- Không sửa backend/Figma.
+- Không thêm dependency.
+- Không commit/push.
+- Không run UI visual test trong plan phase.
+```
+
+### 20.11 Owner Approval Gate
+
+```txt
+Dừng tại đây.
+Chưa code, chưa sửa source, chưa sửa Figma, chưa run UI visual test.
+Sau khi owner nói rõ "duyệt A5.1b" hoặc "bắt đầu implement A5.1b", Frontend Agent mới adopt shared display components theo plan trên.
+```
+
+### 20.12 Implementation Result 2026-05-11
+
+Trạng thái: 🟢 **A5.1b implementation + verify PASS; chưa commit theo yêu cầu owner**.
+
+Ghi chú quan trọng:
+- Commit có sẵn `1e01350 feat(owner-admin): adopt v3 shared display components` đã adopt phần ưu tiên vào `DashboardPage.vue`, `ClinicsPage.vue`, `TenantTable.vue`, `TenantDetailDrawer.vue`.
+- Lượt implement này hoàn tất phần còn lại trong scope A5.1b:
+  - `CreateTenantWizard.vue`: review/sidebar dùng `PlanBadge` + `ModuleChips`; không thay button chọn plan/module nên không đổi toggle/validation/focus.
+  - `ClinicDetailPage.vue`: detail page dùng `PlanBadge`, `DomainStateRow`, `ModuleChips`; không đổi load/update status/route/API.
+
+File source sửa trong lượt này:
+
+```txt
+frontend/apps/owner-admin/src/components/CreateTenantWizard.vue
+frontend/apps/owner-admin/src/pages/ClinicDetailPage.vue
+```
+
+Verify:
+
+```txt
+cd frontend && npm run typecheck -> PASS cả 3 app.
+cd frontend && npm run build     -> PASS cả 3 app.
+git diff --check                 -> PASS, chỉ warning LF/CRLF trên Windows.
+rg "KPITile|ModuleChips|PlanBadge|EmptyState|DomainStateRow" frontend/apps/owner-admin/src -> PASS, có usage.
+rg "MetricCard|module-meter|empty-state|domain-card" frontend/apps/owner-admin/src/pages frontend/apps/owner-admin/src/components -> PASS, no match.
+npm run dev:owner -> Vite ready http://localhost:5175/.
+HTTP smoke:
+- /dashboard -> 200
+- /clinics -> 200
+- /clinics/create -> 200
+- /clinics/mock-tenant-id -> 200
+```
+
+Chưa làm:
+
+```txt
+- Chưa screenshot/pixel smoke vì workspace hiện không có Playwright/Vitest/browser test dependency.
+- Chưa cleanup `temp/owner-admin-vite.log` vì dev server đang chạy cho owner review.
+- Chưa commit/push theo yêu cầu owner.
+```
+
+## 21. Wave A Step A5.2 - CommandPalette Shared Base + TenantSwitcher Presentational (2026-05-11)
+
+Trạng thái: 🟡 **Plan ready - dừng tại owner approval gate, chưa code**.
+
+Lead Agent điều phối theo feature team frontend/UI:
+
+```txt
+Frontend Agent: review OwnerCommandPalette hiện tại, OwnerAdminLayout, AdminTopbar, AdminSidebar.
+Architect Agent: kiểm boundary packages/ui không kéo router/API/business tenant authority.
+Figma UI Agent: inspect read-only frame V3 88:127, 85:2, 127:2.
+QA Agent: đề xuất keyboard/focus/visual smoke sau implement.
+Documentation Agent: chưa checkpoint current-task vì đây là plan nhỏ; chỉ cập nhật plan lane.
+```
+
+### 21.1 Mục Tiêu
+
+Hoàn tất phần pending của A5:
+
+```txt
+1. Tạo `CommandPalette` shared base trong `frontend/packages/ui`.
+2. Refactor `OwnerCommandPalette` thành wrapper app-local giữ data/action/navigation/shortcut.
+3. Tạo `TenantSwitcher` presentational trong `frontend/packages/ui` nếu owner duyệt A5.2 full scope.
+4. Không đổi route/store/API/business logic.
+```
+
+### 21.2 Source Đã Đọc
+
+```txt
+frontend/apps/owner-admin/src/components/OwnerCommandPalette.vue
+frontend/apps/owner-admin/src/layouts/OwnerAdminLayout.vue
+frontend/apps/owner-admin/src/components/AdminTopbar.vue
+frontend/apps/owner-admin/src/components/AdminSidebar.vue
+frontend/packages/ui/src/components/*
+frontend/packages/ui/src/composables/useFocusTrap.ts
+frontend/packages/ui/src/composables/useReducedMotion.ts
+frontend/packages/ui/src/composables/useTenantContext.ts
+frontend/packages/ui/src/index.ts
+```
+
+Figma read-only:
+
+```txt
+88:127  V3 - Owner Admin · Command palette ⌘K
+85:2    V3 - Owner Admin Tenant Operations
+127:2   V3 - Design System · Component Inventory
+```
+
+### 21.3 CommandPalette Hiện Tại Đang Làm Gì
+
+`OwnerCommandPalette.vue` hiện là component app-local nhưng đang gom cả UI shell và app behavior:
+
+```txt
+- Nhận prop `open` và emit `close`.
+- Teleport overlay vào body.
+- Render dialog overlay, panel 640px, search header, recent section, actions section.
+- Hardcode recent tenants: `mat-saigon`, `rhm-hadong`.
+- Hardcode actions gồm label/hint/to/icon.
+- Dùng `RouterLink` trực tiếp để điều hướng.
+- Đóng palette khi click backdrop, click item hoặc phím Escape.
+- Lock `document.body.style.overflow` khi mở.
+- Tự register window keydown Escape.
+- Input search chỉ visual, chưa có v-model query/filter thực.
+- Chưa có focus trap Tab, chưa restore focus, chưa keyboard arrow navigation.
+```
+
+`OwnerAdminLayout.vue` hiện giữ shortcut global `Ctrl/Cmd+K` để mở palette và state `commandPaletteOpen`. Đây là đúng vị trí cho app-level shortcut vì layout biết shell route/topbar.
+
+### 21.4 Phần Nên Extract Sang Shared Base
+
+Tạo `frontend/packages/ui/src/components/CommandPalette.vue` làm presentational controlled component:
+
+```txt
+- Overlay/backdrop/panel/search/list/empty/loading UI.
+- Input search controlled bằng `query` + emit `update:query`.
+- Nhóm item theo section (`recent`, `actions`, `matching` hoặc label truyền vào).
+- Visual active row, hover/focus row, keyboard row focus optional.
+- Escape emit `close`.
+- Backdrop click emit `close`.
+- Enter/click item emit `select`.
+- Dùng `useFocusTrap` để trap focus trong panel khi open.
+- Dùng `useReducedMotion` hoặc CSS prefers-reduced-motion để giảm motion.
+- Body scroll lock có thể nằm trong shared base vì overlay là presentational behavior chung, nhưng phải cleanup đúng khi unmount/close.
+- Không dùng `RouterLink`, không import `vue-router`, không biết `to`.
+- Không biết tenant API, module, plan, status enum.
+```
+
+Không extract:
+
+```txt
+- Dữ liệu recent tenants/action list.
+- Điều hướng route.
+- Shortcut Ctrl/Cmd+K ở layout.
+- Quyết định action nào enabled/disabled theo product phase.
+- Query business filtering phức tạp nếu cần đọc tenant list thật.
+```
+
+### 21.5 OwnerCommandPalette Wrapper Giữ Gì
+
+`frontend/apps/owner-admin/src/components/OwnerCommandPalette.vue` nên giữ vai trò adapter:
+
+```txt
+- Import `CommandPalette` từ `@clinic-saas/ui`.
+- Khai báo item app-local với route/action metadata.
+- Giữ copy Owner Admin hiện tại: recent tenants, actions, hints.
+- Quản lý `query` local nếu cần.
+- Map query -> grouped items, ví dụ Recent/Actions/Tenants matching.
+- Khi `CommandPalette` emit `select`, wrapper dùng `useRouter().push(item.to)` hoặc render slot/RouterLink nếu chọn slot strategy.
+- Sau select thành công emit `close`.
+- Không tự render toàn bộ overlay CSS nữa, chỉ map data và event.
+```
+
+Khuyến nghị implementation: dùng event `select` + `router.push()` trong wrapper thay vì slot `RouterLink` cho từng row. Lý do: shared base giữ được keyboard `Enter` chọn item nhất quán, wrapper chỉ xử lý route ở boundary app.
+
+### 21.6 TenantSwitcher Có Nên Implement Ngay Hay Defer
+
+Khuyến nghị: **implement presentational component ngay trong A5.2, nhưng defer Owner Admin integration**.
+
+Lý do nên implement:
+
+```txt
+- A5.1 plan đã để TenantSwitcher là pending A5.2.
+- `packages/ui` có `useTenantContext`, nhưng chưa có component controlled để hiển thị tenant context.
+- Component presentational không cần API/router/storage nên không vi phạm boundary.
+- Có thể dùng lại sau cho Clinic Admin/Public preview/Owner Admin context switch khi backend/auth tenant context rõ hơn.
+```
+
+Lý do chưa integrate:
+
+```txt
+- Owner Admin hiện là cross-tenant list, chưa có tenant authority/currentTenant real.
+- Nếu gắn vào topbar bây giờ dễ tạo hiểu nhầm rằng chọn tenant trong UI là đổi security context.
+- Không có route/API/permission flow rõ cho tenant switching.
+- `useTenantContext` hiện chỉ là composable local; không phải nguồn quyền truy cập.
+```
+
+Vì vậy A5.2 nên tạo/export component, có thể thêm smoke static/source check; chưa render vào `AdminTopbar` hoặc route trừ khi owner duyệt rõ usage.
+
+### 21.7 File Dự Kiến Tạo/Sửa
+
+Được phép sửa/tạo trong A5.2:
+
+```txt
+frontend/packages/ui/src/components/CommandPalette.vue
+frontend/packages/ui/src/components/TenantSwitcher.vue
+frontend/packages/ui/src/index.ts
+frontend/apps/owner-admin/src/components/OwnerCommandPalette.vue
+```
+
+Chỉ sửa nếu implementation thật sự cần và trong scope:
+
+```txt
+frontend/apps/owner-admin/src/layouts/OwnerAdminLayout.vue
+```
+
+Lý do có thể cần chạm layout:
+
+```txt
+- Nếu muốn wrapper nhận shortcut hint/platform key hoặc close callback rõ hơn.
+- Nếu shared base thay đổi close timing/focus restore cần layout button/search trigger không đổi behavior.
+```
+
+Không sửa:
+
+```txt
+frontend/apps/owner-admin/src/components/AdminTopbar.vue
+frontend/apps/owner-admin/src/components/AdminSidebar.vue
+frontend/packages/api-client/*
+frontend/packages/shared-types/*
+frontend/apps/public-web/*
+frontend/apps/clinic-admin/*
+backend/*
+Figma
+package.json
+package-lock.json
+.claude/settings.local.json
+docs/current-task.frontend.md nếu task không kéo dài hoặc không bị block
+```
+
+### 21.8 Props / Events Đề Xuất
+
+`CommandPalette.vue`:
+
+```ts
+type CommandPaletteTone = "default" | "primary" | "success" | "warning" | "danger" | "info" | "neutral";
+
+type CommandPaletteItem = {
+  id: string;
+  label: string;
+  meta?: string;
+  hint?: string;
+  icon?: string;
+  disabled?: boolean;
+  tone?: CommandPaletteTone;
+};
+
+type CommandPaletteSection = {
+  id: string;
+  label: string;
+  items: CommandPaletteItem[];
+};
+
+props:
+- open: boolean
+- query: string
+- sections: CommandPaletteSection[]
+- placeholder?: string
+- loading?: boolean
+- emptyLabel?: string
+- emptyHelper?: string
+- closeLabel?: string
+- autofocus?: boolean
+
+emits:
+- "close": []
+- "select": [item: CommandPaletteItem]
+- "update:query": [value: string]
+```
+
+Slot mở rộng nếu cần nhưng không bắt buộc ở lượt đầu:
+
+```txt
+- #item="{ item, active }" để app custom row.
+- #empty để app custom empty copy.
+- #footer nếu sau này cần shortcut help.
+```
+
+`TenantSwitcher.vue`:
+
+```ts
+type TenantSwitcherItem = {
+  id: string;
+  label: string;
+  slug?: string;
+  meta?: string;
+  avatarLabel?: string;
+  disabled?: boolean;
+};
+
+props:
+- tenants: TenantSwitcherItem[]
+- currentTenantId?: string
+- open?: boolean
+- label?: string
+- helper?: string
+- loading?: boolean
+- placeholder?: string
+- emptyLabel?: string
+
+emits:
+- "select": [tenantId: string]
+- "open": []
+- "close": []
+- "update:open": [open: boolean]
+```
+
+Implementation style: controlled dropdown/listbox. Component không đọc localStorage/session/env và không gọi API.
+
+### 21.9 Acceptance Criteria
+
+```txt
+A5.2.1 `packages/ui/src/index.ts` export `CommandPalette` và `TenantSwitcher`.
+A5.2.2 `CommandPalette` không import `vue-router`, Pinia, `@clinic-saas/api-client`, `@clinic-saas/shared-types`.
+A5.2.3 `TenantSwitcher` không import router/API/storage/env và không dùng `useTenantContext` như authority.
+A5.2.4 `OwnerCommandPalette` vẫn mở bằng search trigger topbar và Ctrl/Cmd+K.
+A5.2.5 Escape đóng palette; click backdrop đóng palette; click/Enter chọn item đóng palette và điều hướng như trước.
+A5.2.6 Tab focus không thoát khỏi command panel khi palette mở; đóng xong restore focus về trigger hoặc focused element trước đó nếu khả thi.
+A5.2.7 Không đổi route `/dashboard`, `/clinics`, `/clinics/create`, `/clinics/:tenantId`.
+A5.2.8 Không sửa backend/Figma/package/lockfile; không thêm dependency.
+```
+
+### 21.10 Risk Keyboard / Focus / Scroll Lock
+
+```txt
+HIGH - Focus trap conflict với global Escape:
+  OwnerAdminLayout đang bắt Escape cho sidebar, OwnerCommandPalette cũng bắt Escape.
+  Mitigation: khi palette mở, shared CommandPalette tự xử lý Escape và emit close; layout Escape sidebar vẫn chỉ đóng sidebar. Không thêm listener Escape trùng trong wrapper nếu shared đã xử lý.
+
+HIGH - Body scroll lock bị ghi đè giữa sidebar drawer và command palette:
+  Layout hiện set document.body.style.overflow cho sidebar, OwnerCommandPalette cũng set overflow.
+  Mitigation: A5.2 không mở sidebar và palette đồng thời; khi mở palette có thể close sidebar trước hoặc shared base cleanup không reset sai nếu sidebar vẫn open. Nếu không sửa layout, giữ scroll lock trong CommandPalette nhưng test case mở sidebar mobile rồi Cmd+K cần được QA kiểm.
+
+MEDIUM - Focus restore:
+  Nếu trigger là button search topbar, restore OK. Nếu mở bằng keyboard global khi focus ở body/content, restore có thể quay về element cũ hoặc noop.
+  Mitigation: dùng `useFocusTrap({ restoreFocus: true })`; fallback focus panel nếu không có focusable.
+
+MEDIUM - Keyboard row navigation chưa có composable riêng:
+  Implement tối thiểu ArrowDown/ArrowUp/Enter trong shared base hoặc giữ Tab/click only.
+  Khuyến nghị A5.2 implement ArrowUp/ArrowDown/Enter vì Figma handoff 85:2 nhắc kbd nav.
+
+MEDIUM - Router navigation nằm trong wrapper:
+  Nếu shared emit disabled item, wrapper có thể navigate nhầm.
+  Mitigation: shared không emit select cho disabled item; wrapper cũng guard `if (item.disabled) return`.
+
+LOW - Query filter làm mất active index:
+  Khi query đổi, activeIndex phải reset về item đầu tiên enabled.
+```
+
+### 21.11 Verify Command
+
+Sau khi owner duyệt implement:
+
+```powershell
+cd frontend
+npm run typecheck
+npm run build
+git diff --check
+git status --short
+```
+
+Static boundary checks:
+
+```powershell
+rg "vue-router|pinia|@clinic-saas/api-client|@clinic-saas/shared-types|localStorage|sessionStorage|import\\.meta\\.env" frontend\packages\ui\src\components\CommandPalette.vue frontend\packages\ui\src\components\TenantSwitcher.vue
+rg "CommandPalette|TenantSwitcher" frontend\packages\ui\src\index.ts frontend\apps\owner-admin\src\components\OwnerCommandPalette.vue
+```
+
+Expected:
+
+```txt
+- typecheck PASS cả 3 app.
+- build PASS cả 3 app.
+- boundary rg không match forbidden imports/storage/env trong 2 shared components.
+- Staged/dirty chỉ nằm trong A5.2 files được phép.
+```
+
+### 21.12 Khi Nào Run `dev:owner` Để Visual Test
+
+Plan phase hiện tại:
+
+```txt
+- Không run UI visual test.
+- Không cần backend.
+- Không sửa Figma.
+```
+
+Implementation phase sau owner approval:
+
+```txt
+1. Chạy typecheck/build trước.
+2. Nếu PASS, chạy `cd frontend && npm run dev:owner`.
+3. Smoke mock trên `http://localhost:5175`:
+   - /dashboard: click search trigger topbar mở palette.
+   - Ctrl/Cmd+K mở palette từ content.
+   - gõ query "m" thấy section matching hoặc item filter đúng.
+   - ArrowDown/ArrowUp đổi active row, Enter chọn action/tenant.
+   - Escape đóng palette.
+   - click backdrop đóng palette.
+   - click "Tạo phòng khám mới" đi `/clinics/create`.
+   - click tenant/action `/clinics` không crash.
+   - Tab/Shift+Tab không thoát panel khi palette mở.
+   - Mobile width < 640: panel không overflow ngang, search text không đè kbd.
+4. Nếu TenantSwitcher chỉ tạo/export, không cần route visual smoke; có thể inspect bằng typecheck/build + source/static boundary. Nếu owner yêu cầu preview, cần một route/story/demo riêng và phải có plan bổ sung vì hiện chưa có Histoire.
+```
+
+### 21.13 Commit Split / Rollback
+
+Commit đề xuất nếu owner duyệt và verify PASS:
+
+```txt
+feat(ui): add command palette and tenant switcher base
+```
+
+Nếu adoption wrapper thay đổi đủ đáng tách, có thể chia:
+
+```txt
+feat(ui): add command palette and tenant switcher base
+feat(owner-admin): adopt shared command palette
+```
+
+Rollback:
+
+```txt
+- Revert commit A5.2.
+- OwnerCommandPalette cũ có thể khôi phục độc lập vì A5.2 không đổi API client/router/store.
+```
+
+### 21.14 Out Of Scope
+
+```txt
+- Không implement real tenant switching authority.
+- Không đọc/ghi localStorage/sessionStorage.
+- Không gọi API tenant list thật trong TenantSwitcher.
+- Không thêm route preview/storybook/histoire.
+- Không thêm dependency.
+- Không sửa package/lockfile.
+- Không sửa backend/Figma.
+- Không đổi Owner Admin route/store/API/business logic.
+- Không commit/push trong plan phase.
+```
+
+### 21.15 Owner Approval Gate
+
+```txt
+Dừng tại đây.
+Chưa code, chưa sửa source, chưa sửa Figma, chưa chạy UI visual test.
+File plan đã sẵn sàng để owner duyệt.
+Frontend Agent chỉ implement A5.2 khi owner nói rõ: "duyệt A5.2", "bắt đầu implement A5.2" hoặc tương đương.
+```

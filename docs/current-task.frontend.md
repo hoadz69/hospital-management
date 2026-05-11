@@ -916,3 +916,74 @@ Plan chi tiết mới nằm trong `temp/plan.frontend.md` §17. Điểm quyết 
 - useDomainVerifyPoll/polling thật cần owner chốt DNS retry tolerance; nếu chưa chốt, chỉ làm UI state + manual retry mock-first.
 - Chưa code, chưa build/test. Frontend Agent dừng chờ owner duyệt Wave A.
 ```
+
+## Wave A Step A5.1 - Shared Display Components 2026-05-11
+
+Trạng thái: 🟡 **A5.1 implementation + verify PASS; A5.2 chờ owner duyệt tiếp**.
+
+Phạm vi đã hoàn thành:
+- Thêm 5 shared display component V3 trong `frontend/packages/ui/src/components`: `KPITile`, `ModuleChips`, `PlanBadge`, `EmptyState`, `DomainStateRow`.
+- Export 5 component mới qua `frontend/packages/ui/src/index.ts`.
+- Giữ `packages/ui` ở mức presentational: không import router, Pinia, api-client, shared-types; không gọi API; không polling DNS; không đọc env/storage; không hardcode tenant id/role.
+
+File đã sửa/tạo trong commit `eca5086 feat(ui): add v3 shared display components`:
+
+```txt
+frontend/packages/ui/src/components/KPITile.vue
+frontend/packages/ui/src/components/ModuleChips.vue
+frontend/packages/ui/src/components/PlanBadge.vue
+frontend/packages/ui/src/components/EmptyState.vue
+frontend/packages/ui/src/components/DomainStateRow.vue
+frontend/packages/ui/src/index.ts
+```
+
+Verify đã chạy:
+
+```txt
+cd frontend && npm run typecheck -> PASS cả 3 app: clinic-admin, owner-admin, public-web.
+cd frontend && npm run build     -> PASS cả 3 app.
+Static check 5 component mới không có hex/rgb/rgba literal.
+git show --check --stat HEAD -> không có whitespace error.
+```
+
+Chưa làm / còn pending:
+- `CommandPalette` shared base và `TenantSwitcher` presentational chưa implement, để lại A5.2.
+- Chưa integrate các component mới vào Owner Admin route để tránh đổi behavior hiện có trong A5.1.
+- Chưa chạy `npm run dev:owner` + manual browser smoke vì A5.1 chỉ thêm/export shared components.
+- Không sửa backend, không sửa Figma, không thêm dependency, không push.
+
+Bước resume tiếp theo:
+1. Nếu owner duyệt A5.2, implement `CommandPalette` shared base + `TenantSwitcher` presentational theo boundary trong `temp/plan.frontend.md` §19.
+2. Nếu owner muốn adopt UI ngay, tạo plan nhỏ cho adoption Owner Admin trước khi sửa route/component app.
+
+## Wave A Step A5.1b - Owner Admin Shared Display Adoption 2026-05-11
+
+Trạng thái: 🟢 **Implementation + verify PASS; chưa commit theo yêu cầu owner**.
+
+Phạm vi đã hoàn thành:
+- Source hiện có commit `1e01350 feat(owner-admin): adopt v3 shared display components` đã adopt phần ưu tiên A5.1b vào `DashboardPage.vue`, `ClinicsPage.vue`, `TenantTable.vue`, `TenantDetailDrawer.vue`.
+- Lượt này hoàn tất phần còn lại trong scope A5.1b:
+  - `CreateTenantWizard.vue`: preview/review dùng `PlanBadge` và `ModuleChips`, không thay button chọn plan/module.
+  - `ClinicDetailPage.vue`: detail page dùng `PlanBadge`, `DomainStateRow`, `ModuleChips`, giữ status update/load route/API cũ.
+- Không sửa backend, không sửa Figma, không đổi route/API client/store, không thêm dependency, không commit/push.
+
+Verify đã chạy:
+
+```txt
+cd frontend && npm run typecheck -> PASS cả 3 app: clinic-admin, owner-admin, public-web.
+cd frontend && npm run build     -> PASS cả 3 app.
+git diff --check                 -> PASS, chỉ có warning LF/CRLF trên Windows.
+rg "KPITile|ModuleChips|PlanBadge|EmptyState|DomainStateRow" frontend/apps/owner-admin/src -> có usage ở Owner Admin.
+rg "MetricCard|module-meter|empty-state|domain-card" frontend/apps/owner-admin/src/pages frontend/apps/owner-admin/src/components -> no match.
+dev:owner Vite localhost:5175 ready; HTTP route smoke 200 cho /dashboard, /clinics, /clinics/create, /clinics/mock-tenant-id.
+```
+
+Artifact/runtime:
+- `npm run dev:owner` đang chạy ở `http://localhost:5175/`.
+- Log generated untracked: `temp/owner-admin-vite.log`; không stage/commit.
+- Chưa chụp screenshot/pixel smoke vì workspace hiện không có Playwright/Vitest/browser test dependency; HTTP route smoke đã chạy thay thế.
+
+Bước tiếp theo đề xuất:
+1. Owner review UI trên `http://localhost:5175/`.
+2. Sau khi owner review xong, cleanup `temp/owner-admin-vite.log` theo workflow artifact cleanup.
+3. Nếu owner duyệt tiếp, chuyển sang A5.2 (`CommandPalette` shared base + `TenantSwitcher` presentational).

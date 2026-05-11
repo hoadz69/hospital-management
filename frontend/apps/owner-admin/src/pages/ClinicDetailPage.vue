@@ -2,8 +2,8 @@
 // Trang chi tiết tenant tương ứng route `/clinics/:tenantId`.
 // Page này có cùng dữ liệu nguồn với drawer ở `/clinics`, nhưng được trình bày dạng full-page
 // để Owner Admin có thể bookmark/chia sẻ link riêng từng tenant.
-import type { TenantDetail, TenantStatus } from "@clinic-saas/shared-types";
-import { AppButton, AppCard, StatusPill } from "@clinic-saas/ui";
+import type { TenantDetail, TenantDomainStatus, TenantStatus } from "@clinic-saas/shared-types";
+import { AppButton, AppCard, DomainStateRow, ModuleChips, PlanBadge, StatusPill } from "@clinic-saas/ui";
 import { computed, onMounted, ref, watch } from "vue";
 import { formatDomainStatus, formatModuleCode, formatTenantStatus } from "../services/labels";
 import { tenantClient } from "../services/tenantClient";
@@ -35,6 +35,63 @@ function statusTone(status: TenantStatus) {
   }
 
   return "warning";
+}
+
+function domainTone(status: TenantDomainStatus) {
+  if (status === "verified") {
+    return "success";
+  }
+
+  if (status === "failed") {
+    return "danger";
+  }
+
+  if (status === "pending") {
+    return "warning";
+  }
+
+  return "info";
+}
+
+function domainHelper(domain: TenantDetail["domains"][number]) {
+  if (domain.isPrimary) {
+    return "Default subdomain";
+  }
+
+  if (domain.status === "verified") {
+    return "Custom · CNAME OK";
+  }
+
+  if (domain.status === "pending") {
+    return "DNS đang propagate. Recheck khi bản ghi đã sẵn sàng.";
+  }
+
+  if (domain.status === "failed") {
+    return "CNAME/TXT chưa khớp. Cần rà soát bản ghi.";
+  }
+
+  return "Chưa có dữ liệu DNS/SSL từ backend.";
+}
+
+function planTone(planCode: TenantDetail["planCode"]) {
+  if (planCode === "premium") {
+    return "warning";
+  }
+
+  if (planCode === "growth") {
+    return "neutral";
+  }
+
+  return "info";
+}
+
+function moduleChipItems(moduleCodes: TenantDetail["moduleCodes"]) {
+  return moduleCodes.map((moduleCode) => ({
+    key: moduleCode,
+    label: formatModuleCode(moduleCode),
+    enabled: true,
+    tone: "success" as const
+  }));
 }
 
 async function loadTenant() {
@@ -118,7 +175,9 @@ watch(() => props.tenantId, loadTenant);
             </div>
             <div>
               <dt>Gói</dt>
-              <dd>{{ tenant.planDisplayName }}</dd>
+              <dd>
+                <PlanBadge :label="tenant.planDisplayName" :tone="planTone(tenant.planCode)" />
+              </dd>
             </div>
             <div>
               <dt>Tên phòng khám</dt>
@@ -141,25 +200,22 @@ watch(() => props.tenantId, loadTenant);
 
         <AppCard>
           <h3>Tên miền</h3>
-          <ul class="domain-list">
-            <li v-for="domain in tenant.domains" :key="domain.id">
-              <span>{{ domain.domainName }}</span>
-              <StatusPill :label="formatDomainStatus(domain.status)" tone="info" />
-            </li>
-          </ul>
+          <div class="domain-list">
+            <DomainStateRow
+              v-for="domain in tenant.domains"
+              :key="domain.id"
+              :label="domain.domainName"
+              :value="formatDomainStatus(domain.status)"
+              :helper="domainHelper(domain)"
+              :tone="domainTone(domain.status)"
+            />
+          </div>
         </AppCard>
       </div>
 
       <AppCard>
         <h3>Module đang bật</h3>
-        <div class="module-list">
-          <StatusPill
-            v-for="moduleCode in tenant.moduleCodes"
-            :key="moduleCode"
-            :label="formatModuleCode(moduleCode)"
-            tone="neutral"
-          />
-        </div>
+        <ModuleChips :items="moduleChipItems(tenant.moduleCodes)" :total="tenant.moduleCodes.length" />
       </AppCard>
     </template>
   </div>
@@ -173,8 +229,7 @@ watch(() => props.tenantId, loadTenant);
 
 .page-heading,
 .heading-actions,
-.status-row,
-.module-list {
+.status-row {
   display: flex;
   align-items: center;
   gap: 12px;
@@ -239,19 +294,6 @@ dd {
   display: grid;
   gap: 10px;
   margin: 14px 0 0;
-  padding: 0;
-  list-style: none;
-}
-
-.domain-list li {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-}
-
-.module-list {
-  flex-wrap: wrap;
 }
 
 .error-state,

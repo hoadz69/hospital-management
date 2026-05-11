@@ -9,7 +9,7 @@ import type {
   TenantModuleCode,
   TenantPlanCode
 } from "@clinic-saas/shared-types";
-import { AppButton, AppCard, StatusPill } from "@clinic-saas/ui";
+import { AppButton, AppCard, ModuleChips, PlanBadge } from "@clinic-saas/ui";
 import { computed, nextTick, reactive, ref, watch } from "vue";
 import ConflictState from "./ConflictState.vue";
 import { formatModuleCode } from "../services/labels";
@@ -65,6 +65,39 @@ const fieldToStep: Record<TenantConflictField, number> = {
 };
 
 const conflictFields = computed(() => props.conflict?.fields ?? []);
+
+function planLabel(planCode: TenantPlanCode) {
+  if (planCode === "starter") {
+    return "Starter";
+  }
+
+  if (planCode === "growth") {
+    return "Growth";
+  }
+
+  return "Premium";
+}
+
+function planTone(planCode: TenantPlanCode) {
+  if (planCode === "premium") {
+    return "warning";
+  }
+
+  if (planCode === "growth") {
+    return "neutral";
+  }
+
+  return "info";
+}
+
+function moduleChipItems(moduleCodes: TenantModuleCode[]) {
+  return moduleCodes.map((moduleCode) => ({
+    key: moduleCode,
+    label: formatModuleCode(moduleCode),
+    enabled: true,
+    tone: "success" as const
+  }));
+}
 
 function fieldHasConflict(field: keyof TenantCreateRequest) {
   return conflictFields.value.includes(field as TenantConflictField);
@@ -280,7 +313,7 @@ function submit() {
           </div>
           <div>
             <span>Gói</span>
-            <strong>{{ form.planCode }}</strong>
+            <PlanBadge :label="planLabel(form.planCode)" :tone="planTone(form.planCode)" />
           </div>
           <div>
             <span>Tên miền</span>
@@ -288,14 +321,7 @@ function submit() {
           </div>
           <div>
             <span>Module</span>
-            <div class="preview-modules">
-              <StatusPill
-                v-for="moduleCode in form.moduleCodes"
-                :key="moduleCode"
-                :label="formatModuleCode(moduleCode)"
-                tone="neutral"
-              />
-            </div>
+            <ModuleChips :items="moduleChipItems(form.moduleCodes)" :total="moduleOptions.length" />
           </div>
         </section>
 
@@ -322,16 +348,10 @@ function submit() {
     <AppCard class="side-preview">
       <p class="preview-eyebrow">Xem trước thiết lập</p>
       <h2>{{ form.displayName }}</h2>
-      <p>Phòng khám {{ form.specialty }} đang đăng ký gói {{ form.planCode }}.</p>
+      <p>Phòng khám {{ form.specialty }} đang đăng ký gói {{ planLabel(form.planCode) }}.</p>
+      <PlanBadge :label="planLabel(form.planCode)" :tone="planTone(form.planCode)" />
       <div class="preview-domain">{{ form.defaultDomainName }}</div>
-      <div class="preview-modules">
-        <StatusPill
-          v-for="moduleCode in form.moduleCodes"
-          :key="moduleCode"
-          :label="formatModuleCode(moduleCode)"
-          tone="info"
-        />
-      </div>
+      <ModuleChips :items="moduleChipItems(form.moduleCodes)" :total="moduleOptions.length" />
     </AppCard>
   </div>
 </template>
@@ -558,13 +578,6 @@ label.conflict input {
   margin-top: 4px;
   overflow-wrap: anywhere;
   color: #102a43;
-}
-
-.preview-modules {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-  margin-top: 10px;
 }
 
 .wizard-actions {
