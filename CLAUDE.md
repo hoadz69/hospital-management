@@ -40,6 +40,9 @@ Lead Agent: chia commit <task>
 ```
 
 - Đây là action trigger thật, không phải lời chào. Claude Code không được chỉ trả lời "Đã hiểu", "Đã ghi nhận AGENTS.md", "Tôi sẽ tuân thủ guardrail" rồi dừng.
+- Nếu owner prompt có động từ hành động như `chạy`, `làm`, `implement`, `verify`, `review`, `chia commit`, `fix`, `tiếp tục`, `hoàn tất`, Claude Code/Lead Agent bắt buộc phải chạy action thật trong cùng lượt.
+- Acknowledge-only sau action prompt là lỗi workflow. Không được trả lời "đã nhận hướng dẫn", "sẽ tuân thủ", "đã hiểu" rồi dừng.
+- Nếu không thể làm action, phải report blocker cụ thể: thiếu file nào, thiếu command nào, thiếu tool nào, hoặc lỗi môi trường nào. Không được dùng guardrail chung chung làm lý do dừng.
 - Guardrail mặc định: không commit, không push, không stage; không stage/commit artifact/log/screenshot/generated files; không stage `.claude/settings.local.json`; không sửa ngoài scope; không xóa source/docs/plan dirty nếu chưa rõ chủ sở hữu.
 - Tối thiểu phải chạy `git status --branch --short`, `git diff --stat`, đọc dashboard/lane current-task/lane plan/handoff liên quan, phân lane, tự chọn agents, quyết định action (`implement`/`resume`/`verify`/`commit-split`/`plan-only`), thực hiện action và report.
 - `bắt đầu` / `làm tiếp`: Lead tự phân lane, tự đọc plan/current-task/handoff, tự assemble agents theo loại task. Nếu task đã xuất hiện trong lane plan/current-task/handoff/roadmap với scope rõ, allowed files/file areas rõ, và acceptance criteria hoặc verify command rõ thì xem là resumable/approved scope và implement/resume ngay. Nếu scope chưa rõ thì lập/update lane plan rồi dừng chờ duyệt.

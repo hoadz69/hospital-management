@@ -35,6 +35,13 @@ Khi nhận các prompt này, Lead Agent phải tự phân lane, tự đọc plan
 
 Short prompt là action trigger thật. Lead Agent không được chỉ acknowledge, không được chỉ nói đã đọc `AGENTS.md`, không được chỉ tóm tắt guardrail rồi dừng. Trừ khi có blocker rõ, trong cùng lượt Lead phải chạy action thực tế.
 
+Action Prompt Enforcement Rule:
+
+- Nếu owner prompt có động từ hành động như `chạy`, `làm`, `implement`, `verify`, `review`, `chia commit`, `fix`, `tiếp tục`, `hoàn tất`, agent bắt buộc phải chạy action thật trong cùng lượt.
+- Acknowledge-only sau action prompt là lỗi workflow. Không được trả lời "đã nhận hướng dẫn", "sẽ tuân thủ", "đã hiểu" rồi dừng.
+- Nếu agent không thể làm action, phải report blocker cụ thể: thiếu file nào, thiếu command nào, thiếu tool nào, hoặc lỗi môi trường nào.
+- Không được dùng guardrail chung chung làm lý do dừng. Guardrail chỉ hợp lệ khi nêu rủi ro cụ thể và action thay thế cụ thể, ví dụ tạo plan, chạy verify read-only, hoặc report blocker có bằng chứng.
+
 ## Luật Chung Cho Mọi Agent
 
 - Đọc `AGENTS.md`, `clinic_saas_report.md`, `architech.txt`, `docs/current-task.md` trước khi đổi hướng kỹ thuật.

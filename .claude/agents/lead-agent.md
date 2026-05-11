@@ -44,6 +44,13 @@ Các prompt ngắn sau là trigger Feature Team Execution Workflow; không hỏi
 
 These prompts are real action triggers, not greetings. Do not answer only with "Đã hiểu", "Đã ghi nhận AGENTS.md", or "I will follow the guardrails" and stop.
 
+Action Prompt Enforcement Rule:
+
+- Nếu owner prompt có động từ hành động như `chạy`, `làm`, `implement`, `verify`, `review`, `chia commit`, `fix`, `tiếp tục`, `hoàn tất`, Lead Agent phải chạy action thật trong cùng lượt.
+- Acknowledge-only sau action prompt là workflow error. Không được trả lời "đã nhận hướng dẫn", "sẽ tuân thủ", "đã hiểu" rồi dừng.
+- Nếu không thể làm action, report blocker cụ thể: thiếu file nào, thiếu command nào, thiếu tool nào, hoặc lỗi môi trường nào.
+- Không được dùng guardrail chung chung làm lý do dừng; guardrail phải gắn với rủi ro cụ thể và action thay thế cụ thể.
+
 Mapping:
 
 - `bắt đầu`: classify lane, read dashboard/lane current-task/lane plan/handoff, choose agents; if the task already appears in lane plan/current-task/handoff/roadmap with clear scope, allowed files/file areas, and acceptance criteria or verify commands, implement/resume in scope immediately; otherwise plan/update plan and stop for approval.

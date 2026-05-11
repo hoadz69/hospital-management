@@ -88,6 +88,12 @@ Lead Agent: chia commit <task>
 
 Các prompt trên là **action trigger thật**, không phải lời chào/khởi động vai. Lead Agent không được trả lời kiểu acknowledge-only như "Đã ghi nhận AGENTS.md", "Tôi sẽ tuân thủ guardrail", "Đã hiểu" hoặc "Tôi sẽ đọc source of truth trước" rồi dừng. Trừ khi gặp blocker rõ, Lead Agent phải làm hành động thật trong cùng lượt.
 
+Action Prompt Enforcement Rule:
+- Nếu owner prompt có động từ hành động như `chạy`, `làm`, `implement`, `verify`, `review`, `chia commit`, `fix`, `tiếp tục`, `hoàn tất`, agent bắt buộc phải chạy action thật trong cùng lượt.
+- Acknowledge-only sau action prompt là lỗi workflow. Không được trả lời "đã nhận hướng dẫn", "sẽ tuân thủ", "đã hiểu" rồi dừng.
+- Nếu không thể làm action, agent phải report blocker cụ thể: thiếu file nào, thiếu command nào, thiếu tool nào, hoặc lỗi môi trường nào.
+- Không được dùng guardrail chung chung làm lý do dừng. Guardrail chỉ hợp lệ khi nêu rủi ro cụ thể và action thay thế cụ thể, ví dụ tạo plan, chạy verify read-only, hoặc report blocker có bằng chứng.
+
 Guardrail mặc định cho mọi short prompt, owner không cần nhắc lại:
 - Không commit, không push, không stage, trừ khi owner yêu cầu rõ thao tác commit/stage trong prompt hiện tại.
 - Không hỏi lại approval nếu task đã có scope rõ trong lane plan/current-task/handoff/roadmap.
@@ -317,6 +323,8 @@ Codex và Claude Code dùng cùng khung phân vai sau:
 - Documentation Agent: giữ README, architecture docs, setup, deployment, troubleshooting luôn cập nhật.
 
 Khi owner gọi "Lead Agent", "Lead / Orchestrator Agent", "lead-plan", "giao việc", "điều phối", "làm việc này", "làm tiếp", "chạy workflow" hoặc yêu cầu tương đương, đó là quyền rõ ràng cho Codex tự điều phối theo team agent trong phạm vi task. Nếu tool hỗ trợ subagent/parallel agent, Lead Agent được phép tự tạo, giao việc, chờ kết quả và tổng hợp các subagent phù hợp mà không cần hỏi lại từng lần.
+
+Nếu prompt của owner có động từ hành động như `chạy`, `làm`, `implement`, `verify`, `review`, `chia commit`, `fix`, `tiếp tục`, `hoàn tất`, Codex phải thực hiện action thật trong cùng lượt. Nếu không thể thực hiện, Codex phải nêu blocker cụ thể theo file/command/tool/lỗi môi trường; không được dừng bằng guardrail chung chung hoặc câu acknowledge-only.
 
 Các prompt ngắn như `Lead Agent: bắt đầu A5.2`, `Lead Agent: làm tiếp A5.4`, `Lead Agent: verify A5.2`, `Lead Agent: chia commit A5.1b` cũng là trigger điều phối feature-team. Lead Agent phải tự phân loại lane, tự chọn agents, tự đọc lane plan/handoff, rồi report agents đã chọn và phần việc từng vai; owner không cần paste danh sách "Agents tham gia".
 

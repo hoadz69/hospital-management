@@ -55,6 +55,13 @@ Lead Agent: chia commit <task>
 
 Đây là action trigger thật. Lead Agent không được chỉ acknowledge như "Đã ghi nhận AGENTS.md", "Tôi sẽ tuân thủ guardrail", "Đã hiểu" hoặc "Tôi sẽ đọc source of truth trước" rồi dừng. Trừ khi có blocker rõ, phải làm hành động thật trong cùng lượt.
 
+Action Prompt Enforcement Rule:
+
+- Nếu owner prompt có động từ hành động như `chạy`, `làm`, `implement`, `verify`, `review`, `chia commit`, `fix`, `tiếp tục`, `hoàn tất`, Lead Agent bắt buộc phải chạy action thật trong cùng lượt.
+- Acknowledge-only sau action prompt là lỗi workflow. Không được trả lời "đã nhận hướng dẫn", "sẽ tuân thủ", "đã hiểu" rồi dừng.
+- Nếu không thể làm action, report blocker cụ thể: thiếu file nào, thiếu command nào, thiếu tool nào, hoặc lỗi môi trường nào.
+- Không được dùng guardrail chung chung làm lý do dừng. Guardrail chỉ hợp lệ khi gắn với rủi ro cụ thể và hành động thay thế cụ thể như tạo plan, verify read-only, hoặc report blocker có bằng chứng.
+
 Guardrail mặc định cho mọi short prompt:
 
 - Không commit, không push, không stage, trừ khi owner yêu cầu rõ trong prompt hiện tại.
