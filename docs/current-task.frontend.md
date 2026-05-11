@@ -987,3 +987,220 @@ Bước tiếp theo đề xuất:
 1. Owner review UI trên `http://localhost:5175/`.
 2. Sau khi owner review xong, cleanup `temp/owner-admin-vite.log` theo workflow artifact cleanup.
 3. Nếu owner duyệt tiếp, chuyển sang A5.2 (`CommandPalette` shared base + `TenantSwitcher` presentational).
+
+## Wave A Step A5 Completion Bundle - Shared UI Foundation Closure 2026-05-11
+
+Trạng thái: 🟢 **A5 Completion Bundle PASS - A5.4/A5.5/A5.6/A5.7 hoàn tất; chưa commit theo yêu cầu owner**.
+
+Phạm vi đã hoàn tất:
+- A5.1/A5.1b/A5.2 đã implementation + verify PASS trước đó.
+- A5.3 verify PASS theo plan trong `temp/plan.frontend.md`.
+- Lượt này hoàn tất feature team A5.4-A5.7:
+  - A5.4 Adoption sweep: PASS, Owner Admin đã dùng shared UI A5 đúng các điểm đã plan.
+  - A5.5 Boundary cleanup: PASS, `packages/ui` A5 components không kéo router/Pinia/API/shared-types/env/storage.
+  - A5.6 Documentation closure: PASS, cập nhật lane docs.
+  - A5.7 Completion gate: PASS, verify cuối toàn bộ A5.
+
+Team assembly:
+
+```txt
+Lead Agent: điều phối lane frontend, đọc plan/current-task, gom kết quả.
+Architect Agent: review boundary shared UI/app boundary/router/API/store/env/storage.
+Frontend Agent: rà adoption và duplicate local rõ ràng trong owner-admin.
+QA Agent: chạy verify cuối A5.
+Documentation Agent: cập nhật docs/current-task.frontend.md và temp/plan.frontend.md.
+```
+
+Frontend Agent adoption sweep:
+
+```txt
+KPITile: DashboardPage.vue, ClinicsPage.vue.
+EmptyState: ClinicsPage.vue.
+PlanBadge + ModuleChips: TenantTable.vue, CreateTenantWizard.vue, ClinicDetailPage.vue.
+DomainStateRow: TenantDetailDrawer.vue, ClinicDetailPage.vue.
+CommandPalette: OwnerCommandPalette.vue wrapper app-local dùng shared base từ @clinic-saas/ui.
+TenantSwitcher: chỉ export trong packages/ui, chưa tích hợp vào Topbar/layout nên không đổi behavior hiện tại.
+```
+
+Không sửa source implementation vì không phát hiện lỗi type/build/boundary hoặc duplicate rõ ràng cần cleanup surgical. Ghi chú: `DashboardPage.vue` còn empty state local nhỏ trong AppCard recent tenants và `TenantDetailDrawer.vue` còn plan text summary; cả hai được xem là polish sau, không phải blocker A5.
+
+Verify đã chạy:
+
+```txt
+git diff --check -> PASS, chỉ warning LF/CRLF trên Windows.
+cd frontend && npm run typecheck -> PASS cả 3 app: clinic-admin, owner-admin, public-web.
+cd frontend && npm run build -> PASS cả 3 app.
+Boundary rg forbidden imports/storage/env trên 7 component A5 -> PASS, no match.
+Usage/export rg -> PASS, export trong ui index và usage trong owner-admin source đúng.
+```
+
+Skipped đúng scope:
+
+```txt
+Không làm A6 Owner Admin V3 restyle.
+Không làm A7 state surfaces.
+Không thêm route mới.
+Không đổi API client/store/shared-types/business logic.
+Không tích hợp TenantSwitcher vào Topbar vì có thể tạo hiểu nhầm tenant authority.
+Không thêm package/dependency/Histoire/axe/Lighthouse.
+Không sửa backend/Figma/package-lock.
+```
+
+Dirty/untracked sau completion:
+
+```txt
+Dirty tracked:
+- temp/plan.frontend.md
+- docs/current-task.frontend.md
+
+Untracked artifact:
+- temp/owner-admin-vite.log
+```
+
+Commit split proposal nếu owner yêu cầu:
+
+```txt
+docs(frontend): close a5 shared ui completion gate
+```
+
+Commit này chỉ gồm `temp/plan.frontend.md` và `docs/current-task.frontend.md`. Không stage/commit `temp/owner-admin-vite.log`.
+## Wave A Step A6 - Owner Admin V3 Restyle / State Foundation 2026-05-11
+
+Trạng thái: **Implementation + verify PASS; chưa commit theo yêu cầu owner**.
+
+Team assembly:
+
+```txt
+Lead Agent: điều phối frontend lane, giữ scope A6, tích hợp source và verify.
+Architect Agent: subagent runtime thật `Parfit`, review boundary route/API/store/env/package-lock.
+Figma UI Agent: subagent runtime thật `Hubble`, trích checklist V3 từ docs/Figma frame notes và MCP read-only.
+Frontend Agent: subagent runtime thật `Descartes`, polish shared UI foundation trong `frontend/packages/ui`.
+QA Agent: Lead chạy verify cuối lượt theo checklist.
+Documentation Agent: Lead cập nhật docs/current-task.frontend.md và temp/plan.frontend.md.
+```
+
+Phạm vi đã hoàn thành:
+
+```txt
+- Restyle Owner Admin shell/layout/sidebar/topbar theo V3: sidebar slate, topbar compact, focus/hover state rõ.
+- Dashboard `/dashboard` chuyển sang cross-tenant cockpit V3: 6 KPI, MRR chart mock presentation-only,
+  attention queue và recent tenants, không thêm API aggregate mới.
+- Clinics `/clinics`: token V3 sweep cho heading, metric, filter, table, error/empty/filter-empty/footer state.
+- TenantFilterBar: compact chip, aria-pressed, focus-visible.
+- TenantTable: header tiếng Việt, aria-label, Space/Enter chọn row, row height compact.
+- TenantDetailDrawer: sheet 560px, tabs visual Overview/Domains/Modules/Billing/Audit, PlanBadge, DomainStateRow.
+- ClinicDetailPage: token/radius/error/loading state thống nhất V3.
+- CreateTenantWizard: stepper/card/input/plan/module/preview chuyển sang V3 CSS variables, giữ validation/focus/conflict.
+- Shared UI A5: AppButton/AppCard/MetricCard/StatusPill/KPITile/EmptyState/PlanBadge/ModuleChips/
+  DomainStateRow/CommandPalette/TenantSwitcher polish radius/spacing/focus/reduced-motion.
+```
+
+Boundary đã giữ:
+
+```txt
+Không đổi route path.
+Không đổi API client behavior.
+Không đổi Pinia/store/business logic.
+Không đổi shared-types contract.
+Không thêm dependency, không sửa package.json/package-lock.
+Không sửa backend, không sửa Figma file.
+Không hardcode role/tenant id mới.
+Không stage/commit/push.
+```
+
+Verify:
+
+```txt
+git diff --check -> PASS, chỉ warning LF/CRLF trên Windows.
+cd frontend && npm run typecheck -> PASS cả 3 app: clinic-admin, owner-admin, public-web.
+cd frontend && npm run build -> PASS cả 3 app.
+HTTP smoke qua dev server hiện có http://localhost:5175:
+  /dashboard -> 200
+  /clinics -> 200
+  /clinics/create -> 200
+  /clinics/mock-tenant-id -> 200
+Static boundary packages/ui forbidden imports/storage/env -> PASS, no match.
+Static secret/IP check -> không thấy secret/token/IP thật; có match `localhost:` trong
+  `frontend/apps/owner-admin/vite.config.ts` comment/config dev có sẵn, không phải A6 source mới.
+```
+
+Skipped/blocker:
+
+```txt
+- Không làm A7 state surfaces thật cho lifecycle confirm modal, DNS retry, SSL pending.
+- Không thêm route mới `/cross-tenant-dashboard`.
+- Không integrate TenantSwitcher vào Topbar vì chưa có tenant switching authority.
+- Không chạy screenshot/pixel smoke vì phiên hiện không có Playwright/browser screenshot dependency sẵn.
+Blocker: không có blocker cho A6 code/verify.
+```
+
+Dirty/untracked sau A6:
+
+```txt
+Dirty tracked: A6 owner-admin source, shared UI source, docs/current-task.frontend.md, temp/plan.frontend.md.
+Untracked artifact còn lại: temp/owner-admin-vite.log (runtime artifact có từ trước, không stage/commit).
+```
+
+Commit split proposal nếu owner yêu cầu:
+
+```txt
+feat(owner-admin): restyle tenant operations surfaces for v3
+feat(ui): polish shared admin components for v3
+docs(frontend): record a6 owner admin v3 completion
+```
+
+## Wave A Step A6 - QA Visual Review Follow-up 2026-05-11
+
+Trạng thái: **QA visual review PASS sau fix surgical; chưa commit theo yêu cầu owner**.
+
+Phạm vi review:
+
+```txt
+Route dev server http://localhost:5175:
+- /dashboard
+- /clinics
+- /clinics/create
+- /clinics/mock-tenant-id
+```
+
+Issue đã phát hiện và fix:
+
+```txt
+1. /clinics/mock-tenant-id hiển thị error "Tenant not found." nhưng heading vẫn là
+   "Đang tải phòng khám..." -> sửa ClinicDetailPage để heading/error state nhất quán
+   và Việt hóa lỗi not found.
+2. Mobile viewport 390px có overflow/cắt topbar CTA và heading dài -> sửa responsive
+   guard ở OwnerAdminLayout/AdminTopbar, thêm wrap guard heading page, thêm box-sizing
+   cho AppButton/AppCard để control width 100% không vượt viewport do padding.
+```
+
+Verify đã chạy:
+
+```txt
+HTTP smoke /dashboard, /clinics, /clinics/create, /clinics/mock-tenant-id -> 200, có #app.
+Edge headless screenshot desktop 1440x1100 và mobile 390x844 -> đã review.
+cd frontend && npm run typecheck -> PASS cả clinic-admin, owner-admin, public-web.
+cd frontend && npm run build -> PASS cả clinic-admin, owner-admin, public-web.
+git diff --check -> PASS, chỉ warning LF/CRLF trên Windows.
+```
+
+Screenshot artifact review, không stage/commit:
+
+```txt
+frontend/test-results/owner-dashboard-a6.png
+frontend/test-results/owner-clinics-a6.png
+frontend/test-results/owner-clinics-create-a6.png
+frontend/test-results/owner-clinics-detail-a6.png
+frontend/test-results/owner-dashboard-a6-mobile.png
+frontend/test-results/owner-clinics-a6-mobile.png
+frontend/test-results/owner-clinics-create-a6-mobile.png
+frontend/test-results/owner-clinics-detail-a6-mobile.png
+```
+
+Guardrail:
+
+```txt
+Không stage, không commit, không push.
+Không sửa backend/Figma/package-lock/API client/store/shared-types.
+Không stage/commit frontend/test-results/ hoặc temp/owner-admin-vite.log.
+```
