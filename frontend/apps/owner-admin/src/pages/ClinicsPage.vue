@@ -6,7 +6,7 @@
 //  - Mở drawer detail và cho phép cập nhật trạng thái suspend/activate.
 //  - Hiển thị placeholder cho conflict 409 và CTA mở wizard tạo tenant ở footer page.
 import type { TenantDetail, TenantStatus, TenantSummary } from "@clinic-saas/shared-types";
-import { AppButton, AppCard, MetricCard } from "@clinic-saas/ui";
+import { AppButton, AppCard, EmptyState, KPITile } from "@clinic-saas/ui";
 import { computed, onMounted, reactive, ref } from "vue";
 import TenantDetailDrawer from "../components/TenantDetailDrawer.vue";
 import TenantFilterBar, { type TenantFilters } from "../components/TenantFilterBar.vue";
@@ -133,10 +133,10 @@ onMounted(loadTenants);
     </section>
 
     <div class="metrics-grid">
-      <MetricCard label="Phòng khám đang hoạt động" :value="activeCount" meta="Phòng khám đang vận hành" tone="success" />
-      <MetricCard label="Tên miền đã xác minh" :value="verifiedDomains" meta="DNS và routing đã sẵn sàng" />
-      <MetricCard label="Đã tạm ngưng" :value="suspendedCount" meta="Cần rà soát vòng đời" tone="danger" />
-      <MetricCard label="Cần hỗ trợ" :value="supportCount" meta="Bản nháp hoặc tên miền lỗi" tone="warning" />
+      <KPITile label="Phòng khám đang hoạt động" :value="activeCount" meta="Phòng khám đang vận hành" tone="success" />
+      <KPITile label="Tên miền đã xác minh" :value="verifiedDomains" meta="DNS và routing đã sẵn sàng" tone="info" />
+      <KPITile label="Đã tạm ngưng" :value="suspendedCount" meta="Cần rà soát vòng đời" tone="danger" />
+      <KPITile label="Cần hỗ trợ" :value="supportCount" meta="Bản nháp hoặc tên miền lỗi" tone="warning" />
     </div>
 
     <AppCard>
@@ -157,13 +157,17 @@ onMounted(loadTenants);
         @select="selectTenant"
       />
 
-      <div v-else class="empty-state">
-        <strong>Chưa có phòng khám nào trong hệ thống.</strong>
-        <p>Thêm phòng khám đầu tiên để bắt đầu vận hành nền tảng Clinic SaaS.</p>
-        <RouterLink to="/clinics/create">
-          <AppButton label="Thêm phòng khám đầu tiên" />
-        </RouterLink>
-      </div>
+      <EmptyState
+        v-else
+        label="Chưa có phòng khám nào trong hệ thống."
+        helper="Thêm phòng khám đầu tiên để bắt đầu vận hành nền tảng Clinic SaaS."
+      >
+        <template #action>
+          <RouterLink to="/clinics/create">
+            <AppButton label="Thêm phòng khám đầu tiên" />
+          </RouterLink>
+        </template>
+      </EmptyState>
 
       <div v-if="!isEmpty && !loading && filteredTenants.length === 0 && isFiltered" class="filter-empty">
         Không có phòng khám phù hợp bộ lọc hiện tại.
@@ -259,27 +263,6 @@ onMounted(loadTenants);
   padding: 14px 16px;
   background: #fff7ed;
   color: #9a3412;
-}
-
-.empty-state {
-  display: grid;
-  justify-items: start;
-  gap: 10px;
-  padding: 32px;
-}
-
-.empty-state strong {
-  color: #102a43;
-  font-size: 18px;
-}
-
-.empty-state p {
-  margin: 0;
-  color: #627d98;
-}
-
-.empty-state a {
-  text-decoration: none;
 }
 
 .filter-empty {

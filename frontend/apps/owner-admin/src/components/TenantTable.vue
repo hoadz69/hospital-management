@@ -1,7 +1,9 @@
 <script setup lang="ts">
 import type { TenantStatus, TenantSummary } from "@clinic-saas/shared-types";
-import { StatusPill } from "@clinic-saas/ui";
-import { formatTenantStatus } from "../services/labels";
+import { ModuleChips, PlanBadge, StatusPill } from "@clinic-saas/ui";
+import { formatModuleCode, formatTenantStatus } from "../services/labels";
+
+type DisplayTone = "success" | "warning" | "danger" | "info" | "neutral";
 
 defineProps<{
   tenants: TenantSummary[];
@@ -15,7 +17,7 @@ defineEmits<{
 
 const moduleTotal = 6;
 
-function statusTone(status: TenantStatus) {
+function statusTone(status: TenantStatus): DisplayTone {
   if (status === "Active") {
     return "success";
   }
@@ -31,7 +33,7 @@ function statusTone(status: TenantStatus) {
   return "warning";
 }
 
-function planTone(planCode: TenantSummary["planCode"]) {
+function planTone(planCode: TenantSummary["planCode"]): DisplayTone {
   if (planCode === "premium") {
     return "warning";
   }
@@ -41,6 +43,15 @@ function planTone(planCode: TenantSummary["planCode"]) {
   }
 
   return "info";
+}
+
+function moduleChipItems(moduleCodes: TenantSummary["moduleCodes"]) {
+  return moduleCodes.map((moduleCode) => ({
+    key: moduleCode,
+    label: formatModuleCode(moduleCode),
+    enabled: true,
+    tone: "success" as const
+  }));
 }
 
 function formatDate(value: string) {
@@ -87,17 +98,15 @@ function formatDate(value: string) {
             <StatusPill :label="formatTenantStatus(tenant.status)" :tone="statusTone(tenant.status)" />
           </td>
           <td>
-            <StatusPill :label="tenant.planDisplayName" :tone="planTone(tenant.planCode)" />
+            <PlanBadge :label="tenant.planDisplayName" :tone="planTone(tenant.planCode)" />
           </td>
           <td>
-            <div class="module-meter" :aria-label="`${tenant.moduleCodes.length}/${moduleTotal} module đang bật`">
-              <span
-                v-for="index in moduleTotal"
-                :key="index"
-                :class="{ enabled: index <= tenant.moduleCodes.length }"
-              ></span>
-              <small>{{ tenant.moduleCodes.length }}/{{ moduleTotal }}</small>
-            </div>
+            <ModuleChips
+              :items="moduleChipItems(tenant.moduleCodes)"
+              :total="moduleTotal"
+              compact
+              :aria-label="`${tenant.moduleCodes.length}/${moduleTotal} module đang bật`"
+            />
           </td>
           <td class="domain-cell">{{ tenant.defaultDomainName || "—" }}</td>
           <td>{{ formatDate(tenant.createdAt) }}</td>
@@ -177,30 +186,6 @@ td strong {
 
 .domain-cell {
   color: var(--color-text-primary);
-  font-weight: 700;
-}
-
-.module-meter {
-  display: flex;
-  align-items: center;
-  gap: 4px;
-}
-
-.module-meter span {
-  width: 8px;
-  height: 8px;
-  border-radius: 2px;
-  background: var(--color-surface-muted);
-}
-
-.module-meter span.enabled {
-  background: var(--color-status-success);
-}
-
-.module-meter small {
-  margin-left: 4px;
-  color: var(--color-text-secondary);
-  font-size: 11px;
   font-weight: 700;
 }
 

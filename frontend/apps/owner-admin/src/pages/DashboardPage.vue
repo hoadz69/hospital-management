@@ -3,7 +3,7 @@
 // Tận dụng cùng tenantClient để derive metric tổng quan và preview vài tenant gần nhất.
 // Không gọi API riêng để tránh trùng endpoint trong Phase 3 backend slice tối thiểu.
 import type { TenantSummary } from "@clinic-saas/shared-types";
-import { AppButton, AppCard, MetricCard, StatusPill } from "@clinic-saas/ui";
+import { AppButton, AppCard, KPITile, StatusPill } from "@clinic-saas/ui";
 import { computed, onMounted, ref } from "vue";
 import { formatTenantStatus } from "../services/labels";
 import { tenantClient } from "../services/tenantClient";
@@ -48,10 +48,10 @@ onMounted(loadDashboard);
     </section>
 
     <div class="metrics-grid">
-      <MetricCard label="Phòng khám đang hoạt động" :value="activeCount" meta="Phòng khám đang vận hành" tone="success" />
-      <MetricCard label="Tên miền đã xác minh" :value="verifiedDomains" meta="Tên miền mặc định đã sẵn sàng" />
-      <MetricCard label="Đã tạm ngưng" :value="suspendedCount" meta="Cần rà soát vòng đời" tone="danger" />
-      <MetricCard label="Cần hỗ trợ" :value="supportCount" meta="Bản nháp hoặc tên miền lỗi" tone="warning" />
+      <KPITile label="Phòng khám đang hoạt động" :value="activeCount" meta="Phòng khám đang vận hành" tone="success" />
+      <KPITile label="Tên miền đã xác minh" :value="verifiedDomains" meta="Tên miền mặc định đã sẵn sàng" tone="info" />
+      <KPITile label="Đã tạm ngưng" :value="suspendedCount" meta="Cần rà soát vòng đời" tone="danger" />
+      <KPITile label="Cần hỗ trợ" :value="supportCount" meta="Bản nháp hoặc tên miền lỗi" tone="warning" />
     </div>
 
     <AppCard>

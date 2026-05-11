@@ -1,8 +1,8 @@
 <script setup lang="ts">
 // Drawer hiển thị tenant detail khi Owner Admin chọn row trong TenantTable.
 // Component overlay-side, đóng được bằng click backdrop hoặc nút X, hỗ trợ Escape.
-import type { TenantDetail, TenantStatus } from "@clinic-saas/shared-types";
-import { AppButton, AppCard, StatusPill } from "@clinic-saas/ui";
+import type { TenantDetail, TenantDomainStatus, TenantStatus } from "@clinic-saas/shared-types";
+import { AppButton, AppCard, DomainStateRow, ModuleChips, StatusPill } from "@clinic-saas/ui";
 import { computed, onBeforeUnmount, watch } from "vue";
 import { formatDomainStatus, formatModuleCode, formatTenantStatus } from "../services/labels";
 
@@ -60,6 +60,8 @@ const domainCountLabel = computed(() => {
   return `${count} domain · ${primaryCount} default + ${customCount} custom`;
 });
 
+const moduleTotal = 6;
+
 function statusTone(status: TenantStatus) {
   if (status === "Active") {
     return "success";
@@ -72,7 +74,7 @@ function statusTone(status: TenantStatus) {
   return "warning";
 }
 
-function domainTone(status: string) {
+function domainTone(status: TenantDomainStatus) {
   if (status === "verified") {
     return "success";
   }
@@ -88,7 +90,7 @@ function domainTone(status: string) {
   return "info";
 }
 
-function domainHint(status: string) {
+function domainHint(status: TenantDomainStatus) {
   if (status === "pending") {
     return "DNS đang propagate. Recheck khi bản ghi đã sẵn sàng.";
   }
@@ -100,7 +102,7 @@ function domainHint(status: string) {
   return "Chưa có dữ liệu DNS/SSL từ backend.";
 }
 
-function domainAction(status: string) {
+function domainAction(status: TenantDomainStatus) {
   if (status === "verified") {
     return "View cert";
   }
@@ -110,6 +112,15 @@ function domainAction(status: string) {
   }
 
   return "Recheck";
+}
+
+function moduleChipItems(moduleCodes: TenantDetail["moduleCodes"]) {
+  return moduleCodes.map((moduleCode) => ({
+    key: moduleCode,
+    label: formatModuleCode(moduleCode),
+    enabled: true,
+    tone: "success" as const
+  }));
 }
 
 // Đóng drawer bằng phím Escape để tăng accessibility cho keyboard user.
@@ -203,16 +214,17 @@ onBeforeUnmount(() => {
               <AppButton label="+ Thêm domain" variant="primary" disabled />
             </div>
 
-            <ul class="domain-list">
-              <li v-for="domain in domainCards" :key="domain.id" class="domain-card">
-                <div>
-                  <strong>{{ domain.domainName }}</strong>
-                  <span>{{ domain.helper }}</span>
-                  <button type="button" disabled>{{ domain.action }}</button>
-                </div>
-                <StatusPill :label="formatDomainStatus(domain.status)" :tone="domainTone(domain.status)" />
-              </li>
-            </ul>
+            <div class="domain-list">
+              <DomainStateRow
+                v-for="domain in domainCards"
+                :key="domain.id"
+                :label="domain.domainName"
+                :value="formatDomainStatus(domain.status)"
+                :helper="domain.helper"
+                :tone="domainTone(domain.status)"
+                :actions="[{ key: domain.action, label: domain.action, disabled: true }]"
+              />
+            </div>
           </AppCard>
 
           <AppCard class="module-card">
@@ -222,14 +234,7 @@ onBeforeUnmount(() => {
                 <p>{{ tenant.moduleCodes.length }} module đang bật</p>
               </div>
             </div>
-            <div class="module-list">
-              <StatusPill
-                v-for="moduleCode in tenant.moduleCodes"
-                :key="moduleCode"
-                :label="formatModuleCode(moduleCode)"
-                tone="neutral"
-              />
-            </div>
+            <ModuleChips :items="moduleChipItems(tenant.moduleCodes)" :total="moduleTotal" />
           </AppCard>
 
           <div class="drawer-actions">
@@ -394,46 +399,6 @@ dd {
   display: grid;
   gap: var(--space-3);
   margin: var(--space-4) 0 0;
-  padding: 0;
-  list-style: none;
-}
-
-.domain-card {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: var(--space-3);
-  border: 1px solid var(--color-border-subtle);
-  border-radius: var(--radius-card);
-  padding: var(--space-4);
-  background: var(--color-surface-elevated);
-}
-
-.domain-card div {
-  display: grid;
-  gap: var(--space-2);
-  min-width: 0;
-}
-
-.domain-card strong {
-  color: var(--color-text-primary);
-  overflow-wrap: anywhere;
-}
-
-.domain-card span {
-  color: var(--color-text-secondary);
-  font-size: 12px;
-}
-
-.domain-card button {
-  width: fit-content;
-  border: 0;
-  border-radius: var(--radius-input);
-  padding: 7px 12px;
-  background: var(--color-surface-muted);
-  color: var(--color-text-primary);
-  font-size: 12px;
-  font-weight: 800;
 }
 
 .drawer-state {
