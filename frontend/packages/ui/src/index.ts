@@ -1,5 +1,6 @@
 export { default as AppButton } from "./components/AppButton.vue";
 export { default as AppCard } from "./components/AppCard.vue";
+export { default as CommandPalette } from "./components/CommandPalette.vue";
 export { default as DomainStateRow } from "./components/DomainStateRow.vue";
 export { default as EmptyState } from "./components/EmptyState.vue";
 export { default as KPITile } from "./components/KPITile.vue";
@@ -7,4 +8,5 @@ export { default as MetricCard } from "./components/MetricCard.vue";
 export { default as ModuleChips } from "./components/ModuleChips.vue";
 export { default as PlanBadge } from "./components/PlanBadge.vue";
 export { default as StatusPill } from "./components/StatusPill.vue";
+export { default as TenantSwitcher } from "./components/TenantSwitcher.vue";
 export * from "./composables";
