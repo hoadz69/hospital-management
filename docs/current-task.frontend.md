@@ -1204,3 +1204,137 @@ Không stage, không commit, không push.
 Không sửa backend/Figma/package-lock/API client/store/shared-types.
 Không stage/commit frontend/test-results/ hoặc temp/owner-admin-vite.log.
 ```
+
+## Wave A Step A7 - Budget Mode Verify 2026-05-11
+
+Trạng thái: **A7 source verify PASS; chưa stage/commit/push theo yêu cầu owner**.
+
+Scope hoàn tất trong worktree hiện tại:
+
+```txt
+- Thêm DomainDnsRetryState, SslPendingState, TenantLifecycleConfirmModal.
+- Gắn DNS/SSL state surfaces vào DashboardPage, TenantDetailDrawer, ClinicDetailPage.
+- Lifecycle confirm modal dùng cho suspend/archive/restore, không đổi route/store/API contract.
+```
+
+Verify:
+
+```txt
+cd frontend && npm run typecheck -> PASS.
+cd frontend && npm run build -> PASS.
+git diff --check -> PASS, chỉ warning LF/CRLF trên Windows.
+Static boundary packages/ui + 3 A7 components -> PASS, no match.
+Secret/IP check owner-admin/ui/design-tokens -> PASS, no match.
+HTTP smoke không screenshot:
+  /dashboard -> 200, app=True.
+  /clinics -> 200, app=True.
+  /clinics/aurora-dental -> 200, app=True.
+```
+
+Cleanup artifact:
+
+```txt
+Đã xóa untracked/generated: frontend/test-results/, .playwright-mcp/,
+a7-dashboard-state-surfaces-desktop.png, temp/owner-admin-vite.log,
+temp/owner-admin-vite.log.err.
+Đã dừng node vite dev server port 5175 để gỡ lock log trước khi xóa.
+```
+
+Dirty còn lại:
+
+```txt
+Source A7: TenantDetailDrawer.vue, ClinicDetailPage.vue, DashboardPage.vue,
+DomainDnsRetryState.vue, SslPendingState.vue, TenantLifecycleConfirmModal.vue.
+Docs lane: docs/current-task.frontend.md, temp/plan.frontend.md.
+Không stage, không commit, không push A7.
+```
+
+## Wave A Step A7 - Budget Contact Sheet Follow-up 2026-05-11
+
+Trạng thái: **visual review FAIL; verify kỹ thuật PASS; chưa commit/push**.
+
+Đã thực hiện:
+
+```txt
+- Tạo contact sheet đúng 1 file: frontend/test-results/a7-visual-contact-sheet.png.
+- Dev server chạy mock mode để tránh proxy 127.0.0.1:5005 không sẵn sàng.
+- Contact sheet gồm desktop/mobile /dashboard và desktop/mobile /clinics/aurora-dental.
+- Lifecycle modal không thêm vào contact sheet vì không mở được bằng UI an toàn trong flow hiện có.
+```
+
+Kết quả:
+
+```txt
+Visual review FAIL: /clinics/aurora-dental hiển thị state "Không tìm thấy phòng khám"
+trong mock mode; dashboard hiển thị mock data đúng.
+Verify kỹ thuật PASS:
+  git diff --check
+  cd frontend && npm run typecheck
+  cd frontend && npm run build
+  static boundary no match
+  secret/IP no match
+  HTTP smoke /dashboard, /clinics, /clinics/aurora-dental -> 200 + #app
+```
+
+Resume next:
+
+```txt
+Không stage/commit/push cho đến khi owner quyết định cách xử lý visual fail.
+Giữ contact sheet để review: frontend/test-results/a7-visual-contact-sheet.png.
+Đã xóa log dev server temp/owner-admin-vite.log và .err; không giữ screenshot rời.
+```
+
+## Wave A Step A7 - Budget Visual Fix 2026-05-11
+
+Trạng thái: **visual review PASS sau fix surgical; chưa stage/commit/push**.
+
+Fix:
+
+```txt
+- Sửa mock tenant detail lookup để nhận cả tenant id và tenant slug.
+- /clinics/aurora-dental trong mock mode render Aurora Dental thay vì "Không tìm thấy phòng khám".
+- Không đổi route path, API contract, store, shared-types, backend, package-lock hoặc dependency.
+```
+
+Verify:
+
+```txt
+git diff --check -> PASS, chỉ warning LF/CRLF trên Windows.
+cd frontend && npm run typecheck -> PASS.
+cd frontend && npm run build -> PASS.
+Static boundary -> PASS, no match.
+Secret/IP -> PASS, no match.
+HTTP smoke /dashboard, /clinics, /clinics/aurora-dental -> PASS 200 + #app.
+Contact sheet PASS: frontend/test-results/a7-visual-contact-sheet.png.
+```
+
+## Wave A Step A7 - QA Retest Budget 2026-05-11
+
+Trạng thái: **Owner visual review PASS + QA retest PASS; chưa stage/commit/push**.
+
+```txt
+Owner đã review contact sheet frontend/test-results/a7-visual-contact-sheet.png và PASS.
+QA retest không tạo thêm screenshot, không gọi Figma/full team, không sửa code.
+Verify PASS:
+  git diff --check
+  cd frontend && npm run typecheck
+  cd frontend && npm run build
+  static boundary no match
+  secret/IP no match
+  HTTP smoke /dashboard, /clinics, /clinics/aurora-dental -> 200 + #app
+Contact sheet hiện còn tồn tại để owner review/reference.
+```
+
+## Wave A Step A7 - Finalize 2026-05-11
+
+Trạng thái: **A7 PASS, sẵn sàng commit split và push theo yêu cầu owner**.
+
+```txt
+Owner visual review PASS trên contact sheet A7.
+QA retest budget PASS: git diff --check, typecheck, build, static boundary,
+secret/IP và HTTP smoke /dashboard, /clinics, /clinics/aurora-dental.
+Artifact contact sheet chỉ dùng review tạm và sẽ cleanup trước push.
+Commit split:
+  feat(owner-admin): add v3 lifecycle state surfaces
+  docs(frontend): record a7 budget verification
+```
