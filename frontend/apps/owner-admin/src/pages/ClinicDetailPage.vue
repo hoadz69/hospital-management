@@ -17,6 +17,18 @@ const tenant = ref<TenantDetail | undefined>();
 const loading = ref(false);
 const error = ref<string | null>(null);
 
+const detailHeading = computed(() => {
+  if (tenant.value) {
+    return tenant.value.displayName;
+  }
+
+  if (error.value) {
+    return "Không tìm thấy phòng khám";
+  }
+
+  return "Đang tải phòng khám...";
+});
+
 const nextStatus = computed<TenantStatus>(() => {
   if (!tenant.value || tenant.value.status !== "Active") {
     return "Active";
@@ -97,10 +109,16 @@ function moduleChipItems(moduleCodes: TenantDetail["moduleCodes"]) {
 async function loadTenant() {
   loading.value = true;
   error.value = null;
+  tenant.value = undefined;
 
   try {
     tenant.value = await tenantClient.getTenant(props.tenantId);
   } catch (loadError) {
+    if (loadError instanceof Error && loadError.message === "Tenant not found.") {
+      error.value = "Không tìm thấy phòng khám.";
+      return;
+    }
+
     error.value = loadError instanceof Error ? loadError.message : "Không tải được phòng khám.";
   } finally {
     loading.value = false;
@@ -132,7 +150,7 @@ watch(() => props.tenantId, loadTenant);
     <section class="page-heading">
       <div>
         <p class="eyebrow">Chi tiết phòng khám</p>
-        <h2>{{ tenant?.displayName ?? "Đang tải phòng khám..." }}</h2>
+        <h2>{{ detailHeading }}</h2>
       </div>
       <div class="heading-actions">
         <RouterLink to="/clinics">
@@ -224,7 +242,7 @@ watch(() => props.tenantId, loadTenant);
 <style scoped>
 .detail-page {
   display: grid;
-  gap: 20px;
+  gap: var(--space-5);
 }
 
 .page-heading,
@@ -232,7 +250,7 @@ watch(() => props.tenantId, loadTenant);
 .status-row {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: var(--space-3);
 }
 
 .page-heading {
@@ -247,15 +265,19 @@ dl {
 }
 
 .eyebrow {
-  color: #0e7c86;
+  color: var(--color-brand-primary);
   font-size: 12px;
   font-weight: 800;
   text-transform: uppercase;
 }
 
 .page-heading h2 {
-  margin-top: 6px;
-  font-size: 28px;
+  max-width: 100%;
+  overflow-wrap: anywhere;
+  margin-top: var(--space-1);
+  color: var(--color-text-primary);
+  font-size: 24px;
+  line-height: 32px;
 }
 
 a {
@@ -265,18 +287,18 @@ a {
 .detail-grid {
   display: grid;
   grid-template-columns: minmax(0, 1fr) 380px;
-  gap: 20px;
+  gap: var(--space-5);
 }
 
 dl {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 16px;
-  margin-top: 18px;
+  gap: var(--space-4);
+  margin-top: var(--space-5);
 }
 
 dt {
-  color: #627d98;
+  color: var(--color-text-secondary);
   font-size: 12px;
   font-weight: 800;
 }
@@ -284,6 +306,7 @@ dt {
 dd {
   margin: 4px 0 0;
   overflow-wrap: anywhere;
+  color: var(--color-text-primary);
 }
 
 .wide {
@@ -292,27 +315,28 @@ dd {
 
 .domain-list {
   display: grid;
-  gap: 10px;
-  margin: 14px 0 0;
+  gap: var(--space-3);
+  margin: var(--space-4) 0 0;
 }
 
 .error-state,
 .loading-state {
-  border-radius: 8px;
-  padding: 16px;
+  border-radius: var(--radius-input);
+  padding: var(--space-4);
 }
 
 .error-state {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 16px;
-  background: #fff7ed;
-  color: #9a3412;
+  gap: var(--space-4);
+  border: 1px solid color-mix(in srgb, var(--color-status-warning) 24%, var(--color-border-subtle));
+  background: color-mix(in srgb, var(--color-status-warning) 8%, var(--color-surface-elevated));
+  color: var(--color-status-warning);
 }
 
 .loading-state {
-  color: #627d98;
+  color: var(--color-text-secondary);
   text-align: center;
 }
 

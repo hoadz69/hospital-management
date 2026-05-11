@@ -216,7 +216,7 @@ onMounted(loadTenants);
 <style scoped>
 .clinics-page {
   display: grid;
-  gap: 20px;
+  gap: var(--space-5);
 }
 
 .page-heading,
@@ -224,7 +224,7 @@ onMounted(loadTenants);
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 12px;
+  gap: var(--space-3);
 }
 
 .page-heading p,
@@ -233,15 +233,19 @@ onMounted(loadTenants);
 }
 
 .eyebrow {
-  color: #0e7c86;
+  color: var(--color-brand-primary);
   font-size: 12px;
   font-weight: 800;
   text-transform: uppercase;
 }
 
 .page-heading h2 {
-  margin-top: 6px;
-  font-size: 28px;
+  max-width: 100%;
+  overflow-wrap: anywhere;
+  margin-top: var(--space-1);
+  color: var(--color-text-primary);
+  font-size: 24px;
+  line-height: 32px;
 }
 
 .heading-actions a {
@@ -251,34 +255,34 @@ onMounted(loadTenants);
 .metrics-grid {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: 16px;
+  gap: var(--space-3);
 }
 
 .error-state {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 16px;
-  border-bottom: 1px solid #fed7aa;
-  padding: 14px 16px;
-  background: #fff7ed;
-  color: #9a3412;
+  gap: var(--space-4);
+  border-bottom: 1px solid color-mix(in srgb, var(--color-status-warning) 24%, var(--color-border-subtle));
+  padding: var(--space-4);
+  background: color-mix(in srgb, var(--color-status-warning) 8%, var(--color-surface-elevated));
+  color: var(--color-status-warning);
 }
 
 .filter-empty {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 14px;
-  border-top: 1px solid #edf2f7;
-  padding: 14px 16px;
-  color: #627d98;
+  gap: var(--space-3);
+  border-top: 1px solid var(--color-border-subtle);
+  padding: var(--space-4);
+  color: var(--color-text-secondary);
 }
 
 .footer-grid {
   display: grid;
   grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
-  gap: 16px;
+  gap: var(--space-4);
 }
 
 .footer-card {
@@ -288,7 +292,7 @@ onMounted(loadTenants);
 
 .footer-card p {
   margin: 0;
-  color: #627d98;
+  color: var(--color-text-secondary);
 }
 
 .footer-card-head {
@@ -299,23 +303,23 @@ onMounted(loadTenants);
 }
 
 .footer-card-head strong {
-  color: #102a43;
+  color: var(--color-text-primary);
 }
 
 .status-tag {
   display: inline-flex;
   align-items: center;
   border-radius: 999px;
-  padding: 4px 10px;
-  background: #fee2e2;
-  color: #b42318;
+  padding: var(--space-1) var(--space-3);
+  background: color-mix(in srgb, var(--color-status-danger) 12%, var(--color-surface-elevated));
+  color: var(--color-status-danger);
   font-size: 12px;
   font-weight: 800;
 }
 
 .status-tag.info {
-  background: #d8f3f1;
-  color: #075e66;
+  background: color-mix(in srgb, var(--color-brand-accent) 14%, var(--color-surface-elevated));
+  color: var(--color-brand-accent);
 }
 
 .footer-cta {
@@ -343,6 +347,19 @@ onMounted(loadTenants);
 
   .metrics-grid {
     grid-template-columns: 1fr;
+  }
+
+  .page-heading {
+    gap: var(--space-3);
+  }
+
+  .heading-actions {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .heading-actions :deep(.app-button) {
+    width: 100%;
   }
 }
 </style>

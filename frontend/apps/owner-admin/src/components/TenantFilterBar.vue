@@ -81,6 +81,7 @@ function setModuleCode(value: TenantFilters["moduleCode"]) {
         type="button"
         class="filter-chip"
         :class="{ active: filters.status === opt.value }"
+        :aria-pressed="filters.status === opt.value"
         @click="setStatus(opt.value)"
       >
         {{ opt.label }}
@@ -95,6 +96,7 @@ function setModuleCode(value: TenantFilters["moduleCode"]) {
         type="button"
         class="filter-chip"
         :class="{ active: filters.plan === opt.value }"
+        :aria-pressed="filters.plan === opt.value"
         @click="setPlan(opt.value)"
       >
         {{ opt.label }}
@@ -109,6 +111,7 @@ function setModuleCode(value: TenantFilters["moduleCode"]) {
         type="button"
         class="filter-chip"
         :class="{ active: filters.domainStatus === opt.value }"
+        :aria-pressed="filters.domainStatus === opt.value"
         @click="setDomainStatus(opt.value)"
       >
         {{ opt.label }}
@@ -123,6 +126,7 @@ function setModuleCode(value: TenantFilters["moduleCode"]) {
         type="button"
         class="filter-chip"
         :class="{ active: filters.moduleCode === opt.value }"
+        :aria-pressed="filters.moduleCode === opt.value"
         @click="setModuleCode(opt.value)"
       >
         {{ opt.label }}
@@ -142,6 +146,7 @@ function setModuleCode(value: TenantFilters["moduleCode"]) {
   flex-wrap: wrap;
   gap: var(--space-3);
   align-items: center;
+  padding: var(--space-1);
 }
 
 .chip-group {
@@ -167,7 +172,7 @@ function setModuleCode(value: TenantFilters["moduleCode"]) {
 .filter-chip {
   min-height: 32px;
   border: 1px solid var(--color-border-subtle);
-  border-radius: var(--radius-pill);
+  border-radius: 8px;
   padding: 0 var(--space-3);
   background: var(--color-surface-elevated);
   color: var(--color-text-secondary);
@@ -179,7 +184,8 @@ function setModuleCode(value: TenantFilters["moduleCode"]) {
 .filter-chip:hover,
 .filter-chip:focus-visible {
   border-color: color-mix(in srgb, var(--color-brand-primary) 36%, var(--color-border-subtle));
-  outline: none;
+  outline: 2px solid color-mix(in srgb, var(--color-brand-primary) 22%, transparent);
+  outline-offset: 2px;
 }
 
 .filter-chip.active {

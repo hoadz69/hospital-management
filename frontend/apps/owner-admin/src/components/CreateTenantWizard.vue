@@ -224,7 +224,8 @@ function submit() {
           @click="activeStep = index"
         >
           <span class="step-number">{{ activeStep > index ? "✓" : index + 1 }}</span>
-          <span class="step-label">Bước {{ index + 1 }}: {{ step }}</span>
+          <span class="step-label step-label--full">Bước {{ index + 1 }}: {{ step }}</span>
+          <span class="step-label step-label--short">{{ step }}</span>
         </button>
       </div>
 
@@ -360,28 +361,34 @@ function submit() {
 .wizard-grid {
   display: grid;
   grid-template-columns: minmax(0, 1fr) 340px;
-  gap: 20px;
+  gap: var(--space-5);
+  min-width: 0;
+}
+
+.wizard-grid > * {
+  min-width: 0;
 }
 
 .stepper {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: 0;
-  border: 1px solid #d9e2ec;
-  border-radius: 14px;
-  padding: 14px 18px;
-  background: #ffffff;
+  border: 1px solid var(--color-border-subtle);
+  border-radius: var(--radius-card);
+  padding: var(--space-4) var(--space-5);
+  background: var(--color-surface-elevated);
 }
 
 .stepper button {
   position: relative;
+  min-width: 0;
   min-height: 36px;
   display: flex;
   align-items: center;
   gap: 10px;
   border: 0;
-  background: #ffffff;
-  color: #627d98;
+  background: var(--color-surface-elevated);
+  color: var(--color-text-secondary);
   cursor: pointer;
   font-weight: 800;
   text-align: left;
@@ -394,16 +401,16 @@ function submit() {
   left: 136px;
   top: 50%;
   height: 2px;
-  background: #d9e2ec;
+  background: var(--color-border-subtle);
 }
 
 .stepper button.done:not(:last-child)::after {
-  background: #2563eb;
+  background: var(--color-brand-primary);
 }
 
 .stepper button.active,
 .stepper button.done {
-  color: #102a43;
+  color: var(--color-text-primary);
 }
 
 .step-number {
@@ -413,24 +420,29 @@ function submit() {
   place-items: center;
   flex: 0 0 auto;
   border-radius: 999px;
-  background: #dbe4f0;
-  color: #8194aa;
+  background: var(--color-surface-muted);
+  color: var(--color-text-muted);
   font-size: 12px;
   font-weight: 900;
 }
 
 .stepper button.active .step-number,
 .stepper button.done .step-number {
-  background: #2563eb;
-  color: #ffffff;
+  background: var(--color-brand-primary);
+  color: var(--color-surface-elevated);
 }
 
 .step-label {
   position: relative;
   z-index: 1;
   max-width: 120px;
-  background: #ffffff;
+  min-width: 0;
+  background: var(--color-surface-elevated);
   padding-right: 10px;
+}
+
+.step-label--short {
+  display: none;
 }
 
 .conflict {
@@ -455,28 +467,30 @@ label {
 }
 
 label span {
-  color: #627d98;
+  color: var(--color-text-secondary);
   font-size: 12px;
   font-weight: 800;
 }
 
 input {
+  box-sizing: border-box;
   width: 100%;
   min-height: 42px;
-  border: 1px solid #d9e2ec;
-  border-radius: 8px;
+  border: 1px solid var(--color-border-subtle);
+  border-radius: var(--radius-input);
   padding: 0 12px;
-  color: #102a43;
+  background: var(--color-surface-elevated);
+  color: var(--color-text-primary);
 }
 
 input:focus {
-  outline: 2px solid #0e7c86;
+  outline: 2px solid var(--color-brand-primary);
   outline-offset: 2px;
 }
 
 label.conflict input {
-  border-color: #b42318;
-  background: #fff7f7;
+  border-color: var(--color-status-danger);
+  background: color-mix(in srgb, var(--color-status-danger) 6%, var(--color-surface-elevated));
 }
 
 .wide {
@@ -499,11 +513,11 @@ label.conflict input {
 .plan-options button,
 .module-options button {
   min-height: 74px;
-  border: 1px solid #d9e2ec;
-  border-radius: 10px;
+  border: 1px solid var(--color-border-subtle);
+  border-radius: 12px;
   padding: 12px;
-  background: #ffffff;
-  color: #102a43;
+  background: var(--color-surface-elevated);
+  color: var(--color-text-primary);
   cursor: pointer;
   text-align: left;
 }
@@ -522,14 +536,14 @@ label.conflict input {
 
 .plan-options button.selected,
 .module-options button.selected {
-  border-color: #2563eb;
-  background: color-mix(in srgb, #2563eb 8%, #ffffff);
-  color: #0f172a;
+  border-color: var(--color-brand-primary);
+  background: color-mix(in srgb, var(--color-brand-primary) 8%, var(--color-surface-elevated));
+  color: var(--color-text-primary);
 }
 
 .module-options button.selected {
-  background: #eff6ff;
-  color: #2563eb;
+  background: color-mix(in srgb, var(--color-brand-primary) 10%, var(--color-surface-elevated));
+  color: var(--color-brand-primary);
 }
 
 .plan-options strong,
@@ -539,7 +553,7 @@ label.conflict input {
 
 .plan-options span {
   margin-top: 6px;
-  color: #627d98;
+  color: var(--color-text-secondary);
   font-size: 13px;
 }
 
@@ -551,13 +565,13 @@ label.conflict input {
 }
 
 .note-title {
-  color: #102a43;
+  color: var(--color-text-primary);
   font-weight: 800;
 }
 
 .note-copy {
   margin-top: 6px;
-  color: #627d98;
+  color: var(--color-text-secondary);
 }
 
 .preview-section {
@@ -567,7 +581,7 @@ label.conflict input {
 
 .preview-section span,
 .preview-eyebrow {
-  color: #627d98;
+  color: var(--color-text-secondary);
   font-size: 12px;
   font-weight: 800;
   text-transform: uppercase;
@@ -577,7 +591,7 @@ label.conflict input {
   display: block;
   margin-top: 4px;
   overflow-wrap: anywhere;
-  color: #102a43;
+  color: var(--color-text-primary);
 }
 
 .wizard-actions {
@@ -601,15 +615,15 @@ label.conflict input {
 
 .side-preview p {
   margin-top: 10px;
-  color: #627d98;
+  color: var(--color-text-secondary);
 }
 
 .preview-domain {
   margin-top: 18px;
-  border-radius: 8px;
+  border-radius: var(--radius-input);
   padding: 12px;
-  background: #f0fdfa;
-  color: #075e66;
+  background: color-mix(in srgb, var(--color-brand-accent) 10%, var(--color-surface-elevated));
+  color: var(--color-brand-accent);
   overflow-wrap: anywhere;
   font-weight: 800;
 }
@@ -621,23 +635,65 @@ label.conflict input {
 }
 
 @media (max-width: 720px) {
-  .stepper,
   .form-section,
   .plan-options {
     grid-template-columns: 1fr;
   }
 
   .stepper {
-    gap: 8px;
-    padding: 12px;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: var(--space-2);
+    padding: var(--space-3);
+  }
+
+  .stepper button {
+    min-height: 58px;
+    flex-direction: column;
+    justify-content: center;
+    gap: var(--space-1);
+    text-align: center;
+  }
+
+  .step-label {
+    max-width: none;
+    padding-right: 0;
+    font-size: 10px;
+    line-height: 12px;
+  }
+
+  .step-label--full {
+    display: none;
+  }
+
+  .step-label--short {
+    display: block;
   }
 
   .stepper button:not(:last-child)::after {
     display: none;
   }
 
+  .wizard-form {
+    gap: var(--space-4);
+    margin-top: var(--space-4);
+  }
+
+  .plan-options button {
+    min-height: 64px;
+  }
+
+  .module-options button {
+    min-height: 30px;
+    padding: 0 var(--space-3);
+    font-size: 12px;
+  }
+
   .wizard-actions {
     flex-direction: column;
+  }
+
+  .wizard-actions :deep(.app-button) {
+    width: 100%;
   }
 }
 </style>

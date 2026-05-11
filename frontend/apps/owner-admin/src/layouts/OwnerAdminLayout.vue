@@ -148,11 +148,20 @@ onBeforeUnmount(() => {
 
 <style scoped>
 .owner-layout {
+  box-sizing: border-box;
   min-height: 100vh;
+  max-width: 100vw;
   display: grid;
   grid-template-columns: 256px minmax(0, 1fr);
+  overflow-x: hidden;
   background: var(--color-surface-muted);
   color: var(--color-text-primary);
+}
+
+.owner-layout *,
+.owner-layout *::before,
+.owner-layout *::after {
+  box-sizing: border-box;
 }
 
 .sidebar-slot {
@@ -162,10 +171,14 @@ onBeforeUnmount(() => {
 
 .layout-main {
   min-width: 0;
+  max-width: 100%;
+  overflow-x: hidden;
 }
 
 .layout-content {
+  min-width: 0;
   padding: var(--space-6) var(--space-6) var(--space-10);
+  overflow-x: hidden;
 }
 
 /* Hiệu ứng chuyển trang: fade + slide-up nhẹ, dùng cubic-bezier chuẩn Material để cảm giác mượt. */
@@ -229,6 +242,12 @@ onBeforeUnmount(() => {
 
   .sidebar-slot--open {
     transform: translateX(0);
+  }
+}
+
+@media (max-width: 640px) {
+  .layout-content {
+    padding: var(--space-4);
   }
 }
 

@@ -2,7 +2,7 @@
 // Drawer hiển thị tenant detail khi Owner Admin chọn row trong TenantTable.
 // Component overlay-side, đóng được bằng click backdrop hoặc nút X, hỗ trợ Escape.
 import type { TenantDetail, TenantDomainStatus, TenantStatus } from "@clinic-saas/shared-types";
-import { AppButton, AppCard, DomainStateRow, ModuleChips, StatusPill } from "@clinic-saas/ui";
+import { AppButton, AppCard, DomainStateRow, ModuleChips, PlanBadge, StatusPill } from "@clinic-saas/ui";
 import { computed, onBeforeUnmount, watch } from "vue";
 import { formatDomainStatus, formatModuleCode, formatTenantStatus } from "../services/labels";
 
@@ -90,6 +90,18 @@ function domainTone(status: TenantDomainStatus) {
   return "info";
 }
 
+function planTone(planCode: TenantDetail["planCode"]) {
+  if (planCode === "premium") {
+    return "warning";
+  }
+
+  if (planCode === "growth") {
+    return "neutral";
+  }
+
+  return "info";
+}
+
 function domainHint(status: TenantDomainStatus) {
   if (status === "pending") {
     return "DNS đang propagate. Recheck khi bản ghi đã sẵn sàng.";
@@ -171,6 +183,14 @@ onBeforeUnmount(() => {
           </button>
         </header>
 
+        <nav class="drawer-tabs" aria-label="Nhóm thông tin tenant">
+          <span>Overview</span>
+          <span class="active">Domains</span>
+          <span>Modules</span>
+          <span>Billing</span>
+          <span>Audit</span>
+        </nav>
+
         <div v-if="loading" class="drawer-state">Đang tải hồ sơ phòng khám...</div>
 
         <template v-else-if="tenant">
@@ -187,7 +207,9 @@ onBeforeUnmount(() => {
               </div>
               <div>
                 <dt>Gói</dt>
-                <dd>{{ tenant.planDisplayName }}</dd>
+                <dd>
+                  <PlanBadge :label="tenant.planDisplayName" :tone="planTone(tenant.planCode)" />
+                </dd>
               </div>
               <div>
                 <dt>Chuyên khoa</dt>
@@ -257,7 +279,7 @@ onBeforeUnmount(() => {
 .drawer-backdrop {
   position: fixed;
   inset: 0;
-  z-index: 20;
+  z-index: 80;
   display: flex;
   justify-content: flex-end;
   background: color-mix(in srgb, var(--color-text-primary) 32%, transparent);
@@ -277,12 +299,13 @@ onBeforeUnmount(() => {
 
 .drawer-header {
   display: flex;
-  align-items: flex-start;
+  align-items: center;
   justify-content: space-between;
   gap: var(--space-4);
   border-bottom: 1px solid var(--color-border-subtle);
   margin: calc(var(--space-6) * -1) calc(var(--space-6) * -1) 0;
   padding: var(--space-6);
+  background: var(--color-surface-page);
 }
 
 .drawer-title {
@@ -290,6 +313,31 @@ onBeforeUnmount(() => {
   align-items: center;
   gap: var(--space-3);
   min-width: 0;
+}
+
+.drawer-tabs {
+  display: flex;
+  gap: var(--space-6);
+  border-bottom: 1px solid var(--color-border-subtle);
+  margin: 0 calc(var(--space-6) * -1);
+  padding: 0 var(--space-6);
+  overflow-x: auto;
+}
+
+.drawer-tabs span {
+  min-height: 44px;
+  display: inline-flex;
+  align-items: center;
+  border-bottom: 2px solid transparent;
+  color: var(--color-text-secondary);
+  font-size: 13px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.drawer-tabs span.active {
+  border-color: var(--color-brand-primary);
+  color: var(--color-brand-primary);
 }
 
 .tenant-avatar {
@@ -421,6 +469,11 @@ dd {
   .drawer-header {
     margin: calc(var(--space-5) * -1) calc(var(--space-5) * -1) 0;
     padding: var(--space-5);
+  }
+
+  .drawer-tabs {
+    margin: 0 calc(var(--space-5) * -1);
+    padding: 0 var(--space-5);
   }
 
   .detail-grid,

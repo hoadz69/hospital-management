@@ -55,6 +55,7 @@ function handleNavigate() {
         >
           <span class="nav-icon" aria-hidden="true">{{ item.icon }}</span>
           <span class="nav-label">{{ item.label }}</span>
+          <span class="soon-badge">Sắp ra mắt</span>
         </button>
       </template>
     </nav>
@@ -141,6 +142,13 @@ function handleNavigate() {
   background: color-mix(in srgb, var(--color-surface-elevated) 6%, transparent);
 }
 
+.nav-item:focus-visible,
+.sidebar-create:focus-visible,
+.brand:focus-visible {
+  outline: 2px solid color-mix(in srgb, var(--color-brand-primary) 55%, transparent);
+  outline-offset: 2px;
+}
+
 .nav-item.router-link-active {
   border-color: color-mix(in srgb, var(--color-brand-primary) 40%, transparent);
   background: color-mix(in srgb, var(--color-brand-primary) 18%, transparent);
@@ -172,6 +180,17 @@ function handleNavigate() {
   color: color-mix(in srgb, var(--color-surface-elevated) 80%, transparent);
   font-size: 10px;
   font-weight: 800;
+}
+
+.soon-badge {
+  flex-shrink: 0;
+  border-radius: var(--radius-pill);
+  padding: 2px 6px;
+  background: color-mix(in srgb, var(--color-surface-elevated) 10%, transparent);
+  color: color-mix(in srgb, var(--color-surface-elevated) 64%, transparent);
+  font-size: 9px;
+  font-weight: 800;
+  white-space: nowrap;
 }
 
 .sidebar-footer {

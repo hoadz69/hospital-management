@@ -61,16 +61,16 @@ function formatDate(value: string) {
 
 <template>
   <div class="table-shell">
-    <table>
+    <table aria-label="Danh sách tenant Owner Admin">
       <thead>
         <tr>
           <th>Slug</th>
-          <th>Display name</th>
-          <th>Status</th>
-          <th>Plan</th>
+          <th>Tên hiển thị</th>
+          <th>Trạng thái</th>
+          <th>Gói</th>
           <th>Modules</th>
-          <th>Default domain</th>
-          <th>Created</th>
+          <th>Tên miền</th>
+          <th>Ngày tạo</th>
           <th class="action-col"></th>
         </tr>
       </thead>
@@ -89,6 +89,7 @@ function formatDate(value: string) {
           tabindex="0"
           @click="$emit('select', tenant.id)"
           @keydown.enter.prevent="$emit('select', tenant.id)"
+          @keydown.space.prevent="$emit('select', tenant.id)"
         >
           <td class="slug-cell">{{ tenant.slug }}</td>
           <td>
@@ -121,6 +122,7 @@ function formatDate(value: string) {
 .table-shell {
   width: 100%;
   overflow-x: auto;
+  border-radius: var(--radius-card);
 }
 
 table {
@@ -148,7 +150,7 @@ th {
 }
 
 td {
-  height: 64px;
+  height: 60px;
   border-bottom: 1px solid var(--color-border-subtle);
   padding: 0 var(--space-4);
   color: var(--color-text-secondary);
@@ -170,6 +172,11 @@ tbody tr:focus-visible,
 tbody tr.selected {
   background: var(--color-surface-muted);
   outline: none;
+}
+
+tbody tr:focus-visible {
+  outline: 2px solid color-mix(in srgb, var(--color-brand-primary) 34%, transparent);
+  outline-offset: -2px;
 }
 
 td strong {

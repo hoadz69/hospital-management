@@ -46,9 +46,15 @@ const emit = defineEmits<{
     </div>
 
     <div class="topbar-actions">
-      <button v-if="showSearch" type="button" class="search" @click="$emit('open-command-palette')">
+      <button
+        v-if="showSearch"
+        type="button"
+        class="search"
+        aria-label="Mở command palette"
+        @click="$emit('open-command-palette')"
+      >
         <span aria-hidden="true">⌕</span>
-        <span>Tìm phòng khám, slug hoặc tên miền...</span>
+        <span class="search-label">Tìm phòng khám, slug hoặc tên miền...</span>
         <kbd>⌘K</kbd>
       </button>
       <button type="button" class="icon-button" aria-label="Thông báo">•</button>
@@ -61,14 +67,24 @@ const emit = defineEmits<{
 
 <style scoped>
 .topbar {
+  box-sizing: border-box;
   min-height: 56px;
+  min-width: 0;
+  max-width: 100%;
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: var(--space-5);
+  overflow-x: clip;
   border-bottom: 1px solid var(--color-border-subtle);
   padding: 0 var(--space-6);
   background: var(--color-surface-elevated);
+}
+
+.topbar *,
+.topbar *::before,
+.topbar *::after {
+  box-sizing: border-box;
 }
 
 .hamburger {
@@ -122,9 +138,12 @@ const emit = defineEmits<{
 }
 
 .topbar-heading h1 {
+  min-width: 0;
+  overflow: hidden;
   color: var(--color-text-primary);
   font-size: 13px;
   font-weight: 800;
+  text-overflow: ellipsis;
 }
 
 .topbar-heading p {
@@ -132,13 +151,16 @@ const emit = defineEmits<{
 }
 
 .topbar-actions {
+  min-width: 0;
   display: flex;
+  flex: 0 1 auto;
   align-items: center;
   gap: var(--space-3);
 }
 
 .search {
   width: min(360px, 34vw);
+  min-width: 0;
   min-height: 36px;
   display: grid;
   grid-template-columns: auto 1fr auto;
@@ -151,6 +173,20 @@ const emit = defineEmits<{
   color: var(--color-text-muted);
   cursor: pointer;
   text-align: left;
+}
+
+.search-label {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.search:hover,
+.search:focus-visible {
+  border-color: color-mix(in srgb, var(--color-brand-primary) 34%, var(--color-border-subtle));
+  outline: 2px solid color-mix(in srgb, var(--color-brand-primary) 20%, transparent);
+  outline-offset: 2px;
 }
 
 .search kbd {
@@ -175,7 +211,15 @@ const emit = defineEmits<{
   line-height: 1;
 }
 
+.icon-button:hover,
+.icon-button:focus-visible {
+  background: var(--color-surface-muted);
+  outline: 2px solid color-mix(in srgb, var(--color-brand-primary) 20%, transparent);
+  outline-offset: 2px;
+}
+
 .create-link {
+  flex: 0 0 auto;
   text-decoration: none;
 }
 
@@ -196,19 +240,40 @@ const emit = defineEmits<{
 
 @media (max-width: 640px) {
   .topbar {
-    min-height: auto;
-    align-items: stretch;
-    flex-wrap: wrap;
-    padding-block: var(--space-3);
+    min-height: 56px;
+    align-items: center;
+    flex-wrap: nowrap;
+    gap: var(--space-2);
+    padding: 0 var(--space-4);
+  }
+
+  .topbar-heading {
+    flex: 1 1 auto;
+    overflow: hidden;
   }
 
   .topbar-actions {
-    flex-basis: 100%;
+    flex: 0 0 auto;
+    flex-basis: auto;
+    flex-wrap: nowrap;
     justify-content: flex-end;
+    gap: var(--space-2);
   }
 
   .search {
-    width: 100%;
+    width: 40px;
+    height: 40px;
+    min-height: 40px;
+    grid-template-columns: 1fr;
+    place-items: center;
+    padding: 0;
+  }
+
+  .search-label,
+  .search kbd,
+  .icon-button,
+  .create-link {
+    display: none;
   }
 }
 </style>

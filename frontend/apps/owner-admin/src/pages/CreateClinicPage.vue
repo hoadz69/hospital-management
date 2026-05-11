@@ -62,7 +62,8 @@ async function createTenant(payload: TenantCreateRequest) {
 <style scoped>
 .create-page {
   display: grid;
-  gap: 20px;
+  gap: var(--space-5);
+  min-width: 0;
 }
 
 .page-heading {
@@ -78,15 +79,19 @@ async function createTenant(payload: TenantCreateRequest) {
 }
 
 .eyebrow {
-  color: #0e7c86;
+  color: var(--color-brand-primary);
   font-size: 12px;
   font-weight: 800;
   text-transform: uppercase;
 }
 
 .page-heading h2 {
-  margin-top: 6px;
-  font-size: 28px;
+  max-width: 100%;
+  overflow-wrap: anywhere;
+  margin-top: var(--space-1);
+  color: var(--color-text-primary);
+  font-size: 24px;
+  line-height: 32px;
 }
 
 a {
@@ -109,6 +114,19 @@ a {
   .error-state {
     align-items: stretch;
     flex-direction: column;
+  }
+
+  .page-heading {
+    gap: var(--space-3);
+  }
+
+  .page-heading h2 {
+    font-size: 22px;
+    line-height: 30px;
+  }
+
+  .page-heading a :deep(.app-button) {
+    width: 100%;
   }
 }
 </style>
