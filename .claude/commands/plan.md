@@ -21,7 +21,9 @@ Tạo hoặc cập nhật `/temp/plan.md` cho yêu cầu:
 $ARGUMENTS
 ```
 
-Nếu `$ARGUMENTS` là prompt ngắn dạng `Lead Agent: bắt đầu <task>`, `Lead Agent: làm tiếp <task>`, `Lead Agent: verify <task>` hoặc `Lead Agent: chia commit <task>`, phải dùng Feature Team Execution Workflow trong `AGENTS.md`/`docs/agent-playbook.md`: tự phân lane, tự chọn agents theo scope, và không yêu cầu owner liệt kê "Agents tham gia".
+Nếu `$ARGUMENTS` là prompt ngắn dạng `Lead Agent: bắt đầu <task>`, `Lead Agent: làm tiếp <task>`, `Lead Agent: verify <task>` hoặc `Lead Agent: chia commit <task>`, phải dùng Feature Team Execution Workflow trong `AGENTS.md`/`docs/agent-playbook.md`: đây là action trigger thật, không acknowledge-only; chạy `git status --branch --short`, `git diff --stat`, đọc lane current-task/plan/handoff, tự phân lane, tự chọn agents theo scope, quyết định action và không yêu cầu owner liệt kê "Agents tham gia".
+
+Nếu task đã có scope rõ trong lane plan/current-task/handoff/roadmap với allowed files/file areas và acceptance/verify rõ, không tạo plan lại chỉ để chờ duyệt; xem là resumable/approved scope và implement/resume/verify/commit-split theo prompt. Chỉ plan-only khi task mới, scope chưa rõ, cross-lane lớn chưa có plan, có rủi ro destructive/secret/security, hoặc owner nói rõ "chỉ lập plan", "chưa code", "đợi tôi duyệt".
 
 Plan phải có:
 
@@ -35,4 +37,4 @@ Plan phải có:
 8. Success criteria cho từng bước.
 9. Manual verification steps.
 
-Chỉ viết plan. Không implement code cho đến khi owner duyệt.
+Chỉ viết plan khi action đã được xác định là plan-only. Không stage/commit/push; không stage artifact/log/screenshot/generated files hoặc `.claude/settings.local.json`.

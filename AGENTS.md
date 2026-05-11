@@ -86,11 +86,32 @@ Lead Agent: verify <task>
 Lead Agent: chia commit <task>
 ```
 
+Các prompt trên là **action trigger thật**, không phải lời chào/khởi động vai. Lead Agent không được trả lời kiểu acknowledge-only như "Đã ghi nhận AGENTS.md", "Tôi sẽ tuân thủ guardrail", "Đã hiểu" hoặc "Tôi sẽ đọc source of truth trước" rồi dừng. Trừ khi gặp blocker rõ, Lead Agent phải làm hành động thật trong cùng lượt.
+
+Guardrail mặc định cho mọi short prompt, owner không cần nhắc lại:
+- Không commit, không push, không stage, trừ khi owner yêu cầu rõ thao tác commit/stage trong prompt hiện tại.
+- Không hỏi lại approval nếu task đã có scope rõ trong lane plan/current-task/handoff/roadmap.
+- Không sửa ngoài scope; không xóa source/docs/plan dirty nếu chưa rõ chủ sở hữu.
+- Không stage/commit artifact/log/screenshot/generated files.
+- Không stage `.claude/settings.local.json` nếu có.
+
+Tối thiểu mỗi short prompt phải thực hiện:
+- Chạy `git status --branch --short` và `git diff --stat`.
+- Đọc dashboard/lane current-task/lane plan/handoff liên quan.
+- Phân lane, tự chọn agents tham gia, quyết định action: implement/resume/verify/commit-split/plan-only.
+- Thực hiện action tương ứng và report kết quả.
+
 Quy ước:
-- `bắt đầu <task>`: Lead phân lane, đọc lane plan/current-task, tự chọn agents, nếu task đã có plan/approval rõ thì implement đúng scope; nếu task lớn/chưa có plan thì lập/update plan rồi dừng chờ duyệt.
+- `bắt đầu <task>`: Lead phân lane, đọc source of truth/lane plan/current-task/handoff, tự chọn agents; nếu task đã có scope rõ trong lane plan/current-task/handoff/roadmap thì implement/resume đúng scope ngay; nếu scope chưa rõ thì lập/update lane plan cụ thể rồi dừng ở approval gate.
 - `làm tiếp <task>`: Lead resume từ `git status` + lane checkpoint/plan, tự chọn agents, tiếp tục đúng approved scope.
 - `verify <task>`: Lead gọi QA checklist phù hợp, không code thêm nếu không có lỗi được owner cho phép vá.
 - `chia commit <task>`: Lead review dirty/staged files, đề xuất hoặc thực hiện commit split chỉ khi owner yêu cầu commit rõ; không stage/commit/push nếu owner chưa yêu cầu.
+
+Plan exists means resumable: nếu `<task>` đã xuất hiện trong lane plan/current-task/handoff/roadmap với scope rõ, allowed files/file areas rõ, và acceptance criteria hoặc verify command rõ, thì xem là resumable/approved scope. Chỉ dừng approval gate khi task hoàn toàn mới, scope chưa rõ, cross-lane lớn chưa có plan, có rủi ro destructive/secret/security, hoặc owner nói rõ "chỉ lập plan", "chưa code", "đợi tôi duyệt".
+
+Owner explicit override: nếu owner nói "làm luôn", "implement luôn", "tiếp tục từ worktree hiện tại", "đã duyệt implement" hoặc "không hỏi lại approval", Lead Agent phải bỏ approval gate và làm đúng scope, trừ khi có blocker an toàn/secret/destructive.
+
+Nếu chưa đủ dữ kiện, Lead Agent phải tạo/update lane plan cụ thể gồm scope, out of scope, agents, allowed files/file areas, acceptance criteria, verify commands, rollback/cleanup notes và phần cần owner duyệt; sau đó mới dừng. Không được chỉ acknowledge.
 
 Owner không cần ghi "Agents tham gia". Lead Agent tự assemble:
 - Frontend UI/component task: Lead + Architect nếu cần boundary + Frontend + QA + Documentation; Figma UI Agent chỉ đọc Figma nếu cần đối chiếu UI source.
@@ -100,6 +121,23 @@ Owner không cần ghi "Agents tham gia". Lead Agent tự assemble:
 - Docs/workflow task: Lead + Documentation; Architect/QA nếu rule ảnh hưởng workflow lớn.
 
 Nếu có subagent runtime thật, Lead Agent được phép spawn/call subagents phù hợp. Nếu không có, Lead vẫn phải giả lập tuần tự đầy đủ các vai bằng cách đọc agent docs tương ứng và thực hiện checklist của từng vai.
+
+Report tối thiểu cho mọi short prompt: lane đã phân loại; agents đã chọn; action đã làm (`implement`/`resume`/`verify`/`commit-split`/`plan-only`); file sửa/tạo hoặc file đã review; verify pass/fail nếu có; docs cập nhật nếu có; dirty/untracked còn lại; artifact/log không commit; xác nhận mặc định không commit/push/stage.
+
+Ví dụ sai:
+```txt
+Owner: Lead Agent: bắt đầu A5.2
+Agent: Đã ghi nhận và sẽ tuân thủ AGENTS.md...
+```
+Sai vì acknowledge-only, không chạy action thật.
+
+Ví dụ đúng:
+```txt
+Owner: Lead Agent: bắt đầu A5.2
+Agent phải chạy git status/diff, đọc temp/plan.frontend.md + docs/current-task.frontend.md + handoff liên quan,
+phân lane frontend, chọn Lead + Architect + Frontend + QA + Documentation, implement/resume nếu A5.2 đã có scope rõ,
+verify, report dirty files và không stage/commit/push theo default guardrail.
+```
 
 Quy trình tóm tắt:
 

@@ -7,7 +7,22 @@
    - `Lead Agent: làm tiếp <task>`
    - `Lead Agent: verify <task>`
    - `Lead Agent: chia commit <task>`
-   thì xem đây là trigger Feature Team Execution Workflow. Lead Agent tự phân lane, tự chọn agents theo scope trong `AGENTS.md`/`docs/agent-playbook.md`, không yêu cầu owner paste "Agents tham gia". Nếu chưa có plan/approval rõ thì tạo/update plan rồi dừng chờ duyệt.
+   thì xem đây là action trigger thật của Feature Team Execution Workflow. Lead Agent không được acknowledge-only. Tối thiểu phải chạy `git status --branch --short`, `git diff --stat`, đọc dashboard/lane current-task/lane plan/handoff liên quan, tự phân lane, tự chọn agents theo scope trong `AGENTS.md`/`docs/agent-playbook.md`, quyết định action (`implement`/`resume`/`verify`/`commit-split`/`plan-only`) và thực hiện action tương ứng. Owner không cần paste "Agents tham gia".
+
+0a. Guardrail mặc định cho short prompt:
+   - Không commit, không push, không stage trừ khi owner yêu cầu rõ trong prompt hiện tại.
+   - Không stage/commit artifact/log/screenshot/generated files.
+   - Không stage `.claude/settings.local.json`.
+   - Không sửa ngoài scope; không xóa source/docs/plan dirty nếu chưa rõ chủ sở hữu.
+   - Không hỏi lại approval nếu task đã có scope rõ trong lane plan/current-task/handoff/roadmap.
+
+0b. Plan exists means resumable:
+   - Nếu `<task>` đã xuất hiện trong lane plan/current-task/handoff/roadmap với scope rõ, allowed files hoặc file areas rõ, và acceptance criteria hoặc verify command rõ, thì xem là resumable/approved scope.
+   - Với `bắt đầu <task>` hoặc `làm tiếp <task>`, Lead phải implement/resume đúng scope.
+   - Chỉ dừng approval gate nếu task hoàn toàn mới, scope chưa rõ, cross-lane lớn chưa có plan, có rủi ro destructive/secret/security, hoặc owner nói rõ "chỉ lập plan", "chưa code", "đợi tôi duyệt".
+
+0c. Owner explicit override:
+   - Nếu owner nói "làm luôn", "implement luôn", "tiếp tục từ worktree hiện tại", "đã duyệt implement" hoặc "không hỏi lại approval", Lead bỏ approval gate và làm đúng scope, trừ khi có blocker an toàn/secret/destructive.
 
 1. Khi owner yêu cầu chạy lead-plan hoặc tạo plan:
    - Làm ngay.

@@ -42,12 +42,28 @@ Các prompt ngắn sau là trigger Feature Team Execution Workflow; không hỏi
 - `Lead Agent: verify <task>`
 - `Lead Agent: chia commit <task>`
 
+These prompts are real action triggers, not greetings. Do not answer only with "Đã hiểu", "Đã ghi nhận AGENTS.md", or "I will follow the guardrails" and stop.
+
 Mapping:
 
-- `bắt đầu`: classify lane, read dashboard/lane current-task/lane plan/handoff, choose agents; implement only when the lane already has clear approval, otherwise plan/update plan and stop for approval.
+- `bắt đầu`: classify lane, read dashboard/lane current-task/lane plan/handoff, choose agents; if the task already appears in lane plan/current-task/handoff/roadmap with clear scope, allowed files/file areas, and acceptance criteria or verify commands, implement/resume in scope immediately; otherwise plan/update plan and stop for approval.
 - `làm tiếp`: resume from `git status --short`, `git diff --stat`, lane checkpoint/plan, then continue the approved scope.
 - `verify`: run QA verification, no extra code unless owner authorizes a fix.
 - `chia commit`: review dirty/staged files, scope, secrets, artifacts, then propose commit split; stage/commit only when owner explicitly asks.
+
+Default guardrails for every short prompt:
+
+- Do not commit, push, or stage unless the current owner prompt explicitly asks for commit/stage.
+- Do not ask approval again when the task has clear scope in lane plan/current-task/handoff/roadmap.
+- Do not edit outside scope.
+- Do not stage/commit artifacts, logs, screenshots, generated files, or `.claude/settings.local.json`.
+- Do not delete dirty source/docs/plan files unless ownership is clear.
+
+Minimum action checklist: run `git status --branch --short`, run `git diff --stat`, read the relevant dashboard/lane current-task/lane plan/handoff, classify lane, choose agents, decide `implement`/`resume`/`verify`/`commit-split`/`plan-only`, execute, and report.
+
+Owner override: if owner says "làm luôn", "implement luôn", "tiếp tục từ worktree hiện tại", "đã duyệt implement", or "không hỏi lại approval", skip the approval gate and work in scope unless blocked by safety/secret/destructive risk.
+
+If scope is insufficient, create/update a lane plan with scope, out of scope, agents, allowed files/file areas, acceptance criteria, verify commands, rollback/cleanup notes, and what needs owner approval. Then stop; do not acknowledge only.
 
 Default assembly:
 
@@ -59,7 +75,16 @@ Default assembly:
 
 If Claude has real subagent runtime, call suitable subagents. If not, simulate roles sequentially by reading `.claude/agents/*` and `docs/agents/*` and following each checklist.
 
-Reports must include lane classification, chosen agents, what Architect reviewed, what implementation agents did, QA verification, Documentation updates, remaining dirty/untracked files, proposed commit split, and confirmation that nothing was staged/committed/pushed unless owner asked.
+Reports must include lane classification, chosen agents, action performed (`implement`/`resume`/`verify`/`commit-split`/`plan-only`), files edited/created or reviewed, verify pass/fail if any, Documentation updates if any, remaining dirty/untracked files, artifacts/logs not committed, proposed commit split if any, and confirmation that nothing was committed/pushed/staged unless owner asked.
+
+Wrong example:
+
+```txt
+Owner: Lead Agent: bắt đầu A5.2
+Agent: Đã ghi nhận và sẽ tuân thủ AGENTS.md...
+```
+
+Correct behavior: run git status/diff, read the relevant lane plan/current-task/handoff, classify lane, choose agents, implement/resume when A5.2 has clear scope, verify, report dirty files, and do not stage/commit/push by default.
 
 Guardrails:
 

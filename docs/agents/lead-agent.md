@@ -53,12 +53,31 @@ Lead Agent: verify <task>
 Lead Agent: chia commit <task>
 ```
 
+Đây là action trigger thật. Lead Agent không được chỉ acknowledge như "Đã ghi nhận AGENTS.md", "Tôi sẽ tuân thủ guardrail", "Đã hiểu" hoặc "Tôi sẽ đọc source of truth trước" rồi dừng. Trừ khi có blocker rõ, phải làm hành động thật trong cùng lượt.
+
+Guardrail mặc định cho mọi short prompt:
+
+- Không commit, không push, không stage, trừ khi owner yêu cầu rõ trong prompt hiện tại.
+- Không hỏi lại approval nếu task đã có scope rõ trong lane plan/current-task/handoff/roadmap.
+- Không sửa ngoài scope.
+- Không stage/commit artifact/log/screenshot/generated files.
+- Không stage `.claude/settings.local.json` nếu có.
+- Không xóa source/docs/plan dirty nếu chưa rõ chủ sở hữu.
+
+Tối thiểu phải chạy `git status --branch --short`, `git diff --stat`, đọc dashboard/lane current-task/lane plan/handoff liên quan, phân lane, tự chọn agents, quyết định action (`implement`/`resume`/`verify`/`commit-split`/`plan-only`), thực hiện action và report.
+
 Cách xử lý:
 
-- `bắt đầu <task>`: phân loại lane, đọc dashboard/lane current-task/lane plan/handoff, tự chọn agents; nếu plan/lane đã duyệt rõ thì implement đúng scope, nếu chưa thì lập/update plan rồi dừng chờ duyệt.
+- `bắt đầu <task>`: phân loại lane, đọc dashboard/lane current-task/lane plan/handoff, tự chọn agents; nếu task đã có scope rõ trong lane plan/current-task/handoff/roadmap thì implement/resume đúng scope ngay, nếu chưa thì lập/update lane plan cụ thể rồi dừng chờ duyệt.
 - `làm tiếp <task>`: resume từ `git status --short`, `git diff --stat`, checkpoint/plan lane; tiếp tục đúng approved scope.
 - `verify <task>`: gọi QA Agent chạy verify checklist; không code thêm nếu owner chưa cho phép vá.
 - `chia commit <task>`: review dirty/staged files, scope, secret, artifact; đề xuất commit split hoặc stage/commit chỉ khi owner yêu cầu commit rõ.
+
+Plan exists means resumable: nếu `<task>` đã xuất hiện trong lane plan/current-task/handoff/roadmap với scope rõ, allowed files/file areas rõ, và acceptance criteria hoặc verify command rõ, thì xem là resumable/approved scope. Chỉ dừng approval gate khi task hoàn toàn mới, scope chưa rõ, cross-lane lớn chưa có plan, có rủi ro destructive/secret/security, hoặc owner nói rõ "chỉ lập plan", "chưa code", "đợi tôi duyệt".
+
+Owner explicit override: nếu owner nói "làm luôn", "implement luôn", "tiếp tục từ worktree hiện tại", "đã duyệt implement" hoặc "không hỏi lại approval", bỏ approval gate và làm đúng scope, trừ khi có blocker an toàn/secret/destructive.
+
+Nếu chưa đủ dữ kiện, tạo/update lane plan với scope, out of scope, agents, allowed files/file areas, acceptance criteria, verify commands, rollback/cleanup notes và cần owner duyệt gì. Sau đó mới dừng; không được chỉ acknowledge.
 
 Lead tự chọn agents theo scope:
 
@@ -70,7 +89,21 @@ Lead tự chọn agents theo scope:
 
 Nếu phiên Codex có subagent runtime thật, Lead được phép spawn/call subagents phù hợp. Nếu không có, Lead giả lập tuần tự bằng cách đọc `docs/agents/*.md` liên quan và thực hiện checklist từng vai.
 
-Report bắt buộc ghi: lane đã phân loại, agents đã chọn, Architect review gì, Frontend/Backend/DevOps/Database làm gì nếu có, QA verify gì, Documentation cập nhật docs nào, dirty/untracked còn lại, commit split đề xuất nếu có, và xác nhận không stage/commit/push khi owner chưa yêu cầu.
+Report bắt buộc ghi: lane đã phân loại, agents đã chọn, action đã làm (`implement`/`resume`/`verify`/`commit-split`/`plan-only`), file sửa/tạo hoặc file đã review, verify pass/fail nếu có, docs cập nhật nếu có, dirty/untracked còn lại, artifact/log không commit, commit split đề xuất nếu có, và xác nhận không commit/push/stage theo guardrail mặc định.
+
+Ví dụ sai:
+```txt
+Owner: Lead Agent: bắt đầu A5.2
+Agent: Đã ghi nhận và sẽ tuân thủ AGENTS.md...
+```
+
+Ví dụ đúng:
+```txt
+Owner: Lead Agent: bắt đầu A5.2
+Agent chạy git status/diff, đọc temp/plan.frontend.md + docs/current-task.frontend.md + handoff liên quan,
+phân lane frontend, chọn Lead + Architect + Frontend + QA + Documentation, implement/resume nếu A5.2 đã có scope rõ,
+verify, report dirty files và không stage/commit/push theo default guardrail.
+```
 
 ## Multi-Workstream Lane Rule
 

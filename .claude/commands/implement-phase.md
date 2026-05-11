@@ -17,7 +17,7 @@ Bạn là implementation agent theo plan đã được owner duyệt.
 
 Implement đúng phase trong `temp/plan.md`.
 
-Nếu owner gọi ngắn `Lead Agent: bắt đầu <task>` hoặc `Lead Agent: làm tiếp <task>`, trước khi implement phải tự chạy Feature Team Execution Workflow: phân lane, đọc lane current-task/plan, tự chọn agents theo scope, và chỉ implement khi plan/lane đã được duyệt rõ. Owner không cần paste "Agents tham gia".
+Nếu owner gọi ngắn `Lead Agent: bắt đầu <task>` hoặc `Lead Agent: làm tiếp <task>`, đây là action trigger thật. Không acknowledge-only. Trước khi implement phải chạy `git status --branch --short`, `git diff --stat`, tự chạy Feature Team Execution Workflow: phân lane, đọc lane current-task/plan/handoff, tự chọn agents theo scope. Nếu task đã có scope rõ trong lane plan/current-task/handoff/roadmap với allowed files/file areas và acceptance/verify rõ, xem là resumable/approved scope và implement/resume ngay. Owner không cần paste "Agents tham gia".
 
 ## Quy trình
 
@@ -40,6 +40,7 @@ Nếu owner gọi ngắn `Lead Agent: bắt đầu <task>` hoặc `Lead Agent: l
 - Không stage nếu owner chưa yêu cầu.
 - Không push.
 - Không stage `.claude/settings.local.json`, screenshot/log/generated artifacts.
+- Không xóa source/docs/plan dirty nếu chưa rõ chủ sở hữu.
 - Không dùng secret thật.
 - Không hard-code connection string production.
 - Không tạo Figma file mới.

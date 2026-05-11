@@ -4,7 +4,7 @@
 
 Verify phase hiện tại, không code thêm.
 
-Nếu owner gọi ngắn `Lead Agent: verify <task>`, Lead Agent phải tự phân lane, tự chọn QA/Documentation và agents liên quan theo scope, đọc lane plan/current-task, rồi chạy checklist verify phù hợp. Owner không cần paste "Agents tham gia".
+Nếu owner gọi ngắn `Lead Agent: verify <task>`, đây là action trigger thật, không acknowledge-only. Lead Agent phải chạy `git status --branch --short`, `git diff --stat`, tự phân lane, tự chọn QA/Documentation và agents liên quan theo scope, đọc lane plan/current-task/handoff, rồi chạy checklist verify phù hợp. Owner không cần paste "Agents tham gia".
 
 ## Luôn đọc trước
 
@@ -50,6 +50,7 @@ docker compose -f infrastructure/docker/docker-compose.prod.yml config
 7. Không sửa code.
 8. Không commit.
 9. Không stage/push; không stage screenshot/log/generated artifacts.
+10. Không xóa source/docs/plan dirty nếu chưa rõ chủ sở hữu.
 
 ## Report format
 
@@ -60,3 +61,4 @@ docker compose -f infrastructure/docker/docker-compose.prod.yml config
 5. Có secret không
 6. Có vượt scope không
 7. Có nên commit checkpoint không
+8. Dirty/untracked còn lại, artifact/log không commit, và xác nhận không commit/push/stage

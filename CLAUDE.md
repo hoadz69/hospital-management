@@ -39,11 +39,23 @@ Lead Agent: verify <task>
 Lead Agent: chia commit <task>
 ```
 
-- `bắt đầu` / `làm tiếp`: Lead tự phân lane, tự đọc plan/current-task/handoff, tự assemble agents theo loại task; nếu task đã có plan/approval rõ thì implement đúng scope, nếu chưa có plan thì lập/update plan rồi dừng chờ duyệt.
+- Đây là action trigger thật, không phải lời chào. Claude Code không được chỉ trả lời "Đã hiểu", "Đã ghi nhận AGENTS.md", "Tôi sẽ tuân thủ guardrail" rồi dừng.
+- Guardrail mặc định: không commit, không push, không stage; không stage/commit artifact/log/screenshot/generated files; không stage `.claude/settings.local.json`; không sửa ngoài scope; không xóa source/docs/plan dirty nếu chưa rõ chủ sở hữu.
+- Tối thiểu phải chạy `git status --branch --short`, `git diff --stat`, đọc dashboard/lane current-task/lane plan/handoff liên quan, phân lane, tự chọn agents, quyết định action (`implement`/`resume`/`verify`/`commit-split`/`plan-only`), thực hiện action và report.
+- `bắt đầu` / `làm tiếp`: Lead tự phân lane, tự đọc plan/current-task/handoff, tự assemble agents theo loại task. Nếu task đã xuất hiện trong lane plan/current-task/handoff/roadmap với scope rõ, allowed files/file areas rõ, và acceptance criteria hoặc verify command rõ thì xem là resumable/approved scope và implement/resume ngay. Nếu scope chưa rõ thì lập/update lane plan rồi dừng chờ duyệt.
 - `verify`: Lead + QA chạy checklist phù hợp, không code thêm nếu owner chưa cho phép vá.
 - `chia commit`: Lead review dirty/staged files và đề xuất commit split; chỉ stage/commit khi owner yêu cầu rõ.
+- Nếu owner nói "làm luôn", "implement luôn", "tiếp tục từ worktree hiện tại", "đã duyệt implement" hoặc "không hỏi lại approval", Lead bỏ approval gate và làm đúng scope, trừ khi có blocker an toàn/secret/destructive.
 - Nếu Claude Code có subagent runtime thì dùng agents phù hợp; nếu không có, Lead giả lập tuần tự bằng cách đọc `.claude/agents/*` và `docs/agents/*`.
-- Report phải ghi lane, agents đã chọn, mỗi agent làm/verify gì, docs cập nhật, dirty/untracked còn lại và commit split đề xuất nếu có.
+- Report phải ghi lane, agents đã chọn, action đã làm, file sửa/tạo hoặc file đã review, verify pass/fail nếu có, docs cập nhật nếu có, dirty/untracked còn lại, artifact/log không commit, và xác nhận không commit/push/stage theo guardrail mặc định.
+
+Ví dụ sai:
+```txt
+Owner: Lead Agent: bắt đầu A5.2
+Agent: Đã ghi nhận và sẽ tuân thủ AGENTS.md...
+```
+
+Ví dụ đúng: Lead chạy git status/diff, đọc lane plan/current-task/handoff, phân lane, chọn agents, implement/resume nếu A5.2 có scope rõ, verify, report dirty files và không stage/commit/push.
 
 ## QA Screenshots and Artifact Cleanup
 

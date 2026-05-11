@@ -124,6 +124,19 @@ Lead Agent: chia commit A5.1b
 
 Owner không cần paste danh sách "Agents tham gia". Codex Lead tự đọc `docs/agent-playbook.md` + `docs/agents/lead-agent.md`, tự phân lane, tự chọn agents theo scope, rồi report rõ lane/agents/verify/docs/dirty files. Nếu phiên có subagent runtime thì có thể spawn; nếu không, giả lập tuần tự bằng checklist agent docs.
 
+Các prompt trên là action trigger thật. Codex không được chỉ acknowledge, không được chỉ nói đã đọc `AGENTS.md`, và không được dừng sau khi tóm tắt guardrail. Tối thiểu phải chạy `git status --branch --short`, `git diff --stat`, đọc dashboard/lane current-task/lane plan/handoff liên quan, phân lane, chọn agents, quyết định action (`implement`/`resume`/`verify`/`commit-split`/`plan-only`), thực hiện action và report.
+
+Guardrail mặc định: không commit, không push, không stage; không stage/commit artifact/log/screenshot/generated files; không stage `.claude/settings.local.json`; không sửa ngoài scope; không xóa source/docs/plan dirty nếu chưa rõ chủ sở hữu. Nếu task đã có scope rõ trong lane plan/current-task/handoff/roadmap thì `bắt đầu` hoặc `làm tiếp` phải implement/resume đúng scope. Chỉ dừng approval gate khi task mới, scope chưa rõ, cross-lane lớn chưa có plan, có rủi ro destructive/secret/security, hoặc owner nói rõ "chỉ lập plan", "chưa code", "đợi tôi duyệt".
+
+Prompt ngắn chuẩn owner có thể dùng mà không cần lặp guardrail:
+
+```txt
+Lead Agent: bắt đầu A5.2
+Lead Agent: làm tiếp A5.3
+Lead Agent: verify A5.4
+Lead Agent: chia commit A5.1b
+```
+
 ## Cách Codex Dùng QA Screenshot / Artifact Workflow
 
 Workflow này không phải skill tự chạy. Khi Codex đóng vai Lead Agent hoặc QA Agent:
