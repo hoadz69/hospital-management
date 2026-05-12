@@ -3015,6 +3015,209 @@ Owner prompt:
 Thực hiện ngay QA visual review A6 trong worktree hiện tại.
 ```
 
+## 26. Wave A Step A8 - Owner Admin Plan/Module Catalog Mock-First (2026-05-12)
+
+Trạng thái: **Implementation + verify PASS; chưa stage/commit/push theo yêu cầu owner**.
+
+### 26.1 Xác Nhận Đầu Vào
+
+```txt
+A7 đã xong qua git log:
+- 6d54282 style(owner-admin): polish clinics operations page
+- b76122e fix(owner-admin): remove duplicate clinics create cta
+- d1e92c3 docs(frontend): record a7 budget verification
+- 2a070b9 feat(owner-admin): add v3 lifecycle state surfaces
+
+git status trước A8: worktree sạch, branch main ahead origin/main 2.
+git pull --ff-only: Already up to date.
+```
+
+### 26.2 Team / Lane
+
+```txt
+Lane: Frontend.
+Lead Agent: điều phối scope A8, giữ boundary không backend/Figma write.
+Frontend Agent: implement Owner Admin mock UI và route.
+Figma UI Agent: read-only, đã đối chiếu frame 126:2 Plan/Module Catalog và 126:173 Plan Assignment qua Figma MCP.
+QA Agent: typecheck/build, HTTP smoke route, visual contact sheet budget.
+Documentation Agent: cập nhật docs/current-task.frontend.md và temp/plan.frontend.md.
+```
+
+### 26.3 Scope A8 FE
+
+```txt
+1. Thêm route Owner Admin `/plans` cho Plan/Module Catalog mock-first theo Figma frame 126:2.
+2. Thêm mock data/adapter frontend rõ ràng cho plan cards, module matrix, tenant assignment draft.
+3. Bật nav/sidebar + command palette tới `/plans`, không còn để Plan/Module Catalog chỉ là coming soon.
+4. Expose đầy đủ state surfaces sau A7 bằng UI route thật:
+   - Dashboard tiếp tục hiển thị DNS retry + SSL pending.
+   - Detail `/clinics/aurora-dental` tiếp tục mở lifecycle confirm modal bằng action mock.
+   - Detail/drawer tiếp tục có DNS Retry / SSL Pending preview khi domain action mock được bấm.
+5. Thêm Plan Assignment mock trong cùng `/plans` nếu scope hợp lý: bảng selected tenants, bulk change draft, MRR diff, effective next renewal.
+6. Cập nhật docs lane: mock data ở đâu, route/state đã verify, BE handoff request và test gaps.
+```
+
+### 26.4 Out Of Scope
+
+```txt
+- Không real backend wiring nếu BE chưa sẵn.
+- Không sửa backend, không sửa docs backend.
+- Không sửa Figma, không tạo Figma file.
+- Không thêm dependency/package-lock.
+- Không stage/commit/push.
+- Không làm Wave B/C/D/E hoặc các frame audit/monitoring/billing/settings sâu.
+```
+
+### 26.5 Allowed Files / Areas
+
+```txt
+frontend/apps/owner-admin/src/router/index.ts
+frontend/apps/owner-admin/src/components/AdminSidebar.vue
+frontend/apps/owner-admin/src/components/OwnerCommandPalette.vue
+frontend/apps/owner-admin/src/pages/PlanModuleCatalogPage.vue
+frontend/apps/owner-admin/src/services/planCatalogMock.ts
+docs/current-task.frontend.md
+temp/plan.frontend.md
+frontend/test-results/a8-fe-contact-sheet.png (artifact review, không commit)
+```
+
+### 26.6 Acceptance Criteria
+
+```txt
+- `/plans` render được 3 plan card Starter/Growth/Premium và module matrix 12 row x 3 plan.
+- `/plans` có bảng Plan Assignment mock: selected tenants, target plan, MRR diff, next renewal, bulk action mock.
+- Sidebar và command palette đi tới `/plans` không crash.
+- A7 states vẫn render ở `/dashboard` và `/clinics/aurora-dental`; lifecycle confirm modal vẫn mở/đóng/action mock qua detail action.
+- HTTP smoke PASS cho `/dashboard`, `/clinics`, `/clinics/create`, `/clinics/aurora-dental`, `/plans`.
+- typecheck/build PASS trong frontend workspace.
+```
+
+### 26.7 Verify Commands
+
+```powershell
+git diff --check
+cd frontend
+npm run typecheck
+npm run build
+npm run dev:owner
+HTTP smoke:
+- /dashboard
+- /clinics
+- /clinics/create
+- /clinics/aurora-dental
+- /plans
+Visual budget:
+- frontend/test-results/a8-fe-contact-sheet.png (1 contact sheet, không giữ ảnh rời)
+```
+
+### 26.8 BE Handoff Request
+
+```txt
+BE/API contract cần sau mock:
+- GET /api/owner/plans: plan catalog, price, tenantCount, module entitlements.
+- GET /api/owner/modules: module metadata, category, default availability per plan.
+- GET /api/owner/tenant-plan-assignments: tenant current plan, MRR, renewal date.
+- POST /api/owner/tenant-plan-assignments/bulk-change: selected tenant ids, target plan, effectiveAt=next_renewal, audit reason.
+- Domain/DNS/SSL real wiring vẫn cần Domain Service contract Phase 4.1 cho retry/pending status.
+```
+
+### 26.9 Implementation Result
+
+```txt
+Scope đã làm:
+- Thêm `/plans` Owner Admin route cho Plan & Module Catalog mock-first.
+- Thêm `planCatalogMock.ts` chứa plan cards, 12 module matrix row, tenant plan assignment mock.
+- Sidebar bật nav "Gói & module"; command palette thêm action mở `/plans`.
+- `/plans` render 3 plan card Starter/Growth/Premium, module matrix 12 x 3, bảng plan assignment, checkbox/select target plan, mock bulk change status.
+- A7 surfaces vẫn được expose: dashboard DNS/SSL attention, detail Aurora Dental có lifecycle action buttons, source vẫn có modal open/close/confirm và DNS/SSL preview state.
+```
+
+File thay đổi trong FE/docs:
+
+```txt
+frontend/apps/owner-admin/src/pages/PlanModuleCatalogPage.vue
+frontend/apps/owner-admin/src/services/planCatalogMock.ts
+frontend/apps/owner-admin/src/router/index.ts
+frontend/apps/owner-admin/src/components/AdminSidebar.vue
+frontend/apps/owner-admin/src/components/OwnerCommandPalette.vue
+docs/current-task.frontend.md
+temp/plan.frontend.md
+frontend/test-results/a8-fe-contact-sheet.png (artifact review, không commit)
+```
+
+Verify đã chạy:
+
+```txt
+git diff --check -> PASS, chỉ warning LF/CRLF trên Windows; có file backend dirty từ lane khác, không thuộc FE A8.
+cd frontend && npm run typecheck -> PASS cả 3 app.
+cd frontend && npm run build -> PASS cả 3 app.
+HTTP smoke mock mode:
+  /dashboard -> 200 + #app
+  /clinics -> 200 + #app
+  /clinics/create -> 200 + #app
+  /clinics/aurora-dental -> 200 + #app
+  /plans -> 200 + #app
+Vite transform smoke:
+  /src/main.ts, /src/router/index.ts, /src/pages/PlanModuleCatalogPage.vue,
+  /src/services/planCatalogMock.ts -> 200
+CDP interaction smoke /plans:
+  checkbox count 6; tick thêm nova-skin -> selected 4;
+  đổi target plan nova-skin sang Premium; Apply mock change -> status
+  "4 tenant sẽ đổi gói ở chu kỳ kế tiếp. MRR dự kiến tăng $420."
+Visual contact sheet:
+  frontend/test-results/a8-fe-contact-sheet.png
+```
+
+Test gaps:
+
+```txt
+- Chưa có browser automation click thật cho lifecycle modal; plan bulk action interaction smoke đã PASS qua Edge CDP.
+- Chưa có real API smoke vì BE contract cho plan/module/assignment chưa sẵn.
+- Contact sheet là generated artifact review, không stage/commit trừ khi owner yêu cầu.
+```
+
+### 26.10 /plans Visual Quality Fix 2026-05-12
+
+Trạng thái: **PASS sau owner contact sheet feedback; chưa stage/commit/push**.
+
+Visual polish đã làm:
+
+```txt
+- Tăng contrast /plans: heading/subtitle/table text/label rõ hơn, giảm cảm giác nhạt.
+- Plan cards Starter/Growth/Premium có tone riêng; Growth popular nổi bật hơn nhưng price/text vẫn đọc được.
+- Plan cards thêm hierarchy price, tenant count và module summary.
+- Module matrix tăng font/row spacing, header rõ, enabled/limited/locked state nhìn như state thật.
+- Assignment card/CTA nổi hơn; desktop contact sheet thấy được bảng assignment.
+- Mobile /plans stack gọn hơn; matrix/assignment không còn phụ thuộc overflow ngang để đọc nội dung chính.
+```
+
+Verify sau fix:
+
+```txt
+git diff --check -> PASS, chỉ warning LF/CRLF trên Windows.
+cd frontend && npm run typecheck -> PASS cả 3 app.
+cd frontend && npm run build -> PASS cả 3 app.
+HTTP smoke:
+  /dashboard -> 200 + #app
+  /clinics -> 200 + #app
+  /clinics/create -> 200 + #app
+  /clinics/aurora-dental -> 200 + #app
+  /plans -> 200 + #app
+Interaction smoke /plans:
+  checkbox count 6; chọn/bỏ chọn/chọn lại nova-skin; đổi target plan sang Premium;
+  Apply mock change -> "4 tenant sẽ đổi gói ở chu kỳ kế tiếp. MRR dự kiến tăng $420."; app không crash.
+Visual contact sheet:
+  frontend/test-results/a8-fe-contact-sheet.png
+```
+
+Gaps/guardrail:
+
+```txt
+- Lifecycle modal click automation vẫn chưa chạy trong lượt này.
+- Real API smoke vẫn pending BE contract; BE handoff section 26.8 giữ nguyên.
+- Không sửa backend/docs backend/Figma/API/mock scope; không stage/commit/push.
+```
+
 Đã kiểm tra:
 
 ```txt

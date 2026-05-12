@@ -1338,3 +1338,123 @@ Commit split:
   feat(owner-admin): add v3 lifecycle state surfaces
   docs(frontend): record a7 budget verification
 ```
+
+## Wave A Step A8 - Owner Admin Plan/Module Catalog Mock-First 2026-05-12
+
+Trạng thái: **Implementation + verify PASS; chưa stage/commit/push**.
+
+Team assembly:
+
+```txt
+Lead Agent: điều phối Frontend lane, xác nhận A7 qua git log/status, ghi plan A8 trước khi code.
+Frontend Agent: implement `/plans`, mock data và route/nav/command palette.
+Figma UI Agent: read-only, đối chiếu frame 126:2 Plan/Module Catalog và 126:173 Plan Assignment qua Figma MCP.
+QA Agent: typecheck/build, HTTP smoke, static source check và contact sheet budget.
+Documentation Agent: cập nhật docs/current-task.frontend.md và temp/plan.frontend.md.
+```
+
+Scope đã hoàn tất:
+
+```txt
+- `/plans` Owner Admin route cho Plan & Module Catalog mock-first.
+- `planCatalogMock.ts` chứa plan cards, 12 module matrix row, tenant assignment draft.
+- Sidebar bật nav "Gói & module"; command palette có action mở `/plans`.
+- `/plans` render Starter/Growth/Premium, module matrix, tenant plan assignment, selected tenants, target plan select, MRR diff và bulk action mock.
+- A7 state surfaces vẫn có mặt: dashboard DNS/SSL attention; detail Aurora Dental có lifecycle action buttons; source vẫn có modal open/close/confirm và DNS/SSL preview.
+```
+
+Mock data/API dependency:
+
+```txt
+Mock data: frontend/apps/owner-admin/src/services/planCatalogMock.ts.
+API thật chưa wire. BE handoff request:
+- GET /api/owner/plans
+- GET /api/owner/modules
+- GET /api/owner/tenant-plan-assignments
+- POST /api/owner/tenant-plan-assignments/bulk-change
+- Domain Service Phase 4.1 status/retry/pending contract cho DNS/SSL real state.
+```
+
+Verify:
+
+```txt
+git diff --check -> PASS, chỉ warning LF/CRLF trên Windows; backend dirty là lane khác.
+cd frontend && npm run typecheck -> PASS.
+cd frontend && npm run build -> PASS.
+HTTP smoke mock mode:
+  /dashboard, /clinics, /clinics/create, /clinics/aurora-dental, /plans -> 200 + #app.
+Vite transform smoke:
+  /src/main.ts, /src/router/index.ts, /src/pages/PlanModuleCatalogPage.vue,
+  /src/services/planCatalogMock.ts -> 200.
+CDP interaction smoke /plans:
+  checkbox count 6; tick thêm nova-skin -> selected 4;
+  đổi target plan nova-skin sang Premium; Apply mock change -> status
+  "4 tenant sẽ đổi gói ở chu kỳ kế tiếp. MRR dự kiến tăng $420."
+Visual artifact:
+  frontend/test-results/a8-fe-contact-sheet.png.
+```
+
+Test gaps:
+
+```txt
+- Chưa click automation lifecycle modal; plan bulk action interaction smoke đã PASS qua Edge CDP.
+- Real API smoke pending BE contract.
+- Contact sheet là generated artifact review, không stage/commit nếu owner chưa yêu cầu.
+```
+
+Dirty/untracked liên quan FE A8:
+
+```txt
+frontend/apps/owner-admin/src/components/AdminSidebar.vue
+frontend/apps/owner-admin/src/components/OwnerCommandPalette.vue
+frontend/apps/owner-admin/src/router/index.ts
+frontend/apps/owner-admin/src/pages/PlanModuleCatalogPage.vue
+frontend/apps/owner-admin/src/services/planCatalogMock.ts
+docs/current-task.frontend.md
+temp/plan.frontend.md
+frontend/test-results/a8-fe-contact-sheet.png (artifact)
+```
+
+Ghi chú lane khác:
+
+```txt
+Worktree có backend dirty/untracked từ tab backend riêng. Frontend A8 không sửa, không stage, không revert.
+```
+
+## Wave A Step A8 - /plans Visual Quality Fix 2026-05-12
+
+Trạng thái: **visual polish + verify PASS; chưa stage/commit/push**.
+
+Phạm vi sửa đúng yêu cầu owner:
+
+```txt
+- Tăng contrast toàn màn /plans: heading/subtitle/table text đậm hơn, tránh label xám mờ.
+- Plan cards Starter/Growth/Premium khác tone rõ; Growth popular nổi bật bằng nền slate nhưng giữ text/price dễ đọc.
+- Thêm hierarchy price + tenant count + module summary trên plan cards.
+- Module matrix tăng font/row spacing, header rõ hơn, enabled/limited/locked state có chip/icon dễ đọc.
+- Plan assignment nổi rõ trên desktop contact sheet; CTA Apply mock change rõ.
+- Mobile /plans stack gọn hơn; matrix/assignment không phụ thuộc overflow ngang và contact sheet thấy được assignment/table.
+```
+
+Verify sau fix:
+
+```txt
+git diff --check -> PASS, chỉ warning LF/CRLF trên Windows.
+cd frontend && npm run typecheck -> PASS cả 3 app.
+cd frontend && npm run build -> PASS cả 3 app.
+HTTP smoke:
+  /dashboard, /clinics, /clinics/create, /clinics/aurora-dental, /plans -> 200 + #app.
+Interaction smoke /plans:
+  checkbox count 6; chọn/bỏ chọn/chọn lại nova-skin; đổi target plan sang Premium;
+  Apply mock change -> "4 tenant sẽ đổi gói ở chu kỳ kế tiếp. MRR dự kiến tăng $420."; app không crash.
+Visual contact sheet:
+  frontend/test-results/a8-fe-contact-sheet.png
+```
+
+Test gaps giữ nguyên:
+
+```txt
+- Chưa click automation lifecycle modal.
+- Real API smoke pending BE contract.
+- Contact sheet là generated artifact review, không stage/commit nếu owner chưa yêu cầu.
+```
