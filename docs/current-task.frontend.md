@@ -1458,3 +1458,46 @@ Test gaps giữ nguyên:
 - Real API smoke pending BE contract.
 - Contact sheet là generated artifact review, không stage/commit nếu owner chưa yêu cầu.
 ```
+
+## Wave A Step A9 - Wiring `/plans` Với BE A.2 Real Contract 2026-05-12
+
+Trạng thái: **Implementation + verify PASS; chưa stage/commit/push**.
+
+Scope hoàn tất:
+
+```txt
+- `/plans` chuyển từ mock import trực tiếp sang app-level `planCatalogClient`.
+- Thêm shared types: `OwnerPlanCatalogItem`, `OwnerModuleCatalogRow`,
+  `OwnerTenantPlanAssignment`, bulk-change request/response.
+- Thêm typed API client gọi BE A.2:
+  GET /api/owner/plans
+  GET /api/owner/modules
+  GET /api/owner/tenant-plan-assignments
+  POST /api/owner/tenant-plan-assignments/bulk-change
+- Giữ mock fallback A8 qua `planCatalogMock.ts`.
+- Thêm loading/error/retry state cho `/plans`; bulk-change gửi auditReason + effectiveAt next renewal.
+```
+
+Verify:
+
+```txt
+git diff --check -> PASS, chỉ warning LF/CRLF trên Windows.
+cd frontend && npm run typecheck -> PASS.
+cd frontend && npm run build -> PASS.
+HTTP smoke `http://localhost:5175`:
+  /dashboard, /clinics, /clinics/create, /clinics/aurora-dental, /plans -> 200 + #app.
+Vite transform smoke:
+  /src/main.ts, /src/router/index.ts, /src/pages/PlanModuleCatalogPage.vue,
+  /src/services/planCatalogClient.ts, /src/services/planCatalogMock.ts -> 200.
+Real API direct smoke:
+  /api/owner/plans hiện 500 vì backend runtime/gateway không bật trong phiên này; UI vẫn fallback mock/auto.
+```
+
+Song song được:
+
+```txt
+Backend/DevOps có thể chạy BE A.3 contract hardening/test guard song song, không chặn FE:
+  tenant mismatch, missing X-Tenant-Id, ClinicAdmin forbidden cho `/api/owner/*`,
+  OpenAPI/gateway smoke consistency.
+Backend persistence/schema plan-module thật vẫn cần owner duyệt riêng, không làm trong FE A9.
+```

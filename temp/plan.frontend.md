@@ -2642,6 +2642,247 @@ Artifact còn lại:
 temp/owner-admin-vite.log
 ```
 
+## 27. Wave A Step A9 - Wiring `/plans` Với BE A.2 Real Contract (Plan-Only 2026-05-12)
+
+Trạng thái: **Plan ready - chờ owner duyệt implement, chưa code**.
+
+### 27.1 Mục Tiêu
+
+```txt
+- Nối Owner Admin `/plans` từ mock-first sang API thật BE A.2.
+- Dùng API Gateway/Tenant Service contract:
+  GET /api/owner/plans
+  GET /api/owner/modules
+  GET /api/owner/tenant-plan-assignments
+  POST /api/owner/tenant-plan-assignments/bulk-change
+- Giữ mock fallback khi không có env real, API lỗi, hoặc chạy mode mock/auto không có baseUrl.
+- Không sửa backend nếu contract hiện tại đủ.
+```
+
+### 27.2 Team / Lane
+
+```txt
+Lane: Frontend.
+Lead Agent: điều phối plan, kiểm tra source of truth và approval gate.
+Architect Agent: review boundary FE/API client, không làm lệch tenant/owner role context.
+Frontend Agent: sau khi được duyệt, implement client/adapter và page wiring.
+QA Agent: verify mock fallback, real contract smoke nếu runtime có sẵn, typecheck/build.
+Documentation Agent: cập nhật docs/current-task.frontend.md và temp/plan.frontend.md sau implement.
+```
+
+### 27.3 Contract Đã Kiểm Tra
+
+```txt
+BE A.2 contract đủ để FE wiring, chưa cần sửa backend:
+- Response list đều có envelope `{ items: [...] }`.
+- Plan item: code, name, price, description, tenantCount, tone, popular.
+- Module item: id, name, category, starter, growth, premium.
+- Assignment item: id, slug, currentPlan, currentPlanName, currentMrr, nextRenewal, selected, targetPlan.
+- Bulk-change request: selectedTenantIds, targetPlan, effectiveAt="next_renewal", auditReason.
+- Bulk-change response: changedCount, mrrDiff, status, message, effectiveAt, auditReason.
+- Endpoint yêu cầu Owner Super Admin context qua `X-Owner-Role: OwnerSuperAdmin`; ClinicAdmin bị 403 theo backend smoke.
+```
+
+### 27.4 Scope Implement Sau Khi Duyệt
+
+```txt
+1. Tạo typed client cho Owner Plan Catalog trong frontend package hoặc owner-admin service layer theo pattern tenantClient hiện có.
+2. Tạo adapter/normalizer cho BE response:
+   - unwrap `{ items }`,
+   - coerce `price/currentMrr/mrrDiff` về number,
+   - validate plan code về `starter | growth | premium`,
+   - fallback field thiếu sang mock-safe default thay vì crash UI.
+3. Tách page `/plans` khỏi import trực tiếp mock constants:
+   - load plans/modules/assignments qua client,
+   - giữ loading/error/retry state,
+   - fallback sang `planCatalogMock.ts` khi mode mock hoặc real fail trong auto/fallback mode.
+4. Bulk-change thật:
+   - gửi selected tenant ids, targetPlan, effectiveAt `next_renewal`, auditReason mặc định hiển thị rõ trong UI hoặc constant an toàn.
+   - status hiển thị message/mrrDiff từ backend khi real path thành công.
+   - fallback mock message khi real path không khả dụng và fallback được bật.
+5. Giữ UI visual/layout A8, chỉ đổi data/request flow.
+6. Cập nhật docs lane sau verify.
+```
+
+### 27.5 Out Of Scope
+
+```txt
+- Không sửa backend, không sửa docs backend.
+- Không sửa schema/migration/persistence thật.
+- Không sửa Figma, không tạo Figma file.
+- Không thêm dependency/package-lock nếu không thật sự bắt buộc.
+- Không đổi route `/plans`, sidebar, command palette trừ khi cần cho trạng thái loading/error nhỏ.
+- Không làm billing thật, audit log thật, permission UI thật ngoài contract hiện có.
+- Không stage/commit/push.
+```
+
+### 27.6 Allowed Files / Areas
+
+```txt
+frontend/packages/api-client/src/ownerPlanCatalogClient.ts        (mới nếu chọn package client)
+frontend/packages/api-client/src/mockOwnerPlanCatalogClient.ts    (mới nếu mock fallback đặt trong package)
+frontend/packages/api-client/src/index.ts                         (export client mới)
+frontend/packages/shared-types/src/ownerPlanCatalog.ts            (mới nếu cần shared FE types)
+frontend/packages/shared-types/src/index.ts                       (export types mới)
+frontend/apps/owner-admin/src/services/planCatalogClient.ts       (mới, app-level env/mode wrapper)
+frontend/apps/owner-admin/src/services/planCatalogMock.ts         (giữ làm fallback hoặc chuyển mock package nếu cần)
+frontend/apps/owner-admin/src/pages/PlanModuleCatalogPage.vue     (wire data/loading/error/bulk-change)
+frontend/apps/owner-admin/src/env.d.ts                            (chỉ nếu cần type env mới)
+docs/current-task.frontend.md
+temp/plan.frontend.md
+```
+
+Không sửa:
+
+```txt
+backend/**
+docs/current-task.backend.md
+temp/plan.backend.md
+docs/roadmap/clinic-saas-roadmap.md
+generated artifacts/log/screenshot
+```
+
+### 27.7 Env / Mode Strategy
+
+```txt
+- Dùng `VITE_API_BASE_URL` và same-origin `/api` proxy giống tenantClient.
+- Thêm mode riêng `VITE_OWNER_PLAN_API_MODE=auto|real|mock` nếu cần tách khỏi tenant API mode.
+- Thêm fallback flag riêng `VITE_OWNER_PLAN_API_FALLBACK` nếu cần; default fallback=true trong auto mode.
+- Owner role dùng `OwnerSuperAdmin`, nhưng không hardcode trong `httpClient`; chỉ truyền qua owner plan client config như tenantClient đang làm.
+```
+
+### 27.8 Acceptance Criteria
+
+```txt
+- `/plans` vẫn render đủ 3 plan card, 12 module row, assignment table trong mock mode.
+- Khi có API real, `/plans` load data từ 3 GET endpoint BE A.2 và không đọc trực tiếp mock constants làm source chính.
+- Bulk-change gửi POST đúng payload gồm selectedTenantIds, targetPlan, effectiveAt="next_renewal", auditReason.
+- UI hiển thị backend message/mrrDiff khi POST real thành công.
+- Khi API lỗi hoặc không có baseUrl ở auto mode, mock fallback giữ trải nghiệm A8 không crash.
+- Khi real mode không có baseUrl, fail rõ ràng như tenantClient pattern.
+- `X-Owner-Role: OwnerSuperAdmin` được gửi qua owner client; không dùng role hardcoded trong generic httpClient.
+- Không regression `/dashboard`, `/clinics`, `/clinics/create`, `/clinics/aurora-dental`.
+```
+
+### 27.9 Verify Commands
+
+```powershell
+git diff --check
+cd frontend
+npm run typecheck
+npm run build
+npm run dev:owner
+```
+
+HTTP smoke mock/auto fallback:
+
+```txt
+/dashboard -> 200 + #app
+/clinics -> 200 + #app
+/clinics/create -> 200 + #app
+/clinics/aurora-dental -> 200 + #app
+/plans -> 200 + #app
+```
+
+Real contract smoke nếu backend/gateway runtime sẵn:
+
+```txt
+GET /api/owner/plans -> 200, items.length=3
+GET /api/owner/modules -> 200, items.length=12
+GET /api/owner/tenant-plan-assignments -> 200, items.length=6
+POST /api/owner/tenant-plan-assignments/bulk-change -> 200, changedCount/mrrDiff/message có giá trị
+Negative smoke: X-Owner-Role=ClinicAdmin -> 403 nếu gọi trực tiếp API contract.
+```
+
+Interaction smoke `/plans`:
+
+```txt
+- tick/bỏ tick assignment không crash.
+- đổi target plan.
+- click Apply change:
+  - mock/fallback path hiển thị status hợp lý;
+  - real path hiển thị message/mrrDiff từ backend.
+```
+
+### 27.10 Rollback / Cleanup
+
+```txt
+- Nếu real wiring lỗi nhưng UI mock vẫn cần giữ, revert phần client/page wiring A9 về import mock A8.
+- Không xóa `planCatalogMock.ts` trong A9; giữ làm fallback và rollback source.
+- Không tạo screenshot mặc định; nếu có artifact do smoke/browser tạo thì đặt dưới frontend/test-results/ và không stage/commit.
+```
+
+### 27.11 Commit Split Proposal Khi Owner Yêu Cầu Commit
+
+```txt
+feat(owner-admin): wire plans page to owner plan catalog api
+docs(frontend): record a9 plan catalog api wiring
+```
+
+Điểm dừng: **chờ owner duyệt plan A9 trước khi implement**.
+
+### 27.12 Implementation Result - 2026-05-12
+
+Trạng thái: **Implementation + verify PASS; chưa stage/commit/push**.
+
+Scope đã làm:
+
+```txt
+- Thêm shared types cho Owner Plan Catalog ở `frontend/packages/shared-types/src/ownerPlanCatalog.ts`.
+- Thêm typed real API client `createOwnerPlanCatalogClient` trong `frontend/packages/api-client`.
+- Thêm app-level `planCatalogClient.ts` cho Owner Admin với mode `auto|real|mock`,
+  `VITE_OWNER_PLAN_API_MODE`, `VITE_OWNER_PLAN_API_FALLBACK`, role `OwnerSuperAdmin`,
+  và mock fallback giữ nguyên dữ liệu A8.
+- Chuyển `/plans` khỏi import trực tiếp mock constants; page load plans/modules/assignments
+  qua client, có loading/error/retry state.
+- Bulk-change gửi payload BE A.2: `selectedTenantIds`, `targetPlan`, `effectiveAt="next_renewal"`,
+  `auditReason`; UI hiển thị message/MRR diff từ response hoặc fallback mock.
+- Giữ `planCatalogMock.ts` làm fallback/rollback source, không xóa mock.
+```
+
+Verify:
+
+```txt
+git diff --check -> PASS, chỉ warning LF/CRLF trên Windows.
+cd frontend && npm run typecheck -> PASS cả 3 app.
+cd frontend && npm run build -> PASS cả 3 app.
+HTTP smoke qua dev server đang có `http://localhost:5175`:
+  /dashboard -> 200 + #app
+  /clinics -> 200 + #app
+  /clinics/create -> 200 + #app
+  /clinics/aurora-dental -> 200 + #app
+  /plans -> 200 + #app
+Vite transform:
+  /src/main.ts -> 200
+  /src/router/index.ts -> 200
+  /src/pages/PlanModuleCatalogPage.vue -> 200
+  /src/services/planCatalogClient.ts -> 200
+  /src/services/planCatalogMock.ts -> 200
+Real API direct smoke:
+  /api/owner/plans qua dev proxy hiện 500 vì backend runtime/gateway không bật trong phiên này.
+  A9 vẫn giữ auto/mock fallback nên UI không bị chặn.
+```
+
+Song song Backend/DevOps:
+
+```txt
+Backend wave không chặn FE A9:
+  - BE A.3 Contract Hardening + FE A9 Support có thể chạy song song, không schema/persistence.
+  - Scope: tăng test guard tenant mismatch, missing X-Tenant-Id, ClinicAdmin forbidden cho `/api/owner/*`,
+    smoke OpenAPI/gateway consistency.
+
+Backend wave cần approval riêng:
+  - Plan/Module persistence thật, migration 0002, repository Dapper, Billing/subscription integration.
+  - Đã có plan preparation trong backend lane; không implement trong lượt FE A9.
+```
+
+Gaps:
+
+```txt
+- Chưa smoke real browser flow với backend runtime thật vì `/api/owner/plans` hiện không sẵn.
+- Chưa chạy interaction automation click Apply sau wiring; typecheck/build/HTTP smoke đã PASS.
+```
+
 Artifact này là runtime log, không stage/commit.
 
 ### 23.8 Commit Split Proposal
