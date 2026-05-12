@@ -54,6 +54,9 @@ const isFiltered = computed(
     filters.domainStatus !== "all" ||
     filters.moduleCode !== "all"
 );
+const isFilterEmpty = computed(
+  () => !loading.value && !error.value && tenants.value.length > 0 && filteredTenants.value.length === 0 && isFiltered.value
+);
 
 function resetFilters() {
   filters.status = "all";
@@ -147,7 +150,7 @@ onMounted(loadTenants);
       </div>
 
       <TenantTable
-        v-if="!isEmpty"
+        v-if="!isEmpty && !isFilterEmpty"
         :loading="loading"
         :selected-tenant-id="selectedTenantId"
         :tenants="filteredTenants"
@@ -155,7 +158,8 @@ onMounted(loadTenants);
       />
 
       <EmptyState
-        v-else
+        v-else-if="isEmpty"
+        class="clinics-empty-state"
         label="Chưa có phòng khám nào trong hệ thống."
         helper="Thêm phòng khám đầu tiên để bắt đầu vận hành nền tảng Clinic SaaS."
       >
@@ -166,14 +170,21 @@ onMounted(loadTenants);
         </template>
       </EmptyState>
 
-      <div v-if="!isEmpty && !loading && filteredTenants.length === 0 && isFiltered" class="filter-empty">
-        Không có phòng khám phù hợp bộ lọc hiện tại.
-        <AppButton label="Đặt lại bộ lọc" variant="ghost" @click="resetFilters" />
-      </div>
+      <EmptyState
+        v-else-if="isFilterEmpty"
+        class="clinics-empty-state clinics-empty-state--compact"
+        tone="neutral"
+        label="Không có phòng khám phù hợp"
+        helper="Thử nới bộ lọc để xem lại danh sách phòng khám đang vận hành."
+      >
+        <template #action>
+          <AppButton label="Đặt lại bộ lọc" variant="secondary" @click="resetFilters" />
+        </template>
+      </EmptyState>
     </AppCard>
 
     <div class="footer-grid">
-      <AppCard tone="danger">
+      <AppCard class="conflict-card" tone="muted">
         <div class="footer-card">
           <div class="footer-card-head">
             <strong>Trùng slug hoặc tên miền (HTTP 409)</strong>
@@ -251,6 +262,35 @@ onMounted(loadTenants);
   gap: var(--space-3);
 }
 
+.metrics-grid :deep(.kpi-tile) {
+  min-height: 104px;
+  gap: var(--space-1);
+  padding: var(--space-4);
+  box-shadow: 0 8px 18px color-mix(in srgb, var(--color-text-primary) 6%, transparent);
+}
+
+.metrics-grid :deep(.kpi-tile__label) {
+  max-width: 168px;
+  font-size: 11px;
+  font-weight: 800;
+  line-height: 15px;
+}
+
+.metrics-grid :deep(.kpi-tile__value) {
+  margin-top: var(--space-1);
+  font-size: 30px;
+  line-height: 34px;
+}
+
+.metrics-grid :deep(.kpi-tile__footer) {
+  align-items: flex-start;
+}
+
+.metrics-grid :deep(.kpi-tile__meta) {
+  font-size: 12px;
+  line-height: 16px;
+}
+
 .error-state {
   display: flex;
   align-items: center;
@@ -262,14 +302,30 @@ onMounted(loadTenants);
   color: var(--color-status-warning);
 }
 
-.filter-empty {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: var(--space-3);
-  border-top: 1px solid var(--color-border-subtle);
-  padding: var(--space-4);
-  color: var(--color-text-secondary);
+.clinics-empty-state {
+  border: 0;
+  border-radius: 0;
+  padding: var(--space-8) var(--space-5);
+  box-shadow: none;
+}
+
+.clinics-empty-state :deep(.empty-state__icon) {
+  width: 72px;
+  height: 72px;
+}
+
+.clinics-empty-state :deep(.empty-state__icon span) {
+  width: 34px;
+  height: 34px;
+  border-radius: 10px;
+  background:
+    linear-gradient(var(--empty-color, var(--color-brand-primary)), var(--empty-color, var(--color-brand-primary))) 8px 10px / 18px 2px no-repeat,
+    linear-gradient(var(--empty-color, var(--color-brand-primary)), var(--empty-color, var(--color-brand-primary))) 8px 18px / 14px 2px no-repeat,
+    transparent;
+}
+
+.clinics-empty-state--compact {
+  padding: var(--space-7) var(--space-5);
 }
 
 .footer-grid {
@@ -297,6 +353,21 @@ onMounted(loadTenants);
 
 .footer-card-head strong {
   color: var(--color-text-primary);
+}
+
+.conflict-card {
+  border-color: color-mix(in srgb, var(--color-status-warning) 26%, var(--color-border-subtle));
+  background: color-mix(in srgb, var(--color-status-warning) 7%, var(--color-surface-elevated));
+  box-shadow: none;
+}
+
+.conflict-card .footer-card {
+  gap: var(--space-2);
+}
+
+.conflict-card .status-tag {
+  background: color-mix(in srgb, var(--color-status-warning) 14%, var(--color-surface-elevated));
+  color: var(--color-status-warning);
 }
 
 .status-tag {
