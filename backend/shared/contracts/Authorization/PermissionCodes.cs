@@ -16,6 +16,36 @@ public static class PermissionCodes
     public const string TenantsWrite = "tenants.write";
 
     /// <summary>
+    /// Quyền đọc domain của tenant hoặc registry domain ở phạm vi platform.
+    /// </summary>
+    public const string DomainsRead = "domains.read";
+
+    /// <summary>
+    /// Quyền đăng ký, verify hoặc cập nhật domain của tenant.
+    /// </summary>
+    public const string DomainsWrite = "domains.write";
+
+    /// <summary>
+    /// Quyền đọc thư viện template toàn platform.
+    /// </summary>
+    public const string TemplatesRead = "templates.read";
+
+    /// <summary>
+    /// Quyền áp template cho tenant.
+    /// </summary>
+    public const string TemplatesWrite = "templates.write";
+
+    /// <summary>
+    /// Quyền đọc cấu hình Website CMS của tenant.
+    /// </summary>
+    public const string WebsiteCmsRead = "website-cms.read";
+
+    /// <summary>
+    /// Quyền cập nhật cấu hình Website CMS của tenant.
+    /// </summary>
+    public const string WebsiteCmsWrite = "website-cms.write";
+
+    /// <summary>
     /// Quyền đọc user placeholder.
     /// </summary>
     public const string UsersRead = "users.read";
@@ -32,6 +62,12 @@ public static class PermissionCodes
     [
         TenantsRead,
         TenantsWrite,
+        DomainsRead,
+        DomainsWrite,
+        TemplatesRead,
+        TemplatesWrite,
+        WebsiteCmsRead,
+        WebsiteCmsWrite,
         UsersRead,
         UsersWrite
     ];

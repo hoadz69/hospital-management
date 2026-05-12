@@ -1,0 +1,17 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+
+  <ItemGroup>
+    <ProjectReference Include="..\TemplateService.Application\TemplateService.Application.csproj" />
+    <ProjectReference Include="..\TemplateService.Infrastructure\TemplateService.Infrastructure.csproj" />
+    <ProjectReference Include="..\..\..\..\shared\building-blocks\ClinicSaaS.BuildingBlocks.csproj" />
+    <ProjectReference Include="..\..\..\..\shared\contracts\ClinicSaaS.Contracts.csproj" />
+    <ProjectReference Include="..\..\..\..\shared\observability\ClinicSaaS.Observability.csproj" />
+  </ItemGroup>
+
+  <PropertyGroup>
+    <TargetFramework>net9.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+  </PropertyGroup>
+
+</Project>
