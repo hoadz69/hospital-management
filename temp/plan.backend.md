@@ -845,3 +845,138 @@ Cross-service:
 - Owner decision blocker (audit retention, PII rule, autosave conflict policy,
   DNS retry tolerance) phải chốt trước khi service tương ứng implement schema/logic.
 ```
+
+## 14. Phase 4 Wave A Backend Contract/Stub - 2026-05-12
+
+Trạng thái: ✅ **QA verify PASS / ready for backend commit khi owner yêu cầu**.
+
+### 14.1 Backend Status Trước Khi Làm
+
+```txt
+Phase 2 Tenant MVP Done, 5 smoke case PASS qua API Gateway.
+Pre-Phase 4 hardening Done: xUnit test infra + Swagger/OpenAPI chỉ Development.
+Endpoint thật đã có: /api/tenants CRUD tối thiểu qua tenant-service và api-gateway.
+Service còn placeholder trước wave này: domain-service, template-service, website-cms-service.
+FE Wave A cần contract Domain/Template/CMS để chuyển từ mock-first sang ghép endpoint shape.
+```
+
+### 14.2 Scope Được Chọn
+
+```txt
+FULL next backend scope trong lane BE/DevOps: Phase 4 Wave A contract/stub cho cả 3 service.
+Không làm persistence thật, DNS async thật, SSL ACME, MongoDB write thật hoặc Redis cache thật.
+Không sửa frontend, không sửa docs frontend, không commit/push/stage.
+```
+
+### 14.3 Agents Và Boundary
+
+```txt
+Lead Agent: điều phối scope BE, cập nhật plan/handoff, không stage/commit.
+Architect Agent: chốt Wave A contract/stub, service boundary và tenant isolation.
+Backend Agent: tạo shared contracts, service stubs Clean Architecture, gateway contract routes.
+Database Agent: review không cần migration vì chưa persistence thật.
+QA Agent: cài/bật dotnet user-local, restore/build/test/smoke PASS.
+Documentation Agent: cập nhật docs/current-task.backend.md và plan backend section này.
+```
+
+### 14.4 Allowed File Areas Đã Dùng
+
+```txt
+backend/shared/contracts/**
+backend/services/domain-service/**
+backend/services/template-service/**
+backend/services/website-cms-service/**
+backend/services/api-gateway/src/ApiGateway.Api/**
+backend/ClinicSaaS.Backend.sln
+docs/current-task.backend.md
+temp/plan.backend.md
+```
+
+### 14.5 Endpoints/Contracts Hoàn Thành Ở Mức Stub
+
+```txt
+Domain Service + API Gateway contract:
+  GET  /api/tenants/{tenantId}/domains
+  GET  /api/tenants/{tenantId}/domains/{domainId}
+  POST /api/tenants/{tenantId}/domains
+  POST /api/tenants/{tenantId}/domains/{domainId}/verify
+  GET  /api/tenants/{tenantId}/domains/{domainId}/verify-status
+  GET  /api/tenants/{tenantId}/domains/{domainId}/ssl-status
+  POST /api/tenants/{tenantId}/publish
+
+Template Service + API Gateway contract:
+  GET  /api/templates
+  GET  /api/templates/{templateKey}
+  POST /api/tenants/{tenantId}/template/apply
+  GET  /api/tenants/{tenantId}/template/active
+  POST /api/tenants/{tenantId}/template/preview-diff
+
+Website CMS Service + API Gateway contract:
+  GET/PUT /api/tenants/{tenantId}/website/settings
+  GET/POST /api/tenants/{tenantId}/website/sliders
+  PUT/DELETE /api/tenants/{tenantId}/website/sliders/{slideId}
+  GET     /api/tenants/{tenantId}/website/pages
+  GET/PUT /api/tenants/{tenantId}/website/pages/{pageKey}
+  POST    /api/tenants/{tenantId}/website/publish
+  GET     /api/tenants/{tenantId}/website/publish-history
+```
+
+### 14.6 Data/DB Decision
+
+```txt
+DB/schema: không có migration trong wave này.
+Lý do: contract/stub trả dữ liệu Application layer, chưa persistence thật.
+Phase sau:
+  Domain: PostgreSQL platform domain registry + Redis domain mapping cache.
+  Template: MongoDB template registry/snapshot + PostgreSQL active template link.
+  Website CMS: MongoDB settings/sliders/pages/publish snapshots + Redis public cache.
+```
+
+### 14.7 Verify
+
+```txt
+where dotnet: không có trong PATH.
+winget install Microsoft.DotNet.SDK.9: fail do msstore certificate mismatch và installer exit 1603.
+dotnet-install.ps1 user-local: PASS, SDK 9.0.313 cài tại C:\Users\nvhoa2\.dotnet.
+dotnet --info: SDK 9.0.313, host/runtime 9.0.15, Windows win-x64.
+git diff --check: PASS.
+dotnet restore backend/ClinicSaaS.Backend.sln: PASS.
+dotnet build backend/ClinicSaaS.Backend.sln --no-restore: FAIL lần 1 do CS8506 trong TemplateContractStubHandler; đã fix bằng khai báo `string[] changedAreas`.
+dotnet build backend/ClinicSaaS.Backend.sln --no-restore: PASS, 0 Warning(s), 0 Error(s).
+dotnet test backend/ClinicSaaS.Backend.sln --no-build: PASS, 21/21 tests.
+Local Development smoke: PASS.
+```
+
+### 14.8 Smoke PASS
+
+```txt
+Domain Service:
+  GET /health -> 200
+  GET /openapi/v1.json -> 200
+  GET /api/tenants/{tenantId}/domains với X-Tenant-Id khớp route -> 200
+
+Template Service:
+  GET /health -> 200
+  GET /openapi/v1.json -> 200
+  GET /api/templates -> 200
+
+Website CMS Service:
+  GET /health -> 200
+  GET /openapi/v1.json -> 200
+  GET /api/tenants/{tenantId}/website/settings với X-Tenant-Id khớp route -> 200
+
+API Gateway:
+  GET /health -> 200
+  GET /openapi/v1.json -> 200
+  GET /api/tenants/{tenantId}/domains với X-Tenant-Id khớp route -> 200
+  GET /api/templates -> 200
+  GET /api/tenants/{tenantId}/website/settings với X-Tenant-Id khớp route -> 200
+```
+
+### 14.9 Commit Split Đề Xuất
+
+```txt
+feat(backend): add phase 4 domain template cms contract stubs
+test(backend): add phase 4 service stub smoke tests
+docs(backend): record phase 4 wave a backend contract handoff
+```

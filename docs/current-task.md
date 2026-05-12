@@ -1,6 +1,6 @@
 # Current Task - Project Coordination Dashboard
 
-Ngày cập nhật: 2026-05-10
+Ngày cập nhật: 2026-05-12
 
 File này là dashboard điều phối project. Không ghi plan chi tiết của một lane vào đây.
 Lead Agent chỉ dùng file này để tóm tắt trạng thái tổng quan và trỏ sang task/plan lane riêng.
@@ -11,7 +11,7 @@ Mọi feature mới phải chạy theo "Feature Team Execution Workflow" (Step 0
 
 | Workstream | Task file | Plan file | Trạng thái ngắn | Bước tiếp theo |
 |---|---|---|---|---|
-| Backend/DevOps | `docs/current-task.backend.md` | `temp/plan.backend.md` | ✅ Phase 2 API Runtime Smoke Gate PASS. ✅ Pre-Phase 4 Hardening backend lane (P1.1 + P1.2 + P1.3) committed. Sẵn sàng giao Phase 4.1/4.2/4.3 OpenAPI contract cho FE Wave A | Owner duyệt OpenAPI contract Phase 4.1 Domain + 4.2 Template + 4.3 CMS (mock OK) cho Wave A unblock. Sau đó implement Phase 4.1 Domain DNS verify async + SSL ACME |
+| Backend/DevOps | `docs/current-task.backend.md` | `temp/plan.backend.md` | ✅ Phase 4 Wave A backend contract/stub QA PASS: Domain Service + Template Service + Website CMS Service + API Gateway routes. `restore/build/test` PASS, local Development smoke PASS | Backend lane đủ điều kiện commit khi owner yêu cầu; Wave sau là persistence thật cho Domain/Template/CMS khi được duyệt |
 | Frontend | `docs/current-task.frontend.md` | `temp/plan.frontend.md` | 🟡 Phase 3 Implementation Done (commit `7f6366d`) + Pre-Phase 4 Hardening (P1.6 + P1.7) committed. **V3v2 76 frame ready cho Phase 4 Wave A.** Chờ owner duyệt plan + 5 owner decision | Owner duyệt plan Wave A trong `temp/plan.frontend.md` §16. Owner duyệt 5 decision (audit retention, PII rule, autosave conflict, DNS retry, tenant suspended fallback) trước Wave B/C/D/E |
 | DevOps | (dashboard này) | `temp/plan.devops.md` | ✅ Pre-Phase 4 Hardening DevOps lane (P1.4 + P1.8) committed. Sẵn sàng support Wave A backend mock + Wave B edge resolver subdomain → tenantId | Wave B backend dep: nginx hoặc Cloudflare Worker meta tag inject tenant id |
 | Database | (dashboard này) | (note trong dashboard) | ✅ Pre-Phase 4 Hardening database lane (P1.5) committed. Phase 4 chưa cần lane riêng. P2 candidate: chuyển sang DbUp/FluentMigrator runner | Theo dõi schema mới khi Wave D Catalog/Customer/Records APSO bắt đầu |

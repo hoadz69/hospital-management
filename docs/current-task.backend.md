@@ -358,3 +358,102 @@ Owner decision blocker liên quan backend:
 - PII patient handling rule — chốt encryption + audit rule trước Wave D Records APSO.
 - DNS retry tolerance — chốt retry max attempts cho Domain Service trước Wave A composable.
 ```
+
+## Cập Nhật 2026-05-12 - Phase 4 Wave A Backend Contract/Stub
+
+Trạng thái: ✅ **QA verify PASS** trong worktree hiện tại, chưa commit/push/stage.
+
+Scope Lead Agent đã chọn cho Backend/DevOps lane:
+
+```txt
+Phase 4.1 Domain Service contract/stub.
+Phase 4.2 Template Service contract/stub.
+Phase 4.3 Website CMS settings/sliders/pages contract/stub.
+Không sửa frontend.
+Không tạo migration/schema.
+Không dùng DB/server/secret thật.
+```
+
+Architect boundary:
+
+```txt
+API Gateway: expose contract routes cho FE Wave A, không truy DB.
+Domain Service: owner domain registry/publish state; dữ liệu thật về sau ở PostgreSQL + Redis domain cache.
+Template Service: owner template registry/apply; dữ liệu thật về sau ở MongoDB + PostgreSQL tenant active template.
+Website CMS Service: owner settings/sliders/pages/publish; dữ liệu thật về sau ở MongoDB + Redis public cache.
+Endpoint tenant-scoped phải có X-Tenant-Id/JWT tenant_id và khớp route tenantId.
+Endpoint platform-scoped: GET /api/templates.
+```
+
+Backend files đã tạo/sửa trong wave này:
+
+```txt
+backend/shared/contracts/Domains/DomainContracts.cs
+backend/shared/contracts/Templates/TemplateContracts.cs
+backend/shared/contracts/WebsiteCms/WebsiteCmsContracts.cs
+backend/shared/contracts/Authorization/PermissionCodes.cs
+backend/services/domain-service/src/** (Api/Application/Domain/Infrastructure)
+backend/services/template-service/src/** (Api/Application/Domain/Infrastructure)
+backend/services/website-cms-service/src/** (Api/Application/Domain/Infrastructure)
+backend/services/*/tests/*Service.Tests/** cho 3 service mới
+backend/services/api-gateway/src/ApiGateway.Api/Endpoints/Phase4ContractEndpoints.cs
+backend/services/api-gateway/src/ApiGateway.Api/Program.cs
+backend/ClinicSaaS.Backend.sln
+```
+
+Contract handoff FE Wave A:
+
+```txt
+Domain:
+  GET  /api/tenants/{tenantId}/domains
+  GET  /api/tenants/{tenantId}/domains/{domainId}
+  POST /api/tenants/{tenantId}/domains
+  POST /api/tenants/{tenantId}/domains/{domainId}/verify
+  GET  /api/tenants/{tenantId}/domains/{domainId}/verify-status
+  GET  /api/tenants/{tenantId}/domains/{domainId}/ssl-status
+  POST /api/tenants/{tenantId}/publish
+  Status: contract-stub, DNS/SSL async thật pending.
+
+Template:
+  GET  /api/templates
+  GET  /api/templates/{templateKey}
+  POST /api/tenants/{tenantId}/template/apply
+  GET  /api/tenants/{tenantId}/template/active
+  POST /api/tenants/{tenantId}/template/preview-diff
+  Status: contract-stub, apply persistence thật pending.
+
+Website CMS:
+  GET/PUT /api/tenants/{tenantId}/website/settings
+  GET/POST /api/tenants/{tenantId}/website/sliders
+  PUT/DELETE /api/tenants/{tenantId}/website/sliders/{slideId}
+  GET     /api/tenants/{tenantId}/website/pages
+  GET/PUT /api/tenants/{tenantId}/website/pages/{pageKey}
+  POST    /api/tenants/{tenantId}/website/publish
+  GET     /api/tenants/{tenantId}/website/publish-history
+  Status: contract-stub, MongoDB/Redis/write-publish thật pending.
+```
+
+Verify đã chạy trong phiên hiện tại:
+
+```txt
+where dotnet: không có trong PATH.
+C:\Program Files\dotnet và C:\Program Files (x86)\dotnet: không có dotnet.exe.
+winget install Microsoft.DotNet.SDK.9: fail lần 1 do msstore certificate mismatch; fail lần 2 exit 1603.
+dotnet-install.ps1 user-local: PASS, cài SDK 9.0.313 tại C:\Users\nvhoa2\.dotnet.
+dotnet --info bằng full path: SDK 9.0.313, host/runtime 9.0.15, RID win-x64.
+git diff --check: PASS.
+dotnet restore backend/ClinicSaaS.Backend.sln: PASS.
+dotnet build backend/ClinicSaaS.Backend.sln --no-restore: FAIL lần 1 do CS8506 trong TemplateContractStubHandler switch expression; đã fix trong backend scope.
+dotnet build backend/ClinicSaaS.Backend.sln --no-restore: PASS sau fix, 0 warning, 0 error.
+dotnet test backend/ClinicSaaS.Backend.sln --no-build: PASS, 21/21 tests.
+Local Development smoke: PASS 14/14 checks cho Domain, Template, Website CMS và API Gateway.
+```
+
+Resume tiếp theo:
+
+```txt
+1. Phase 4 Wave A backend contract/stub đủ điều kiện commit theo lane backend sau khi owner yêu cầu.
+2. Không cần migration/schema ở wave này.
+3. Wave tiếp theo: persistence thật cho Domain/Template/CMS khi owner duyệt Phase 4 Wave B/D backend.
+4. Dotnet hiện dùng user-local full path C:\Users\nvhoa2\.dotnet\dotnet.exe nếu PATH chưa refresh.
+```
