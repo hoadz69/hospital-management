@@ -4,6 +4,7 @@ import ClinicDetailPage from "../pages/ClinicDetailPage.vue";
 import ClinicsPage from "../pages/ClinicsPage.vue";
 import CreateClinicPage from "../pages/CreateClinicPage.vue";
 import DashboardPage from "../pages/DashboardPage.vue";
+import PlanModuleCatalogPage from "../pages/PlanModuleCatalogPage.vue";
 
 // Khai báo meta chứa title/subtitle hiển thị ở topbar và cờ điều khiển hiển thị nút tạo tenant.
 // Việc tập trung tại router giúp Layout không phải hardcode mapping route -> tiêu đề.
@@ -49,6 +50,15 @@ export const router = createRouter({
           meta: {
             title: "Thêm phòng khám",
             subtitle: "Wizard 4 bước: thông tin phòng khám, gói & module, tên miền và xác nhận.",
+            showCreateAction: false
+          }
+        },
+        {
+          path: "plans",
+          component: PlanModuleCatalogPage,
+          meta: {
+            title: "Gói & module",
+            subtitle: "Plan catalog, module entitlement và đổi gói tenant bằng mock data A8.",
             showCreateAction: false
           }
         },

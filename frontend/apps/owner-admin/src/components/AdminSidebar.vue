@@ -10,6 +10,7 @@ type NavItem = {
 const navItems: NavItem[] = [
   { label: "Tổng quan", to: "/dashboard", enabled: true, icon: "▥" },
   { label: "Phòng khám", to: "/clinics", enabled: true, icon: "▣", count: "248" },
+  { label: "Gói & module", to: "/plans", enabled: true, icon: "▦", count: "3" },
   { label: "Tên miền", to: "", enabled: false, icon: "◎" },
   { label: "Mẫu giao diện", to: "", enabled: false, icon: "◫" },
   { label: "Thanh toán", to: "", enabled: false, icon: "▤" },

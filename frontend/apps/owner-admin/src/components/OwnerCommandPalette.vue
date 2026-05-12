@@ -30,6 +30,7 @@ const recentTenants = [
 
 const actions = [
   { id: "create-clinic", label: "Tạo phòng khám mới", hint: "Ctrl N", to: "/clinics/create", icon: "+" },
+  { id: "plan-catalog", label: "Mở gói & module", hint: "Ctrl P", to: "/plans", icon: "▦" },
   { id: "add-domain", label: "Thêm domain", hint: "Ctrl D", to: "/clinics", icon: "◎" },
   { id: "audit-log", label: "Xem audit log", hint: "Ctrl L", to: "/clinics", icon: "▤" },
   { id: "export-report", label: "Export report CSV", hint: "Ctrl E", to: "/clinics", icon: "⇩" }
