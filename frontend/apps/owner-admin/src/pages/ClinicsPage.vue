@@ -126,9 +126,6 @@ onMounted(loadTenants);
           :loading="loading"
           @click="loadTenants"
         />
-        <RouterLink to="/clinics/create">
-          <AppButton label="Thêm phòng khám" />
-        </RouterLink>
       </div>
     </section>
 
@@ -248,10 +245,6 @@ onMounted(loadTenants);
   line-height: 32px;
 }
 
-.heading-actions a {
-  text-decoration: none;
-}
-
 .metrics-grid {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
@@ -355,7 +348,7 @@ onMounted(loadTenants);
 
   .heading-actions {
     display: grid;
-    grid-template-columns: 1fr 1fr;
+    grid-template-columns: 1fr;
   }
 
   .heading-actions :deep(.app-button) {
