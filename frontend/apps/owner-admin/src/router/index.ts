@@ -58,7 +58,7 @@ export const router = createRouter({
           component: PlanModuleCatalogPage,
           meta: {
             title: "Gói & module",
-            subtitle: "Plan catalog, module entitlement và đổi gói tenant bằng mock data A8.",
+            subtitle: "Plan catalog, module entitlement và đổi gói tenant qua BE A.2 contract, có mock fallback.",
             showCreateAction: false
           }
         },

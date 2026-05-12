@@ -1,6 +1,130 @@
 # Kế Hoạch Frontend - Phase 3 Owner Admin Tenant Slice (Done) + Phase 4 Wave A V3 Foundation Planning
 
-Ngày cập nhật: 2026-05-10
+Ngày cập nhật: 2026-05-12
+
+## 2026-05-12 - Full Team Final Real API Attempt
+
+Trạng thái: **PARTIAL PASS - chưa thể đánh dấu FE Done hoàn toàn với API thật**. Lead Agent đã bật được runtime thật bằng dotnet local cho Tenant Service và API Gateway, nhưng tenant persistence API bị chặn do thiếu PostgreSQL connection string/container.
+
+Đã verify bằng API thật:
+- API Gateway `http://localhost:5018/health` -> PASS.
+- `GET /api/owner/plans` -> PASS, 3 items.
+- `GET /api/owner/modules` -> PASS, 12 items.
+- `GET /api/owner/tenant-plan-assignments` -> PASS, 6 items.
+- `POST /api/owner/tenant-plan-assignments/bulk-change` -> PASS, `effectiveAt=next_renewal`, `auditReason` ok.
+- Negative `400` bulk-change validation -> PASS.
+- Negative `403` wrong owner role -> PASS.
+- Negative `500` tenant list missing PostgreSQL -> PASS, xác nhận blocker runtime thật.
+
+Chưa verify được bằng API thật:
+- Tenant slices `/dashboard`, `/clinics`, `/clinics/create`, `/clinics/:tenantId` chưa có API tenant thật end-to-end vì Tenant Service báo thiếu `CLINICSAAS_TENANT_SERVICE_POSTGRES` hoặc `PostgreSql:ConnectionString`.
+- Negative `409` duplicate tenant chưa verify bằng API thật vì persistence DB chưa sẵn.
+
+FE verify:
+- Route shell `/plans`, `/dashboard`, `/clinics`, `/clinics/create`, `/clinics/tenant-smoke-a` -> PASS.
+- `git diff --check` -> PASS (CRLF warning only).
+- `npm run typecheck` -> PASS.
+- `npm run build` -> PASS.
+- Mock fallback/error path vẫn giữ trong `tenantClient` và `planCatalogClient`.
+
+Bước tiếp theo bắt buộc để đóng FE Done hoàn toàn với API thật:
+- Bật PostgreSQL dev/runtime hoặc cung cấp `CLINICSAAS_TENANT_SERVICE_POSTGRES` hợp lệ cho Tenant Service.
+- Chạy lại smoke tenant API thật: `GET /api/tenants`, `GET /api/tenants/{id}`, `POST /api/tenants`, `PATCH /api/tenants/{id}/status`, duplicate 409.
+- Sau khi tenant API thật PASS, FE lane mới có thể đánh dấu Done hoàn toàn theo đúng guardrail.
+
+## 2026-05-12 - Full Fast Mode FE Lane Completion Verify
+
+Trạng thái: **PASS có blocker runtime thật**. Lead Agent đã chạy team giả lập Backend + Frontend + QA + Documentation để verify xong FE lane cho A9 và tenant slices.
+
+Kết quả theo lane:
+- Backend lane: code endpoint `/api/owner/*` đã có trong Tenant Service và API Gateway. Runtime thật không bật được trong phiên này vì không có `dotnet`, không có Docker CLI, port `5005/5006/5018` không lắng nghe.
+- Frontend lane: `/plans` dùng `planCatalogClient` real path; `/dashboard`, `/clinics`, `/clinics/create`, `/clinics/:tenantId` dùng `tenantClient` real path. Mock fallback vẫn giữ.
+- QA lane: smoke route/API/negative path PASS qua Vite proxy với Node contract stub tạm, FE chạy `real` mode và fallback tắt.
+- Documentation lane: cập nhật `docs/current-task.frontend.md` và `temp/plan.frontend.md`.
+
+Verify:
+```txt
+git diff --check -> PASS (CRLF warning only)
+npm run typecheck -> PASS
+npm run build -> PASS
+Smoke route -> PASS: /plans, /dashboard, /clinics, /clinics/create, /clinics/tenant-smoke-a
+Smoke API happy path -> PASS:
+  /api/owner/plans
+  /api/owner/modules
+  /api/owner/tenant-plan-assignments
+  POST /api/owner/tenant-plan-assignments/bulk-change
+  /api/tenants
+  /api/tenants/tenant-smoke-a
+  PATCH /api/tenants/tenant-smoke-a/status
+Smoke negative -> PASS:
+  400 validation
+  403 wrong owner role
+  409 duplicate tenant
+  500 forced server error
+```
+
+Kết luận:
+- FE lane A9/tenant slices Done/Verified ở mức wiring + contract smoke.
+- Không cần ghép thêm API code trong frontend hiện tại.
+- Blocker duy nhất để gọi là "API thật runtime" là môi trường thiếu `dotnet`/Docker; khi runtime thật bật lại, chạy lại smoke với `VITE_DEV_PROXY_TARGET` trỏ API Gateway thật.
+
+## 2026-05-12 - FE A9 Backend + Frontend Lane Verification Round 2
+
+Trạng thái: PASS - **FE A9 Done/Verified**. Lead Agent đã chạy lại Backend lane check và Frontend lane smoke theo Fast Mode / full action.
+
+Kết quả:
+- Backend code có sẵn 4 endpoint `/api/owner/*` trong Tenant Service và API Gateway.
+- Runtime backend thật local bị chặn vì máy hiện tại không có `dotnet`, không có Docker CLI, port `5005/5006/5018` không lắng nghe.
+- Frontend smoke dùng Node contract stub tạm qua Vite proxy `real` mode, fallback tắt, để chứng minh client real path đang chạy.
+- `/plans` gọi đủ `/api/owner/plans`, `/api/owner/modules`, `/api/owner/tenant-plan-assignments`, `POST /api/owner/tenant-plan-assignments/bulk-change`.
+- Bulk-change payload verify đúng `effectiveAt: "next_renewal"` và có `auditReason`.
+- Tenant slices `/dashboard`, `/clinics`, `/clinics/create`, `/clinics/:tenantId` vẫn dùng `tenantClient` real path và fallback/error path còn giữ.
+
+Verify:
+```txt
+git diff --check -> PASS (CRLF warning only)
+npm run typecheck -> PASS
+npm run build -> PASS
+Smoke routes -> PASS: /plans, /dashboard, /clinics, /clinics/create, /clinics/tenant-smoke-a
+Smoke API happy path -> PASS: /api/owner/plans, /modules, /tenant-plan-assignments, bulk-change,
+                         /api/tenants, /api/tenants/tenant-smoke-a, PATCH tenant status
+Smoke negative -> PASS: 400 validation, 403 wrong owner role, 409 duplicate tenant, 500 forced server error
+```
+
+Bước tiếp theo:
+- Nếu cần xác nhận runtime thật, cài/bật `dotnet` hoặc Docker và chạy lại smoke với `VITE_DEV_PROXY_TARGET` trỏ API Gateway thật.
+- Không cần ghép thêm FE API code cho A9 trong lúc này; chỉ cần giữ mock fallback và tiếp tục dùng contract hiện có.
+
+## 2026-05-12 - Fast Verify/Ghép Real API Owner Plans + Tenant Slices
+
+Trạng thái: ✅ **PASS**. Owner yêu cầu Lead Agent verify toàn bộ FE đã wire API thật chưa và ghép API thật nếu backend endpoint đã sẵn sàng. Kết quả: không cần ghép thêm logic API lớn vì các slice đã dùng real client; chỉ sửa wording route `/plans` để phản ánh BE A.2 contract + mock fallback.
+
+Scope đã rà:
+- `/plans`: real `planCatalogClient` gọi `/api/owner/plans`, `/api/owner/modules`, `/api/owner/tenant-plan-assignments`, `POST /api/owner/tenant-plan-assignments/bulk-change`.
+- `/dashboard`: real `tenantClient.listTenants()`.
+- `/clinics`: real `tenantClient.listTenants()`, `getTenant()`, `updateTenantStatus()`.
+- `/clinics/create`: real `tenantClient.createTenant()` và 409 conflict path.
+- `/clinics/:tenantId`: real `tenantClient.getTenant()` và `updateTenantStatus()`.
+
+Backend endpoint readiness:
+- Code endpoint đã có ở Tenant Service và API Gateway cho 4 route `/api/owner/*`.
+- Runtime local thật chưa có vì `dotnet` và Docker CLI không khả dụng trong máy hiện tại; port `5005`, `5006`, `5018` ban đầu không lắng nghe.
+- Verify FE wiring dùng Node contract stub local ở `127.0.0.1:5005` qua Vite proxy, với FE chạy `real` mode và fallback tắt để chứng minh đường gọi không dùng mock client.
+
+Verify PASS:
+```txt
+git diff --check
+npm run typecheck
+npm run build
+Smoke FE route: /plans, /dashboard, /clinics, /clinics/create, /clinics/tenant-smoke-a
+Smoke API proxy: /api/owner/plans, /api/owner/modules, /api/owner/tenant-plan-assignments,
+POST /api/owner/tenant-plan-assignments/bulk-change, /api/tenants, /api/tenants/tenant-smoke-a
+```
+
+Guardrail giữ đúng:
+- Không sửa backend code.
+- Không tạo mock production mới; stub chỉ là artifact verify tạm trong `temp/` và sẽ cleanup.
+- Không stage/commit/push.
 
 Trạng thái: **Mock Functional Smoke PASS - Real API Smoke Pending Wiring** (QA Agent 2026-05-10). Implementation Done + post-smoke fix round 1 + 2 done. QA manual smoke A-F: A/B/C/E/F-mock PASS; D PASS với 1 gap UX nhỏ (step gating tech-debt Phase 4, không phải data integrity blocker). Checklist tại `docs/testing/owner-admin-tenant-slice-smoke.md`.
 
