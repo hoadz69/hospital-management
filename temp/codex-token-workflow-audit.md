@@ -86,3 +86,89 @@ Scope:
 - Không commit/stage/push.
 - Sau khi sửa chạy git diff --check và report files changed + dirty.
 ```
+
+## Session Update - 2026-05-13 Cleanup Phase 1 + Phase 2
+
+Owner yeu cau khong con thoi gian review tung phase, nen thuc hien Phase 1 va Phase 2 trong cung mot luot, van giu scope docs/workflow va khong sua runtime code.
+
+### Phase 1 - Plan/current-task bloat cleanup
+
+Da chuyen full history cu sang cold storage:
+
+| Active file | Archive file |
+|---|---|
+| `docs/current-task.frontend.md` | `docs/archive/frontend-history-2026-05.md` |
+| `docs/current-task.backend.md` | `docs/archive/backend-history-2026-05.md` |
+| `temp/plan.frontend.md` | `temp/archive/plan.frontend.history.md` |
+| `temp/plan.backend.md` | `temp/archive/plan.backend.history.md` |
+
+Active lane files hien chi giu:
+- active state,
+- latest verify snapshot,
+- active blockers/caveats,
+- next step,
+- archive index/link.
+
+Archive policy da ghi vao active files va `AGENTS.md`:
+- `docs/archive/**` va `temp/archive/**` la cold storage,
+- khong doc archive trong task thuong ngay,
+- chi doc khi owner yeu cau ro, active file tro toi section archive cu the, hoac can bang chung debug cu.
+
+### Phase 2 - Workflow docs dedupe
+
+Da chon `docs/agent-playbook.md` lam canonical source cho:
+- Feature Team Execution Workflow,
+- Short Lead Prompt,
+- Fast/Budget Mode,
+- Full Team Mode,
+- report format.
+
+Da rut gon:
+- `AGENTS.md` thanh bootstrap guardrails + reading policy + source-of-truth links,
+- `docs/agents/lead-agent.md` thanh role-specific guide,
+- `.claude/agents/lead-agent.md` thanh Claude wrapper ngan,
+- `docs/codex-setup.md` thanh setup/tooling/MCP notes.
+
+Guardrails van giu trong `AGENTS.md`:
+- tenant isolation,
+- no secret/IP/key/token/connection string that,
+- no commit/stage/push unless owner asks,
+- no out-of-scope edits,
+- lane ownership,
+- approval gate,
+- artifact cleanup,
+- language rule.
+
+### Before / After Size Snapshot
+
+| File | Before | After |
+|---|---:|---:|
+| `docs/current-task.frontend.md` | 1709 lines / 87.3 KB | 41 lines / 2.2 KB |
+| `docs/current-task.backend.md` | 1018 lines / 45.3 KB | 41 lines / 2.2 KB |
+| `temp/plan.frontend.md` | 3675 lines / 148.1 KB | 49 lines / 2.1 KB |
+| `temp/plan.backend.md` | 1805 lines / 72.5 KB | 51 lines / 2.1 KB |
+| `AGENTS.md` | 452 lines / 36.1 KB | 99 lines / 5.6 KB |
+| `docs/agents/lead-agent.md` | 340 lines / 19.3 KB | 50 lines / 1.9 KB |
+| `.claude/agents/lead-agent.md` | 164 lines / 12.2 KB | 23 lines / 1.0 KB |
+| `docs/codex-setup.md` | 181 lines / 9.9 KB | 42 lines / 1.7 KB |
+
+Expected token reduction:
+- normal FE/BE lane intake should avoid reading about 300-350 KB of appended history,
+- default bootstrap read of `AGENTS.md` drops by about 30 KB,
+- Lead/Codex setup wrapper reads drop by about 38 KB combined.
+
+### Verify
+
+- `git diff --check`: PASS, only LF/CRLF warnings on Windows.
+- `git diff --stat`: PASS.
+- No build/test was run because this cleanup only touched docs/workflow.
+
+### Commit Intent
+
+Owner requested saving this session knowledge into this audit file, then committing the whole docs/workflow cleanup in one commit and pushing.
+
+Recommended commit message:
+
+```txt
+docs: reduce Codex workflow token bloat
+```
