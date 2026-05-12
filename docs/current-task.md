@@ -11,8 +11,8 @@ Mọi feature mới phải chạy theo "Feature Team Execution Workflow" (Step 0
 
 | Workstream | Task file | Plan file | Trạng thái ngắn | Bước tiếp theo |
 |---|---|---|---|---|
-| Backend/DevOps | `docs/current-task.backend.md` | `temp/plan.backend.md` | ✅ Phase 4 Wave A backend contract/stub QA PASS: Domain Service + Template Service + Website CMS Service + API Gateway routes. `restore/build/test` PASS, local Development smoke PASS | Backend lane đủ điều kiện commit khi owner yêu cầu; Wave sau là persistence thật cho Domain/Template/CMS khi được duyệt |
-| Frontend | `docs/current-task.frontend.md` | `temp/plan.frontend.md` | 🟡 Phase 3 Implementation Done (commit `7f6366d`) + Pre-Phase 4 Hardening (P1.6 + P1.7) committed. **V3v2 76 frame ready cho Phase 4 Wave A.** Chờ owner duyệt plan + 5 owner decision | Owner duyệt plan Wave A trong `temp/plan.frontend.md` §16. Owner duyệt 5 decision (audit retention, PII rule, autosave conflict, DNS retry, tenant suspended fallback) trước Wave B/C/D/E |
+| Backend/DevOps | `docs/current-task.backend.md` | `temp/plan.backend.md` | 🟡 Backend Phase 4 Wave B Owner Plan/Module persistence preparation plan ready. A.2 contract/stub QA PASS; persistence owner đề xuất là Tenant Service, Billing Service phase sau | Chờ owner duyệt `temp/plan.backend.md` §16 trước khi tạo migration/schema/code persistence. Có thể chạy song song FE A9 nếu giữ nguyên `/api/owner/*` contract |
+| Frontend | `docs/current-task.frontend.md` | `temp/plan.frontend.md` | ✅ FE A9 `/plans` wired với BE A.2 contract ở client layer, mock/auto fallback giữ nguyên. typecheck/build PASS, HTTP smoke 5 route PASS | Smoke real API khi backend runtime/gateway bật; nếu owner yêu cầu commit thì split FE A9 riêng, không kèm artifact/log |
 | DevOps | (dashboard này) | `temp/plan.devops.md` | ✅ Pre-Phase 4 Hardening DevOps lane (P1.4 + P1.8) committed. Sẵn sàng support Wave A backend mock + Wave B edge resolver subdomain → tenantId | Wave B backend dep: nginx hoặc Cloudflare Worker meta tag inject tenant id |
 | Database | (dashboard này) | (note trong dashboard) | ✅ Pre-Phase 4 Hardening database lane (P1.5) committed. Phase 4 chưa cần lane riêng. P2 candidate: chuyển sang DbUp/FluentMigrator runner | Theo dõi schema mới khi Wave D Catalog/Customer/Records APSO bắt đầu |
 | Docs/Agent Workflow | (dashboard này) | `temp/plan.md` | ✅ Feature Team Execution Workflow committed (`74c29c8`). ✅ Pre-Phase 4 Hardening DONE. 🟡 V3v2 76 frame source of truth Phase 4+ ready, docs sync DONE 2026-05-10 | Theo dõi 5 owner decision; cập nhật roadmap khi từng wave Phase 4+ chuyển trạng thái |
@@ -27,6 +27,10 @@ Mọi feature mới phải chạy theo "Feature Team Execution Workflow" (Step 0
 - `temp/plan.md` là index tương thích cũ, không dùng làm plan chi tiết cho backend hoặc frontend.
 
 ## Notes / Unclassified
+
+- 2026-05-12: Backend Phase 4 Wave B Owner Plan/Module persistence preparation đã cập nhật plan-only trong lane Backend/DevOps. Decision đề xuất: Tenant Service sở hữu plan catalog/module entitlement/tenant-plan assignment vì gắn tenant lifecycle; Billing Service để phase sau cho subscription/invoice/payment. Schema dự kiến: `platform.plans`, `platform.modules`, `platform.plan_module_entitlements`, `platform.tenant_plan_assignments`, audit tối thiểu `platform.tenant_plan_assignment_changes`. Không migration/schema/code ở lượt này; chờ owner duyệt `temp/plan.backend.md` §16.
+
+- 2026-05-12: FE A9 đã wire `/plans` với BE A.2 real contract qua typed client + app wrapper `auto|real|mock`, vẫn fallback mock khi backend runtime chưa bật. Verify frontend PASS; direct `/api/owner/plans` qua dev proxy hiện 500 do backend/gateway runtime không sẵn trong phiên này. Backend song song phù hợp nhất: BE A.3 contract hardening/test guard, không schema/persistence.
 
 - 2026-05-12: Backend Phase 4 Wave A.2 Owner Plan Module contract/stub **QA PASS** trong lane Backend/DevOps. Service owner: Tenant Service; API Gateway expose `/api/owner/plans`, `/api/owner/modules`, `/api/owner/tenant-plan-assignments`, `POST /api/owner/tenant-plan-assignments/bulk-change`. Không migration/schema, không persistence thật. Verify: `git diff --check`, restore/build/test PASS, local Development smoke Tenant Service + API Gateway PASS, `X-Owner-Role=ClinicAdmin` bulk-change 403 PASS. Chi tiết: `docs/current-task.backend.md` và `temp/plan.backend.md` §15.
 
