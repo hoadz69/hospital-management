@@ -33,6 +33,22 @@ Server test/dev smoke là runtime chính cho backend, database và API integrati
 - FE real API smoke phải dùng API Gateway thật trên server test khi backend local không sẵn; Vite proxy trỏ về gateway/tunnel thật.
 - Stub chỉ là fallback cuối cùng để kiểm tra contract path khi server test không truy cập được; không được dùng stub để đánh dấu E2E Done nếu server test có thể chạy API thật.
 
+### Server Test BE Default Rule
+
+Khi owner nói "kết nối BE", "chạy BE", "smoke BE thật", "kết nối server BE" hoặc "run backend thật" thì mặc định dùng server test, không hỏi lại owner server nào/key path nào:
+
+```powershell
+$env:DEPLOY_HOST="116.118.47.78"
+$env:DEPLOY_USER="root"
+$env:SSH_KEY_PATH="C:\Users\Hoadz\.ssh\clinic_prod_ed25519"
+```
+
+- Trước khi chạy SSH trong PowerShell, tự nạp ba biến trên.
+- Local Windows không cần Docker/.NET nếu đang smoke BE thật; ưu tiên server test.
+- Backend runtime, PostgreSQL, Tenant Service và API Gateway smoke chạy trên server test.
+- FE real API smoke trỏ tới API Gateway thật trên server test hoặc qua SSH tunnel.
+- Stub chỉ dùng khi server test không vào được, không được dùng để đánh dấu E2E Done.
+
 1. Khi owner yêu cầu chạy lead-plan hoặc tạo plan:
    - Làm ngay.
    - Không hỏi lại.

@@ -2,6 +2,72 @@
 
 Ngày cập nhật: 2026-05-10
 
+## 2026-05-12 - Server Test Real Smoke PASS
+
+Trạng thái: **PASS có caveat owner-plan contract stub**.
+
+Đã thực hiện:
+- Nạp Server Test BE Default Rule trong PowerShell và SSH server test thành công.
+- Kiểm tra server, Docker, `docker ps`, port listen, PostgreSQL/Tenant Service/API Gateway.
+- Publish lại Tenant Service + API Gateway từ source hiện tại và swap vào `/opt/clinic-saas/runtime-smoke`.
+- Restart đúng hai container service, giữ PostgreSQL container/volume/network hiện có.
+- Không publish PostgreSQL public.
+
+Smoke backend qua API Gateway thật:
+- `/health` 200.
+- `/api/owner/plans` 200.
+- `/api/owner/modules` 200.
+- `/api/owner/tenant-plan-assignments` 200.
+- `/api/owner/tenant-plan-assignments/bulk-change` 200 với `effectiveAt="next_renewal"` + `auditReason`.
+- Wrong role 403.
+- Missing `auditReason` 400.
+
+Smoke Tenant API thật:
+- `POST /api/tenants` 201.
+- `GET /api/tenants` 200.
+- `GET /api/tenants/{id}` 200.
+- `PATCH /api/tenants/{id}/status` 200.
+- Duplicate slug/domain 409.
+
+Caveat:
+- Owner-plan endpoints đang chạy trong backend/gateway thật nhưng implementation hiện tại vẫn là contract stub theo scope BE A.2/A.3, chưa persistence thật.
+- Tenant API đã verify persistence thật qua PostgreSQL.
+
+Verify/Cleanup:
+- `npm run typecheck` PASS.
+- `npm run build` PASS.
+- Đã dừng tunnel/Vite và xóa generated artifacts sau smoke.
+
+## 2026-05-12 - Server Test Real Smoke Attempt
+
+Trạng thái: **BLOCKED trước SSH**.
+
+Scope đã thực hiện:
+- Lead + DevOps + Backend + QA chạy preflight local.
+- Cleanup hai generated log untracked sau khi xác định Vite owner-admin dev process đang giữ file.
+- Không stage/commit/push, không sửa backend code, không ghi secret/connection string.
+
+Verify đã chạy:
+- `git status --branch --short`
+- `git diff --stat`
+- `git diff --check`
+- Diff secret scan: không thấy giá trị thật; chỉ có guardrail wording trong docs.
+
+Chưa thực hiện được vì thiếu env SSH:
+- Server preflight qua SSH.
+- PostgreSQL/Tenant Service/API Gateway runtime check.
+- API Gateway smoke `/health`, `/api/owner/*`, bulk-change 400/403.
+- Tenant API smoke `POST/GET/PATCH /api/tenants`, duplicate 409.
+
+Resume command khi env đã có:
+```powershell
+$env:DEPLOY_HOST='<owner-provided-host>'
+$env:DEPLOY_USER='<owner-provided-user>'
+$env:SSH_KEY_PATH='<local-private-key-path>'
+```
+
+Sau đó rerun DevOps/Backend smoke thật, không dùng stub để đánh dấu Done.
+
 Trạng thái: ✅ Phase 2 API Runtime Smoke Gate PASS đủ 5 case trên server `116.118.47.78` sau hai vòng fix (Dapper type handler + reorder positional record `TenantListRow`). Lane sẵn sàng cho Lead Agent đồng bộ dashboard + roadmap để chuyển Phase 2 sang Done.
 
 Chế độ thực hiện: Backend/DevOps lane riêng. Không sửa frontend, không sửa Figma, không commit, không push, không ghi secret/IP/private key vào repo.
@@ -15,6 +81,18 @@ Server test/dev smoke do owner cấp qua `DEPLOY_HOST`, `DEPLOY_USER`, `SSH_KEY_
 - Tenant Service và API Gateway smoke chạy trên server test; FE real API smoke dùng gateway thật trên server test hoặc SSH tunnel.
 - Không ghi private key, token, secret, connection string thật vào repo/docs/log.
 - Stub chỉ dùng fallback cuối cùng để verify contract path; không đánh dấu E2E Done bằng stub khi server test có thể chạy API thật.
+
+### Server Test BE Default Rule
+
+Khi owner nói "kết nối BE", "chạy BE", "smoke BE thật", "kết nối server BE" hoặc "run backend thật" thì mặc định dùng server test, không hỏi lại owner server nào/key path nào. Trước khi chạy SSH trong PowerShell, tự nạp:
+
+```powershell
+$env:DEPLOY_HOST="116.118.47.78"
+$env:DEPLOY_USER="root"
+$env:SSH_KEY_PATH="C:\Users\Hoadz\.ssh\clinic_prod_ed25519"
+```
+
+Local Windows không cần Docker/.NET nếu đang smoke BE thật; ưu tiên server test. Backend runtime, PostgreSQL, Tenant Service và API Gateway smoke chạy trên server test. FE real API smoke trỏ tới API Gateway thật trên server test hoặc qua SSH tunnel. Stub chỉ dùng khi server test không vào được, không được dùng để đánh dấu E2E Done.
 
 ## 1. Tóm Tắt Task
 

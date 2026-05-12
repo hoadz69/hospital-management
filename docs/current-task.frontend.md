@@ -2,6 +2,51 @@
 
 Ngày cập nhật: 2026-05-12
 
+## FE Real API Smoke PASS Qua Server Test - 2026-05-12
+
+Trạng thái: **PASS có caveat owner-plan contract stub**. FE real API smoke đã dùng SSH tunnel tới API Gateway thật trên server test, Vite proxy `VITE_DEV_PROXY_TARGET` trỏ tunnel, `VITE_TENANT_API_MODE=real`, `VITE_TENANT_API_FALLBACK=false`, `VITE_OWNER_PLAN_API_MODE=real`, `VITE_OWNER_PLAN_API_FALLBACK=false`. Không dùng local stub server.
+
+Route smoke:
+- `/plans` 200.
+- `/dashboard` 200.
+- `/clinics` 200.
+- `/clinics/create` 200.
+- `/clinics/{tenantId thật}` 200 với tenant vừa tạo qua Tenant API thật.
+
+Network/API xác nhận:
+- `/plans` gọi `/api/owner/plans`, `/api/owner/modules`, `/api/owner/tenant-plan-assignments` qua Vite proxy tới gateway thật.
+- Clinic routes gọi `/api/tenants` và `/api/tenants/{tenantId}` qua gateway thật.
+- Bulk-change proxy 200 khi gửi JSON hợp lệ có `effectiveAt="next_renewal"` và `auditReason`.
+
+Caveat: owner-plan API chạy qua gateway thật nhưng backend handler hiện vẫn là contract-stub implementation; tenant slices đã smoke với Tenant API persistence thật qua PostgreSQL.
+
+Verify:
+- Browser smoke không crash; chỉ có 404 `favicon.ico`, không phải lỗi API/app.
+- `cd frontend && npm run typecheck` PASS.
+- `cd frontend && npm run build` PASS.
+- Đã cleanup Vite/tunnel/log artifacts sau smoke.
+
+## Server Test Real API Smoke Attempt - 2026-05-12
+
+Trạng thái: **BLOCKED trước FE real API smoke**. API Gateway thật trên server test chưa truy cập được vì preflight SSH thiếu `DEPLOY_HOST`, `DEPLOY_USER`, `SSH_KEY_PATH`, nên Vite proxy/SSH tunnel tới gateway thật chưa thể cấu hình.
+
+Đã verify:
+- `cd frontend && npm run typecheck` PASS.
+- `cd frontend && npm run build` PASS.
+- Cleanup log tạm PASS: đã xóa `temp/owner-admin-vite.log`, `temp/owner-admin-vite.log.err`.
+
+Chưa verify bằng API thật:
+- `/plans`
+- `/dashboard`
+- `/clinics`
+- `/clinics/create`
+- `/clinics/{tenantId thật}`
+- `/plans` gọi real owner endpoints.
+- Tenant slices gọi real tenant API.
+- FE 400/403/409/500 behavior qua gateway thật.
+
+Guardrail giữ đúng: không dùng stub/mock fallback để đánh dấu FE real API smoke PASS. Mock fallback vẫn là đường dev/offline, không phải kết quả E2E thật trong attempt này.
+
 ## Full Team Final Real API Attempt (2026-05-12)
 
 ## Server Test Runtime Rule - 2026-05-12

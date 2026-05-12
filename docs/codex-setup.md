@@ -138,6 +138,18 @@ $env:SSH_KEY_PATH='<owner-provided-key-path>'
 
 Không ghi private key, nội dung key, token, secret hoặc connection string thật vào repo/docs/log. Nếu local Windows thiếu Docker/.NET hoặc Docker daemon không chạy, đó không phải blocker backend: dùng SSH/SCP tới server test để chạy PostgreSQL, Tenant Service, API Gateway và API smoke. FE real API smoke trỏ Vite proxy tới API Gateway thật trên server test hoặc qua SSH tunnel. Stub chỉ dùng fallback cuối cùng cho contract path, không dùng để đánh dấu E2E Done nếu server test chạy được API thật.
 
+### Server Test BE Default Rule
+
+Khi owner nói "kết nối BE", "chạy BE", "smoke BE thật", "kết nối server BE" hoặc "run backend thật" thì Codex mặc định dùng server test, không hỏi lại owner server nào/key path nào. Trước khi chạy SSH trong PowerShell, tự nạp:
+
+```powershell
+$env:DEPLOY_HOST="116.118.47.78"
+$env:DEPLOY_USER="root"
+$env:SSH_KEY_PATH="C:\Users\Hoadz\.ssh\clinic_prod_ed25519"
+```
+
+Local Windows không cần Docker/.NET nếu đang smoke BE thật; ưu tiên server test. Backend runtime, PostgreSQL, Tenant Service và API Gateway smoke chạy trên server test. FE real API smoke trỏ tới API Gateway thật trên server test hoặc qua SSH tunnel. Stub chỉ dùng khi server test không vào được, không được dùng để đánh dấu E2E Done.
+
 Guardrail mặc định: không commit, không push, không stage; không stage/commit artifact/log/screenshot/generated files; không stage `.claude/settings.local.json`; không sửa ngoài scope; không xóa source/docs/plan dirty nếu chưa rõ chủ sở hữu. Nếu task đã có scope rõ trong lane plan/current-task/handoff/roadmap thì `bắt đầu` hoặc `làm tiếp` phải implement/resume đúng scope. Chỉ dừng approval gate khi task mới, scope chưa rõ, cross-lane lớn chưa có plan, có rủi ro destructive/secret/security, hoặc owner nói rõ "chỉ lập plan", "chưa code", "đợi tôi duyệt".
 
 Fast Mode là mặc định cho `Lead Agent: làm/tiếp tục/fix/verify A7` hoặc `Lead Agent: làm tiếp`: đọc tối thiểu, không gọi full subagents/Figma/screenshot nếu không cần, không paste log dài và report tóm tắt. Full Team Mode chỉ chạy khi owner nói rõ `chạy Feature Team`, `full team`, `completion gate`, `visual QA`, `Figma check`, `screenshot verify`, hoặc task chạm nhiều vùng/rủi ro cao.

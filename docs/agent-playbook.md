@@ -54,6 +54,22 @@ Server test/dev smoke là runtime chính cho backend/DB/API smoke khi local Wind
 - FE real API smoke phải trỏ Vite proxy tới API Gateway thật trên server test hoặc SSH tunnel tới gateway server.
 - Stub chỉ dùng fallback cuối cùng để verify contract path khi server test không truy cập được; không dùng stub để đánh dấu E2E Done nếu server test có thể chạy API thật.
 
+### Server Test BE Default Rule
+
+Khi owner nói "kết nối BE", "chạy BE", "smoke BE thật", "kết nối server BE" hoặc "run backend thật" thì mặc định dùng server test, không hỏi lại owner server nào/key path nào:
+
+```powershell
+$env:DEPLOY_HOST="116.118.47.78"
+$env:DEPLOY_USER="root"
+$env:SSH_KEY_PATH="C:\Users\Hoadz\.ssh\clinic_prod_ed25519"
+```
+
+- Trước khi chạy SSH trong PowerShell, tự nạp ba biến trên.
+- Local Windows không cần Docker/.NET nếu đang smoke BE thật; ưu tiên server test.
+- Backend runtime, PostgreSQL, Tenant Service và API Gateway smoke chạy trên server test.
+- FE real API smoke trỏ tới API Gateway thật trên server test hoặc qua SSH tunnel.
+- Stub chỉ dùng khi server test không vào được, không được dùng để đánh dấu E2E Done.
+
 - Đọc `AGENTS.md`, `clinic_saas_report.md`, `architech.txt`, `docs/current-task.md` trước khi đổi hướng kỹ thuật.
 - Khi cần đối chiếu Figma/FigJam, ưu tiên Figma MCP nếu đọc được. PDF export trong repo chỉ là snapshot tham chiếu:
   - `Clinic SaaS Architecture - Source of Truth.pdf`

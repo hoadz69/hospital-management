@@ -2,6 +2,31 @@
 
 Ngày cập nhật: 2026-05-12
 
+## Server Test Real Smoke PASS - 2026-05-12
+
+Trạng thái: **PASS có caveat owner-plan contract stub**. Lead Agent đã dùng Server Test BE Default Rule, SSH vào server test, kiểm tra runtime thật, publish lại Tenant Service + API Gateway từ source hiện tại lên runtime smoke server, rồi smoke qua API Gateway thật. Không dùng stub server/local stub để thay thế gateway.
+
+Kết quả:
+- Server runtime: PostgreSQL container Up, không publish `5432`; Tenant Service `127.0.0.1:5006` Healthy; API Gateway `127.0.0.1:5005` Healthy.
+- Backend owner API qua API Gateway thật: `/health`, `GET /api/owner/plans`, `GET /api/owner/modules`, `GET /api/owner/tenant-plan-assignments`, `POST /api/owner/tenant-plan-assignments/bulk-change` PASS; wrong role 403 PASS; missing `auditReason` 400 PASS. Caveat: owner-plan endpoint hiện vẫn là contract-stub implementation trong backend code, chưa phải persistence thật.
+- Tenant API thật qua PostgreSQL: `POST /api/tenants` 201, `GET /api/tenants` 200, `GET /api/tenants/{id}` 200, `PATCH /api/tenants/{id}/status` 200, duplicate slug/domain 409.
+- FE real API smoke: SSH tunnel tới API Gateway thật, Vite real mode fallback off; routes `/plans`, `/dashboard`, `/clinics`, `/clinics/create`, `/clinics/{tenantId thật}` đều 200. Browser network xác nhận `/plans` gọi `/api/owner/*`, clinic routes gọi `/api/tenants` và `/api/tenants/{tenantId}` qua proxy thật.
+- Verify: `cd frontend && npm run typecheck` PASS; `cd frontend && npm run build` PASS.
+- Cleanup: đã dừng Vite/tunnel và xóa generated logs, `temp/publish`, `.playwright-mcp`.
+
+## Server Test Real Smoke Attempt - 2026-05-12
+
+Trạng thái: **BLOCKED trước SSH**. Lead Agent đã chạy preflight local, cleanup log tạm và verify frontend static, nhưng chưa thể SSH vào server test vì shell hiện tại không có `DEPLOY_HOST`, `DEPLOY_USER`, `SSH_KEY_PATH`.
+
+Kết quả ngắn:
+- Preflight local: `git status --branch --short`, `git diff --stat`, `git diff --check` đã chạy. Diff secret scan không thấy giá trị private key/token/connection string thật; các match chỉ là text guardrail trong docs.
+- Cleanup artifact: đã dừng Vite owner-admin dev process đang giữ file và xóa `temp/owner-admin-vite.log`, `temp/owner-admin-vite.log.err` vì là untracked generated logs.
+- Backend runtime server test: chưa chạy được do thiếu biến SSH.
+- Backend API smoke/Tenant API smoke/FE real API smoke: **không chạy**, không dùng stub để đánh dấu PASS.
+- Frontend static verify: `cd frontend && npm run typecheck` PASS, `cd frontend && npm run build` PASS.
+
+Next: owner cần cung cấp lại `DEPLOY_HOST`, `DEPLOY_USER`, `SSH_KEY_PATH` vào shell/session hiện tại, sau đó rerun server test smoke thật qua API Gateway.
+
 File này là dashboard điều phối project. Không ghi plan chi tiết của một lane vào đây.
 Lead Agent chỉ dùng file này để tóm tắt trạng thái tổng quan và trỏ sang task/plan lane riêng.
 

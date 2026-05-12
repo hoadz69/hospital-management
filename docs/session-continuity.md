@@ -13,6 +13,18 @@ Checkpoint/handoff phải ghi:
 - Không ghi private key, token, secret hoặc connection string thật; chỉ ghi tên biến/session và trạng thái.
 - Stub chỉ là fallback cuối cùng, không dùng để đánh dấu E2E Done khi server test có thể chạy API thật.
 
+### Server Test BE Default Rule
+
+Khi owner nói "kết nối BE", "chạy BE", "smoke BE thật", "kết nối server BE" hoặc "run backend thật" thì mặc định dùng server test, không hỏi lại owner server nào/key path nào. Trước khi chạy SSH trong PowerShell, tự nạp:
+
+```powershell
+$env:DEPLOY_HOST="116.118.47.78"
+$env:DEPLOY_USER="root"
+$env:SSH_KEY_PATH="C:\Users\Hoadz\.ssh\clinic_prod_ed25519"
+```
+
+Local Windows không cần Docker/.NET nếu đang smoke BE thật; ưu tiên server test. Backend runtime, PostgreSQL, Tenant Service và API Gateway smoke chạy trên server test. FE real API smoke trỏ tới API Gateway thật trên server test hoặc qua SSH tunnel. Stub chỉ dùng khi server test không vào được, không được dùng để đánh dấu E2E Done.
+
 ## File Cần Đọc Khi Bắt Đầu Session Mới
 
 1. `AGENTS.md`

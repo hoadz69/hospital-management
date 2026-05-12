@@ -2,6 +2,49 @@
 
 Ngày cập nhật: 2026-05-12
 
+## 2026-05-12 - FE Real API Smoke PASS Qua Server Test
+
+Trạng thái: **PASS có caveat owner-plan contract stub**.
+
+Thiết lập smoke:
+- SSH tunnel local tới API Gateway thật trên server test.
+- Vite proxy trỏ tunnel thật.
+- Real mode/fallback off: `VITE_TENANT_API_MODE=real`, `VITE_TENANT_API_FALLBACK=false`, `VITE_OWNER_PLAN_API_MODE=real`, `VITE_OWNER_PLAN_API_FALLBACK=false`.
+- Không dùng local stub server.
+
+Route/API smoke:
+- `/plans`, `/dashboard`, `/clinics`, `/clinics/create`, `/clinics/{tenantId thật}` đều 200.
+- Browser network xác nhận `/plans` gọi `/api/owner/*`.
+- Browser network xác nhận tenant slices gọi `/api/tenants` và `/api/tenants/{tenantId}`.
+- Tenant id detail lấy từ tenant vừa tạo qua API thật.
+
+Caveat:
+- Owner-plan route đi qua gateway thật nhưng response backend hiện là contract-stub implementation.
+- Tenant slices đã đi qua Tenant API persistence thật.
+
+Verify:
+- `cd frontend && npm run typecheck` PASS.
+- `cd frontend && npm run build` PASS.
+- Cleanup Vite/tunnel/log/temp artifact PASS.
+
+## 2026-05-12 - FE Real API Smoke Attempt Qua Server Test
+
+Trạng thái: **BLOCKED trước real API route smoke** vì API Gateway thật trên server test chưa xác định/truy cập được khi `DEPLOY_HOST`, `DEPLOY_USER`, `SSH_KEY_PATH` không có trong shell hiện tại.
+
+Đã chạy:
+- `cd frontend && npm run typecheck` PASS.
+- `cd frontend && npm run build` PASS.
+- Cleanup generated logs: PASS.
+
+Chưa chạy:
+- Vite proxy hoặc SSH tunnel tới API Gateway thật.
+- Route smoke `/plans`, `/dashboard`, `/clinics`, `/clinics/create`, `/clinics/{tenantId thật}` bằng backend thật.
+- Xác nhận `/plans` gọi real `/api/owner/*`.
+- Xác nhận tenant slices gọi real Tenant API.
+- Negative FE 400/403/409/500 qua gateway thật.
+
+Guardrail: không dùng stub/mock để đánh dấu FE real API smoke PASS. Khi server env có lại, chạy real mode với fallback tắt: `VITE_TENANT_API_MODE=real`, `VITE_TENANT_API_FALLBACK=false`, `VITE_OWNER_PLAN_API_MODE=real`, `VITE_OWNER_PLAN_API_FALLBACK=false`.
+
 ## 2026-05-12 - Full Team Final Real API Attempt
 
 ## 2026-05-12 - Server Test Runtime Rule Cho FE Real API Smoke

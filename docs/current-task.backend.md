@@ -2,6 +2,58 @@
 
 Ngày cập nhật: 2026-05-10
 
+## Server Test Real Smoke PASS - 2026-05-12
+
+Trạng thái: **PASS có caveat owner-plan contract stub**. Backend/DevOps đã dùng Server Test BE Default Rule, SSH server test thành công, kiểm tra Docker/runtime thật và redeploy publish hiện tại cho Tenant Service + API Gateway vào `/opt/clinic-saas/runtime-smoke`. Không dùng stub server ngoài hoặc local stub để thay thế gateway.
+
+Runtime server:
+- PostgreSQL `clinic-saas-postgres` Up, Docker network nội bộ, `docker port clinic-saas-postgres` không có mapping public.
+- Tenant Service container Up, bind host `127.0.0.1:5006`, `/health` 200 Healthy.
+- API Gateway container Up, bind host `127.0.0.1:5005`, `/health` 200 Healthy.
+
+Backend owner API qua API Gateway thật:
+- `GET /health` 200.
+- `GET /api/owner/plans` 200.
+- `GET /api/owner/modules` 200.
+- `GET /api/owner/tenant-plan-assignments` 200.
+- `POST /api/owner/tenant-plan-assignments/bulk-change` 200 với `effectiveAt="next_renewal"` và `auditReason`.
+- Wrong role `ClinicAdmin` 403.
+- Missing `auditReason` 400.
+
+Caveat owner-plan: endpoint chạy trong backend/gateway thật nhưng handler hiện tại vẫn là contract-stub implementation theo scope BE A.2/A.3, chưa persistence DB thật.
+
+Tenant API thật qua PostgreSQL:
+- Tạo tenant smoke unique 201, tenant id smoke đã dùng cho FE route detail.
+- `GET /api/tenants` 200.
+- `GET /api/tenants/{id}` 200.
+- `PATCH /api/tenants/{id}/status` 200.
+- Duplicate slug/domain 409.
+
+Verify thêm:
+- Local publish bằng `.NET SDK` path đầy đủ PASS sau khi shutdown build server để tránh lock.
+- FE `npm run typecheck` PASS và `npm run build` PASS.
+- Đã cleanup Vite/tunnel/log/temp publish artifact sau smoke.
+
+## Server Test Real Smoke Attempt - 2026-05-12
+
+Trạng thái: **BLOCKED trước SSH**. Full Team Mode đã chạy phần preflight local nhưng DevOps/Backend chưa thể vào server test vì shell hiện tại thiếu `DEPLOY_HOST`, `DEPLOY_USER`, `SSH_KEY_PATH`.
+
+Đã chạy:
+- `git status --branch --short`
+- `git diff --stat`
+- `git diff --check`
+- Secret scan diff: không thấy giá trị private key/token/connection string thật; match trong docs chỉ là rule text.
+- Cleanup: xóa được `temp/owner-admin-vite.log`, `temp/owner-admin-vite.log.err` sau khi dừng Vite owner-admin dev process đang giữ file.
+
+Chưa chạy được:
+- SSH preflight server (`uname -a`, `free -h`, `df -h`, `docker --version`, `docker ps`, `ss -lntp`).
+- PostgreSQL/container check trên server.
+- Tenant Service/API Gateway runtime check.
+- API Gateway smoke `/health`, `/api/owner/*`, bulk-change happy/negative.
+- Tenant API smoke `POST/GET/PATCH /api/tenants` và duplicate 409.
+
+Blocker chính xác: thiếu biến SSH runtime trong shell/session hiện tại. Không dùng stub và không đánh dấu backend runtime/API smoke Done.
+
 ## Vai Trò File
 
 File này là handoff riêng cho Backend/DevOps workstream. Backend Agent và DevOps Agent cập nhật file này khi làm Phase 2 API Runtime Smoke Gate.
@@ -19,6 +71,18 @@ Guardrail runtime:
 - PostgreSQL giữ trong Docker network/server nội bộ, không publish `5432` public và không mở DB ra internet.
 - FE real API smoke trỏ Vite proxy tới API Gateway thật trên server test hoặc qua SSH tunnel.
 - Stub chỉ là fallback cuối cùng để verify contract path; không đánh dấu E2E Done bằng stub khi server test có thể chạy API thật.
+
+### Server Test BE Default Rule
+
+Khi owner nói "kết nối BE", "chạy BE", "smoke BE thật", "kết nối server BE" hoặc "run backend thật" thì Backend/DevOps mặc định dùng server test, không hỏi lại owner server nào/key path nào. Trước khi chạy SSH trong PowerShell, tự nạp:
+
+```powershell
+$env:DEPLOY_HOST="116.118.47.78"
+$env:DEPLOY_USER="root"
+$env:SSH_KEY_PATH="C:\Users\Hoadz\.ssh\clinic_prod_ed25519"
+```
+
+Local Windows không cần Docker/.NET nếu đang smoke BE thật; ưu tiên server test. Backend runtime, PostgreSQL, Tenant Service và API Gateway smoke chạy trên server test. FE real API smoke trỏ tới API Gateway thật trên server test hoặc qua SSH tunnel. Stub chỉ dùng khi server test không vào được, không được dùng để đánh dấu E2E Done.
 
 Phase 2 API Runtime Smoke Gate ✅ ĐÃ PASS đủ 5 smoke trên server `116.118.47.78` (run 2026-05-10):
 
