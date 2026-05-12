@@ -4,6 +4,16 @@ Ngày cập nhật: 2026-05-12
 
 ## 2026-05-12 - Full Team Final Real API Attempt
 
+## 2026-05-12 - Server Test Runtime Rule Cho FE Real API Smoke
+
+FE lane khi cần API thật phải dùng API Gateway thật trên server test/dev smoke do owner cung cấp qua `DEPLOY_HOST`, `DEPLOY_USER`, `SSH_KEY_PATH`, hoặc SSH tunnel tới gateway server. Backend local Windows thiếu Docker/.NET không còn là blocker FE real smoke nếu server test truy cập được.
+
+Quy tắc:
+- `npm run dev:owner` dùng Vite proxy trỏ gateway thật trên server test/tunnel khi chạy real API smoke.
+- `VITE_TENANT_API_MODE=real`, `VITE_TENANT_API_FALLBACK=false`, `VITE_OWNER_PLAN_API_MODE=real`, `VITE_OWNER_PLAN_API_FALLBACK=false` khi cần chứng minh real mode không dùng mock.
+- Mock fallback vẫn giữ để dev/visual offline, nhưng không dùng để đánh dấu E2E Done nếu server test chạy API thật.
+- Không ghi private key, token, secret hoặc connection string thật vào docs/log.
+
 Trạng thái: **PARTIAL PASS - chưa thể đánh dấu FE Done hoàn toàn với API thật**. Lead Agent đã bật được runtime thật bằng dotnet local cho Tenant Service và API Gateway, nhưng tenant persistence API bị chặn do thiếu PostgreSQL connection string/container.
 
 Đã verify bằng API thật:

@@ -4,6 +4,14 @@ Tài liệu này mô tả cách bootstrap server do owner cung cấp để chạ
 
 Không lưu IP server thật, private key, token hoặc secret production trong file này.
 
+## Server Test Runtime Rule
+
+Server test/dev smoke do owner cung cấp qua `DEPLOY_HOST`, `DEPLOY_USER`, `SSH_KEY_PATH` là runtime chính cho backend/DB/API smoke khi local Windows thiếu Docker/.NET hoặc Docker daemon không chạy. Agent dùng SSH/SCP để deploy/check code trong phạm vi project, không ghi private key, token, secret hoặc connection string thật vào repo/docs/log.
+
+- PostgreSQL chạy trong Docker network/server nội bộ, không publish `5432` public và không mở DB ra internet.
+- Tenant Service/API Gateway chạy trên server test; FE real API smoke trỏ Vite proxy tới API Gateway thật hoặc SSH tunnel tới gateway server.
+- Stub chỉ dùng fallback cuối cùng để verify contract path; không dùng stub để đánh dấu E2E Done nếu server test có thể chạy API thật.
+
 ## Mục Tiêu
 
 ```txt

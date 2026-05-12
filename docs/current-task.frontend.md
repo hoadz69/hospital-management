@@ -4,6 +4,15 @@ Ngày cập nhật: 2026-05-12
 
 ## Full Team Final Real API Attempt (2026-05-12)
 
+## Server Test Runtime Rule - 2026-05-12
+
+Frontend lane khi cần API thật phải ưu tiên API Gateway thật trên server test/dev smoke do owner cung cấp qua `DEPLOY_HOST`, `DEPLOY_USER`, `SSH_KEY_PATH`. Nếu backend local Windows thiếu Docker/.NET hoặc gateway local không sẵn, đó không còn là blocker FE real smoke; Lead/DevOps phải dùng server test hoặc SSH tunnel tới gateway server.
+
+FE smoke rule:
+- Vite proxy trỏ tới API Gateway thật trên server test hoặc URL tunnel local tới gateway server.
+- `real` mode phải gọi gateway thật khi backend sẵn; mock fallback vẫn giữ cho UI dev nhưng không dùng để đánh dấu E2E Done.
+- Không ghi private key, token, secret hoặc connection string thật vào docs/log; chỉ ghi tên biến/session và trạng thái smoke.
+
 Trạng thái: **PARTIAL PASS - không đánh dấu FE Done hoàn toàn với API thật** vì tenant persistence runtime bị chặn bởi cấu hình DB. Phần Owner Plan A9 đã verify bằng API Gateway thật; phần tenant slices đã verify route/build/client wiring và vẫn giữ fallback, nhưng API tenant thật chưa pass.
 
 Kết quả Backend runtime thật:

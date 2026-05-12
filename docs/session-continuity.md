@@ -2,6 +2,17 @@
 
 File này dùng để chống mất ngữ cảnh khi session Codex/Claude bị xóa hoặc hết hạn.
 
+## Server Test Runtime Rule
+
+Khi resume task backend/FE integration, agent phải kiểm tra xem owner đã cung cấp `DEPLOY_HOST`, `DEPLOY_USER`, `SSH_KEY_PATH` trong shell/session chưa. Nếu có, server test/dev smoke là runtime chính cho PostgreSQL, Tenant Service, API Gateway và API integration smoke; thiếu Docker/.NET local trên Windows không được xem là blocker.
+
+Checkpoint/handoff phải ghi:
+- Runtime smoke dùng server test hay local.
+- Gateway thật/tunnel nào để FE proxy tới.
+- API smoke nào PASS/FAIL/blocker.
+- Không ghi private key, token, secret hoặc connection string thật; chỉ ghi tên biến/session và trạng thái.
+- Stub chỉ là fallback cuối cùng, không dùng để đánh dấu E2E Done khi server test có thể chạy API thật.
+
 ## File Cần Đọc Khi Bắt Đầu Session Mới
 
 1. `AGENTS.md`

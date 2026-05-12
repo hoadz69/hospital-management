@@ -6,6 +6,16 @@ Trạng thái: ✅ Phase 2 API Runtime Smoke Gate PASS đủ 5 case trên server
 
 Chế độ thực hiện: Backend/DevOps lane riêng. Không sửa frontend, không sửa Figma, không commit, không push, không ghi secret/IP/private key vào repo.
 
+## Server Test Runtime Rule - 2026-05-12
+
+Server test/dev smoke do owner cấp qua `DEPLOY_HOST`, `DEPLOY_USER`, `SSH_KEY_PATH` là runtime chính cho backend/DB/API smoke. Nếu local Windows thiếu Docker/.NET hoặc Docker daemon không chạy, Backend/DevOps Agent chuyển sang SSH/SCP server test thay vì dừng ở blocker local.
+
+Áp dụng:
+- PostgreSQL chạy trên server test trong Docker network/server nội bộ; không publish `5432` public.
+- Tenant Service và API Gateway smoke chạy trên server test; FE real API smoke dùng gateway thật trên server test hoặc SSH tunnel.
+- Không ghi private key, token, secret, connection string thật vào repo/docs/log.
+- Stub chỉ dùng fallback cuối cùng để verify contract path; không đánh dấu E2E Done bằng stub khi server test có thể chạy API thật.
+
 ## 1. Tóm Tắt Task
 
 Phase 2 Tenant MVP Backend đã có local commit:

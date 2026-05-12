@@ -10,6 +10,16 @@ Không ghi task frontend vào file này. Không overwrite `docs/current-task.md`
 
 ## Trạng Thái
 
+## Server Test Runtime Rule - 2026-05-12
+
+Backend/DevOps lane dùng server test/dev smoke do owner cung cấp qua `DEPLOY_HOST`, `DEPLOY_USER`, `SSH_KEY_PATH` làm runtime chính cho PostgreSQL, Tenant Service, API Gateway và API integration smoke. Local Windows chỉ dùng để edit code hoặc chạy static check khi có tool; thiếu local Docker/.NET không còn là blocker nếu server test truy cập được.
+
+Guardrail runtime:
+- Dùng SSH/SCP để deploy/check code trong phạm vi project trên server test; không ghi private key, token, secret hoặc connection string thật vào repo/docs/log.
+- PostgreSQL giữ trong Docker network/server nội bộ, không publish `5432` public và không mở DB ra internet.
+- FE real API smoke trỏ Vite proxy tới API Gateway thật trên server test hoặc qua SSH tunnel.
+- Stub chỉ là fallback cuối cùng để verify contract path; không đánh dấu E2E Done bằng stub khi server test có thể chạy API thật.
+
 Phase 2 API Runtime Smoke Gate ✅ ĐÃ PASS đủ 5 smoke trên server `116.118.47.78` (run 2026-05-10):
 
 ```txt

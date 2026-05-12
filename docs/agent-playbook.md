@@ -44,6 +44,16 @@ Action Prompt Enforcement Rule:
 
 ## Luật Chung Cho Mọi Agent
 
+## Server Test Runtime Rule
+
+Server test/dev smoke là runtime chính cho backend/DB/API smoke khi local Windows thiếu Docker/.NET hoặc không có daemon/runtime sẵn sàng. Owner cung cấp `DEPLOY_HOST`, `DEPLOY_USER`, `SSH_KEY_PATH` qua shell/session; agent chỉ dùng các biến đó trong lệnh runtime và không ghi private key, token, secret hoặc connection string thật vào repo/docs/log.
+
+- Backend Agent/DevOps Agent dùng SSH/SCP lên server test để chạy PostgreSQL, Tenant Service, API Gateway và API integration smoke.
+- Local Windows ưu tiên edit code, đọc repo, chạy frontend `npm run typecheck`/`npm run build` nếu tool sẵn có; thiếu local Docker/.NET phải chuyển sang server test thay vì dừng vô lý.
+- PostgreSQL giữ trong Docker network/server nội bộ; không publish `5432` public và không mở DB ra internet.
+- FE real API smoke phải trỏ Vite proxy tới API Gateway thật trên server test hoặc SSH tunnel tới gateway server.
+- Stub chỉ dùng fallback cuối cùng để verify contract path khi server test không truy cập được; không dùng stub để đánh dấu E2E Done nếu server test có thể chạy API thật.
+
 - Đọc `AGENTS.md`, `clinic_saas_report.md`, `architech.txt`, `docs/current-task.md` trước khi đổi hướng kỹ thuật.
 - Khi cần đối chiếu Figma/FigJam, ưu tiên Figma MCP nếu đọc được. PDF export trong repo chỉ là snapshot tham chiếu:
   - `Clinic SaaS Architecture - Source of Truth.pdf`

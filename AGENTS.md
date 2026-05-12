@@ -22,6 +22,17 @@ File này là hướng dẫn chung cho Codex, Claude Code và các coding agent 
 
 ## Command Execution Rule
 
+## Server Test Runtime Rule
+
+Server test/dev smoke là runtime chính cho backend, database và API integration smoke khi local Windows thiếu Docker/.NET hoặc runtime không ổn định. Runtime hiện tại được owner cung cấp qua biến/session như `DEPLOY_HOST`, `DEPLOY_USER`, `SSH_KEY_PATH`; agent không được paste private key, token, secret hoặc connection string thật vào repo/docs/log.
+
+- Backend smoke, PostgreSQL, Tenant Service, API Gateway và API integration test ưu tiên chạy trên server test bằng SSH/SCP.
+- Local Windows chỉ là môi trường edit code và chạy frontend `typecheck`/`build` khi tool sẵn có; thiếu local Docker/.NET không được xem là blocker nếu server test có thể chạy runtime thật.
+- PostgreSQL phải giữ trong Docker network/server nội bộ; không publish `5432` public, không mở DB ra internet.
+- API Gateway/Tenant Service có thể bind localhost trên server test hoặc port phục vụ smoke theo nhu cầu, nhưng phải ghi rõ cách FE truy cập: proxy trực tiếp tới gateway test hoặc qua SSH tunnel.
+- FE real API smoke phải dùng API Gateway thật trên server test khi backend local không sẵn; Vite proxy trỏ về gateway/tunnel thật.
+- Stub chỉ là fallback cuối cùng để kiểm tra contract path khi server test không truy cập được; không được dùng stub để đánh dấu E2E Done nếu server test có thể chạy API thật.
+
 1. Khi owner yêu cầu chạy lead-plan hoặc tạo plan:
    - Làm ngay.
    - Không hỏi lại.

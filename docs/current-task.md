@@ -26,7 +26,16 @@ Mọi feature mới phải chạy theo "Feature Team Execution Workflow" (Step 0
 - Nếu task mới chưa rõ thuộc lane nào, Lead Agent ghi một dòng ngắn ở phần Notes/Unclassified rồi phân lane sau.
 - `temp/plan.md` là index tương thích cũ, không dùng làm plan chi tiết cho backend hoặc frontend.
 
+## Server Test Runtime Rule
+
+- Runtime chính cho backend/DB/API smoke là server test/dev smoke do owner cung cấp qua `DEPLOY_HOST`, `DEPLOY_USER`, `SSH_KEY_PATH` trong shell/session hiện tại.
+- Nếu local Windows thiếu Docker/.NET hoặc Docker daemon không chạy, không coi đó là blocker backend; Lead/DevOps chuyển sang SSH/SCP và chạy PostgreSQL, Tenant Service, API Gateway, API smoke trên server test.
+- FE real API smoke trỏ Vite proxy tới API Gateway thật trên server test hoặc qua SSH tunnel. Stub chỉ dùng fallback cuối cùng cho contract path, không dùng để đánh dấu E2E Done khi server test chạy được API thật.
+- Không ghi private key, token, secret hoặc connection string thật vào repo/docs/log; PostgreSQL giữ trong Docker network/server nội bộ, không publish `5432` public.
+
 ## Notes / Unclassified
+
+- 2026-05-12: Cập nhật workflow runtime: server test/dev smoke là runtime chính cho backend/DB/API và FE real API smoke. Local Windows chỉ còn là môi trường edit + frontend build/typecheck khi có tool; thiếu local Docker/.NET thì chuyển sang server test thay vì đánh blocker.
 
 - 2026-05-12: Backend/DevOps Phase 4 A.10 preparation rerun Full Team Fast/Budget PASS baseline backend. Không implement vì A.10 vẫn thiếu service/path/method/request-response/acceptance riêng. Đã rà Tenant Service + API Gateway `/api/owner/*`, giữ stub/fallback vì persistence §16 chưa duyệt. Verify PASS: `git diff --check`, restore/build/test 29/29, local dotnet runtime Tenant Service `:5006` + API Gateway `:5018`, health/OpenAPI, happy path 4 route, ClinicAdmin + `X-Tenant-Id` 403, bulk-change validation 400 cho missing auditReason/invalid targetPlan/invalid effectiveAt/empty selectedTenantIds. Đã tắt runtime và xóa `temp/a10-prep-*.log`. Chi tiết: `docs/current-task.backend.md`, `temp/plan.backend.md` §18.5.
 
