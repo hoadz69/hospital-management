@@ -359,6 +359,112 @@ Owner decision blocker liên quan backend:
 - DNS retry tolerance — chốt retry max attempts cho Domain Service trước Wave A composable.
 ```
 
+## Cập Nhật 2026-05-12 - Backend Phase 4 Wave A.2 Owner Plan Module Contract/Stub
+
+Trạng thái: ✅ **QA verify PASS** trong worktree hiện tại, chưa commit/push/stage.
+
+Scope Lead Agent đã chạy trong Backend/DevOps lane:
+
+```txt
+Owner Plan & Module Catalog contract/stub cho FE A8 `/plans`.
+Không sửa frontend.
+Không sửa docs frontend.
+Không tạo migration/schema.
+Không dùng DB/server/secret thật.
+```
+
+Architect decision:
+
+```txt
+Service owner: Tenant Service.
+Lý do: plan catalog/module entitlement và tenant-plan assignment đang gắn tenant lifecycle,
+module enablement và create clinic flow. Billing Service để phase sau khi subscription,
+invoice và payment thật được owner duyệt.
+
+API Gateway: expose route contract `/api/owner/*`, không truy DB.
+Platform-scoped:
+  GET /api/owner/plans
+  GET /api/owner/modules
+Owner Super Admin cross-tenant scoped:
+  GET  /api/owner/tenant-plan-assignments
+  POST /api/owner/tenant-plan-assignments/bulk-change
+
+Security:
+  RequireRole OwnerSuperAdmin + permission metadata plans.read/plans.write.
+  Guard route-specific chặn `X-Owner-Role: ClinicAdmin` hoặc role header khác trên bulk/list cross-tenant.
+  Auth thật/JWT vẫn là Phase 8; wave này là contract/stub có guard placeholder.
+```
+
+Backend files đã tạo/sửa:
+
+```txt
+backend/shared/contracts/Tenancy/OwnerPlanCatalogContracts.cs
+backend/shared/contracts/Authorization/PermissionCodes.cs
+backend/services/tenant-service/src/TenantService.Application/Plans/OwnerPlanCatalogStubHandler.cs
+backend/services/tenant-service/src/TenantService.Application/DependencyInjection.cs
+backend/services/tenant-service/src/TenantService.Api/Endpoints/OwnerPlanCatalogEndpoints.cs
+backend/services/tenant-service/src/TenantService.Api/Program.cs
+backend/services/api-gateway/src/ApiGateway.Api/Endpoints/OwnerPlanCatalogContractEndpoints.cs
+backend/services/api-gateway/src/ApiGateway.Api/Program.cs
+backend/services/tenant-service/tests/TenantService.Tests/OwnerPlanCatalogStubHandlerTests.cs
+backend/services/tenant-service/tests/TenantService.Tests/TenantService.Tests.csproj
+```
+
+Contract handoff FE A8:
+
+```txt
+GET /api/owner/plans
+  items[]: code, name, price, description, tenantCount, tone, popular
+  Data: Starter/Growth/Premium.
+
+GET /api/owner/modules
+  items[]: id, name, category, starter, growth, premium
+  Cell entitlement: boolean hoặc limit string, 12 module như FE mock.
+
+GET /api/owner/tenant-plan-assignments
+  items[]: id, slug, currentPlan, currentPlanName, currentMrr,
+           nextRenewal, selected, targetPlan
+
+POST /api/owner/tenant-plan-assignments/bulk-change
+  request: selectedTenantIds, targetPlan, effectiveAt, auditReason
+  effectiveAt hiện chỉ nhận `next_renewal`.
+  auditReason bắt buộc.
+  response: changedCount, mrrDiff, status, message, effectiveAt, auditReason
+```
+
+DB/schema decision:
+
+```txt
+Không có migration trong wave này.
+Lý do: contract/stub trả dữ liệu in-memory Application/API layer, chưa persistence thật.
+Phase sau mới thiết kế PostgreSQL plan/subscription/assignment tables khi owner duyệt
+Billing/Tenant persistence thật.
+```
+
+Verify đã chạy:
+
+```txt
+git diff --check: PASS.
+C:\Users\nvhoa2\.dotnet\dotnet.exe restore backend/ClinicSaaS.Backend.sln: PASS.
+C:\Users\nvhoa2\.dotnet\dotnet.exe build backend/ClinicSaaS.Backend.sln --no-restore: PASS, 0 warning, 0 error.
+C:\Users\nvhoa2\.dotnet\dotnet.exe test backend/ClinicSaaS.Backend.sln --no-build: PASS, 25/25 tests.
+
+Local Development smoke:
+  Tenant Service :5006 GET /health, GET /openapi/v1.json, 4 endpoint /api/owner/*: PASS.
+  API Gateway    :5018 GET /health, GET /openapi/v1.json, 4 endpoint /api/owner/*: PASS.
+  POST bulk-change với auditReason + effectiveAt=next_renewal: PASS.
+  POST bulk-change với X-Owner-Role=ClinicAdmin: 403 PASS ở Tenant Service và API Gateway.
+```
+
+Resume tiếp theo:
+
+```txt
+1. Backend Phase 4 Wave A.2 đủ điều kiện commit theo lane backend khi owner yêu cầu.
+2. Không cần DB/schema ở wave này.
+3. Phase sau: persistence thật cho plan/subscription/assignment khi owner duyệt Billing/Tenant plan module.
+4. Không stage/commit/push trong lượt này.
+```
+
 ## Cập Nhật 2026-05-12 - Phase 4 Wave A Backend Contract/Stub
 
 Trạng thái: ✅ **QA verify PASS** trong worktree hiện tại, chưa commit/push/stage.

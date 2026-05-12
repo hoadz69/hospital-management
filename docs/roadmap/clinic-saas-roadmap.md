@@ -1,5 +1,7 @@
 # Clinic SaaS Multi Tenant - Roadmap & Status Tracker
 
+> Cập nhật backend 2026-05-12: Backend Phase 4 Wave A.2 Owner Plan Module contract/stub đã QA PASS trong lane Backend/DevOps. Service owner là Tenant Service; API Gateway expose `/api/owner/plans`, `/api/owner/modules`, `/api/owner/tenant-plan-assignments`, `POST /api/owner/tenant-plan-assignments/bulk-change`. Wave này không migration/schema và chưa persistence thật; persistence PostgreSQL/Billing sẽ làm sau khi owner duyệt.
+
 > Cập nhật hiện hành 2026-05-12: project đang chạy 2 workstream song song. Backend/DevOps đã hoàn tất Phase 2 API Runtime Smoke Gate; Phase 2 Done. Backend lane Phase 4 Wave A contract/stub cho Domain Service, Template Service và Website CMS Service đã QA PASS (`restore/build/test` PASS, local Development smoke PASS). Frontend đang chạy lane A8 riêng, không thuộc cập nhật backend này. UI Redesign V3 (page Figma `65:2` 76 frame, 7 section grouping) là **source of truth Phase 4+** (xem section 7.1). Dashboard nằm ở `docs/current-task.md`; chi tiết lane nằm ở `docs/current-task.backend.md`, `docs/current-task.frontend.md`, `temp/plan.backend.md`, `temp/plan.frontend.md`.
 
 File này dùng làm **source of truth cho lộ trình dài hạn + trạng thái hiện tại** của project.

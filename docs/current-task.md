@@ -28,6 +28,8 @@ Mọi feature mới phải chạy theo "Feature Team Execution Workflow" (Step 0
 
 ## Notes / Unclassified
 
+- 2026-05-12: Backend Phase 4 Wave A.2 Owner Plan Module contract/stub **QA PASS** trong lane Backend/DevOps. Service owner: Tenant Service; API Gateway expose `/api/owner/plans`, `/api/owner/modules`, `/api/owner/tenant-plan-assignments`, `POST /api/owner/tenant-plan-assignments/bulk-change`. Không migration/schema, không persistence thật. Verify: `git diff --check`, restore/build/test PASS, local Development smoke Tenant Service + API Gateway PASS, `X-Owner-Role=ClinicAdmin` bulk-change 403 PASS. Chi tiết: `docs/current-task.backend.md` và `temp/plan.backend.md` §15.
+
 - Nội dung backend cũ từ `docs/current-task.md` đã được chuyển sang `docs/current-task.backend.md`.
 - Nội dung frontend/UI cũ từ `docs/current-task.md` đã được chuyển sang `docs/current-task.frontend.md`.
 - 2026-05-10: thêm "Feature Team Execution Workflow" vào `AGENTS.md`, `docs/agent-playbook.md`, `.claude/agents/*`, `docs/agents/*`, `agents/*`, và `docs/commands/*`. Workflow áp dụng cho cả Claude Code và Codex; Lead Agent giả lập role khi tool không có subagent runtime thật. Commit `74c29c8`.

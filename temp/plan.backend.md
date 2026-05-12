@@ -980,3 +980,137 @@ feat(backend): add phase 4 domain template cms contract stubs
 test(backend): add phase 4 service stub smoke tests
 docs(backend): record phase 4 wave a backend contract handoff
 ```
+
+## 15. Backend Phase 4 Wave A.2 - Owner Plan Module Contract/Stub - 2026-05-12
+
+Trạng thái: ✅ **Implementation + QA PASS**, chờ owner yêu cầu commit. Không stage/commit/push.
+
+### 15.1 Scope
+
+```txt
+Implement FULL backend contract/stub cho Owner Plan & Module Catalog để FE A8 `/plans`
+có API shape thật dần.
+
+Endpoint:
+  GET  /api/owner/plans
+  GET  /api/owner/modules
+  GET  /api/owner/tenant-plan-assignments
+  POST /api/owner/tenant-plan-assignments/bulk-change
+
+Không làm persistence thật.
+Không tạo migration/schema.
+Không dùng DB/server/secret thật.
+Không sửa frontend hoặc docs frontend.
+```
+
+### 15.2 Agents Và Boundary
+
+```txt
+Lead Agent: điều phối lane Backend/DevOps, giữ guardrail không stage/commit/push.
+Architect Agent: chốt service owner là Tenant Service, Billing Service để phase sau.
+Backend Agent: thêm shared contracts, Tenant Service application stub, API endpoints, API Gateway contract routes.
+Database Agent: xác nhận chưa cần migration vì chưa persistence thật.
+QA Agent: restore/build/test/smoke Development + forbidden ClinicAdmin check.
+Documentation Agent: cập nhật docs/current-task.backend.md, temp/plan.backend.md, dashboard ngắn.
+```
+
+### 15.3 Architect Decision
+
+```txt
+Service owner: Tenant Service.
+Lý do: plan catalog/module entitlement/tenant-plan assignment hiện gắn tenant lifecycle
+và module enablement. Billing Service sẽ sở hữu subscription/pricing/invoice/payment khi
+owner duyệt persistence thật.
+
+API Gateway:
+  Expose `/api/owner/*` contract route để FE gọi shape ổn định.
+  Không truy database.
+
+Security:
+  Endpoint platform-scoped/cross-tenant chỉ dành cho Owner Super Admin.
+  Metadata: RequireRole OwnerSuperAdmin + PermissionCodes.PlansRead/PlansWrite.
+  Guard placeholder route-specific chặn `X-Owner-Role: ClinicAdmin` hoặc role header khác.
+```
+
+### 15.4 Allowed File Areas Đã Dùng
+
+```txt
+backend/shared/contracts/**
+backend/services/tenant-service/src/**
+backend/services/tenant-service/tests/**
+backend/services/api-gateway/src/ApiGateway.Api/**
+docs/current-task.backend.md
+temp/plan.backend.md
+docs/current-task.md
+```
+
+### 15.5 Contract Shape
+
+```txt
+GET /api/owner/plans
+  items[]: code, name, price, description, tenantCount, tone, popular
+  Data: Starter/Growth/Premium.
+
+GET /api/owner/modules
+  items[]: id, name, category, starter, growth, premium
+  Entitlement cell giữ bool hoặc string limit như FE mock.
+
+GET /api/owner/tenant-plan-assignments
+  items[]: id, slug, currentPlan, currentPlanName, currentMrr,
+           nextRenewal, selected, targetPlan
+
+POST /api/owner/tenant-plan-assignments/bulk-change
+  request: selectedTenantIds, targetPlan, effectiveAt, auditReason
+  validation: selectedTenantIds không rỗng, targetPlan hợp lệ,
+              effectiveAt = next_renewal, auditReason bắt buộc
+  response: changedCount, mrrDiff, status, message, effectiveAt, auditReason
+```
+
+### 15.6 Data/DB Decision
+
+```txt
+DB/schema: không có migration.
+Lý do: Wave A.2 chỉ contract/stub in-memory để unblock FE A8.
+Phase sau mới thiết kế PostgreSQL plan/subscription/assignment tables,
+module entitlement source of truth và Billing integration khi owner duyệt.
+```
+
+### 15.7 Verify
+
+```txt
+git diff --check: PASS.
+C:\Users\nvhoa2\.dotnet\dotnet.exe restore backend/ClinicSaaS.Backend.sln: PASS.
+C:\Users\nvhoa2\.dotnet\dotnet.exe build backend/ClinicSaaS.Backend.sln --no-restore: PASS, 0 Warning(s), 0 Error(s).
+C:\Users\nvhoa2\.dotnet\dotnet.exe test backend/ClinicSaaS.Backend.sln --no-build: PASS, 25/25 tests.
+Local Development smoke: PASS.
+```
+
+Smoke detail:
+
+```txt
+Tenant Service :5006
+  GET /health -> 200
+  GET /openapi/v1.json -> 200
+  GET /api/owner/plans -> 200
+  GET /api/owner/modules -> 200
+  GET /api/owner/tenant-plan-assignments -> 200
+  POST /api/owner/tenant-plan-assignments/bulk-change -> 200
+  POST bulk-change với X-Owner-Role=ClinicAdmin -> 403
+
+API Gateway :5018
+  GET /health -> 200
+  GET /openapi/v1.json -> 200
+  GET /api/owner/plans -> 200
+  GET /api/owner/modules -> 200
+  GET /api/owner/tenant-plan-assignments -> 200
+  POST /api/owner/tenant-plan-assignments/bulk-change -> 200
+  POST bulk-change với X-Owner-Role=ClinicAdmin -> 403
+```
+
+### 15.8 Commit Split Đề Xuất
+
+```txt
+feat(backend): add owner plan module contract stubs
+test(backend): cover owner plan module stub handler
+docs(backend): record owner plan module contract handoff
+```
