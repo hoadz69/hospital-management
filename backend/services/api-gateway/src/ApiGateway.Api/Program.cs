@@ -30,6 +30,7 @@ app.UseClinicSaaSOpenApi("API Gateway");
 app.MapSystemEndpoints("api-gateway");
 app.MapTenantEndpoints();
 app.MapPhase4ContractEndpoints();
+app.MapOwnerPlanCatalogContractEndpoints();
 
 app.Run();
 

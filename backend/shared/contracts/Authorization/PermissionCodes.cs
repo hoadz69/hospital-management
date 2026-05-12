@@ -16,6 +16,16 @@ public static class PermissionCodes
     public const string TenantsWrite = "tenants.write";
 
     /// <summary>
+    /// Quyền đọc plan catalog, module entitlement và assignment ở phạm vi Owner Admin.
+    /// </summary>
+    public const string PlansRead = "plans.read";
+
+    /// <summary>
+    /// Quyền đổi plan/module assignment cho tenant ở phạm vi Owner Super Admin.
+    /// </summary>
+    public const string PlansWrite = "plans.write";
+
+    /// <summary>
     /// Quyền đọc domain của tenant hoặc registry domain ở phạm vi platform.
     /// </summary>
     public const string DomainsRead = "domains.read";
@@ -62,6 +72,8 @@ public static class PermissionCodes
     [
         TenantsRead,
         TenantsWrite,
+        PlansRead,
+        PlansWrite,
         DomainsRead,
         DomainsWrite,
         TemplatesRead,
