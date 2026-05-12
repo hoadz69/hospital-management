@@ -655,7 +655,7 @@ Resume tiếp theo:
 
 ## Cập Nhật 2026-05-12 - BE A.3 Contract Hardening + FE A9 Support Plan
 
-Trạng thái: 🟡 **Plan-only / có thể chạy song song FE A9**, chưa implement code, chưa tạo migration/schema.
+Trạng thái: ✅ **QA verify PASS** trong Backend/DevOps lane. Đã tăng test/guard contract, chưa tạo migration/schema, chưa implement persistence.
 
 Scope song song không chặn FE:
 
@@ -678,6 +678,78 @@ Database chỉ review "no migration"; DevOps chỉ tham gia nếu cần local ru
 Điểm dừng:
 
 ```txt
-BE A.3 có thể implement sau nếu owner muốn hardening song song.
+BE A.3 contract hardening đã hoàn tất trong phạm vi stub.
 Plan/Module persistence thật vẫn giữ ở §16 và cần owner duyệt riêng.
+```
+
+Kết quả đã làm:
+
+```txt
+- Giữ nguyên response shape hiện tại cho FE A9 ở 4 endpoint `/api/owner/*`.
+- Bổ sung test validation Tenant Service cho:
+  selectedTenantIds rỗng -> validation
+  targetPlan không hợp lệ -> validation
+  effectiveAt khác next_renewal -> validation
+  auditReason thiếu -> validation
+- Bổ sung route metadata test cho Tenant Service:
+  `/api/owner/plans`, `/api/owner/modules`, `/api/owner/tenant-plan-assignments`,
+  `POST /api/owner/tenant-plan-assignments/bulk-change` đều platform-scoped,
+  yêu cầu OwnerSuperAdmin và permission plans.read/plans.write đúng route.
+- Rà API Gateway route hiện giữ cùng 4 path, cùng validation và cùng guard header `X-Owner-Role`.
+- Không sửa frontend, không DB, không migration 0002, không Billing.
+```
+
+File đã sửa/tạo:
+
+```txt
+backend/services/tenant-service/tests/TenantService.Tests/OwnerPlanCatalogStubHandlerTests.cs
+backend/services/tenant-service/tests/TenantService.Tests/OwnerPlanCatalogEndpointMetadataTests.cs
+backend/services/tenant-service/tests/TenantService.Tests/TenantService.Tests.csproj
+docs/current-task.backend.md
+temp/plan.backend.md
+docs/current-task.md
+```
+
+Verify 2026-05-12:
+
+```txt
+git diff --check: PASS.
+C:\Users\nvhoa2\.dotnet\dotnet.exe restore backend/ClinicSaaS.Backend.sln: PASS.
+C:\Users\nvhoa2\.dotnet\dotnet.exe build backend/ClinicSaaS.Backend.sln --no-restore: PASS, 0 warning, 0 error.
+C:\Users\nvhoa2\.dotnet\dotnet.exe test backend/ClinicSaaS.Backend.sln --no-build: PASS, 29/29 tests.
+Local Development smoke:
+  Tenant Service :5006 PASS.
+  API Gateway :5018 PASS.
+  Health + OpenAPI PASS.
+  4 endpoint `/api/owner/*` happy path PASS.
+  ClinicAdmin 403 cho 4 endpoint PASS.
+  Invalid owner role 403 PASS.
+  bulk-change thiếu auditReason, effectiveAt invalid, targetPlan invalid, selectedTenantIds rỗng -> 400 PASS.
+```
+
+Verify readiness bổ sung 2026-05-12:
+
+```txt
+Scope: xác nhận Backend Phase 4 Wave A.2 `/api/owner/*` thật sự sẵn sàng cho FE A9.
+
+Code review:
+  Tenant Service map đủ 4 endpoint `/api/owner/*`, platform-scoped, OwnerSuperAdmin, plans.read/plans.write.
+  API Gateway map cùng 4 endpoint và cùng validation/guard placeholder.
+  Response shape giữ nguyên: plans, modules, tenant-plan-assignments, bulk-change response.
+
+Runtime:
+  Docker CLI không có trong PATH nên không verify container local được.
+  Không có Tenant Service/API Gateway sẵn ở :5006/:5018; port :5005 do node process giữ.
+  Đã dựng runtime local bằng dotnet cho Tenant Service :5006 và API Gateway :5018 để QA smoke.
+
+Smoke:
+  Tenant Service :5006 owner endpoint smoke PASS.
+  API Gateway :5018 owner endpoint smoke PASS.
+  GET /health và GET /openapi/v1.json PASS; OpenAPI có đủ 4 route `/api/owner/*`.
+  Happy path 4 endpoint PASS và response shape PASS.
+  OwnerSuperAdmin + X-Tenant-Id vẫn PASS vì route là platform-scoped.
+  ClinicAdmin 403 cho 4 endpoint PASS, kể cả khi gửi X-Tenant-Id.
+  Invalid owner role 403 PASS.
+  bulk-change validation 400 PASS: thiếu auditReason, effectiveAt invalid, targetPlan invalid, selectedTenantIds rỗng.
+  409 conflict: không áp dụng cho `/api/owner/*` contract/stub hiện tại vì chưa có persistence/conflict path; giữ pending cho §16 persistence.
 ```

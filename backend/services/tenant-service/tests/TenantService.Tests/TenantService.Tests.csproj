@@ -9,6 +9,7 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\..\src\TenantService.Api\TenantService.Api.csproj" />
     <ProjectReference Include="..\..\src\TenantService.Application\TenantService.Application.csproj" />
     <ProjectReference Include="..\..\src\TenantService.Domain\TenantService.Domain.csproj" />
     <ProjectReference Include="..\..\..\..\shared\building-blocks\ClinicSaaS.BuildingBlocks.csproj" />

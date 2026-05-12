@@ -1418,7 +1418,7 @@ Nếu owner chỉ muốn chuẩn bị tiếp mà chưa tạo schema:
 
 ## 17. BE A.3 Contract Hardening + FE A9 Support Plan - 2026-05-12
 
-Trạng thái: **Plan ready / có thể chạy song song FE A9; chưa implement code**.
+Trạng thái: **Implemented / QA verify PASS; không tạo schema/migration/persistence**.
 
 ### 17.1 Mục Tiêu
 
@@ -1493,4 +1493,74 @@ Tenant Service + API Gateway:
 - Không triển khai Billing Service/subscription/invoice/payment.
 - Không đổi FE A9 contract hoặc UI.
 - Persistence thật vẫn theo §16, chờ owner duyệt riêng.
+```
+
+### 17.7 Kết Quả Implement
+
+```txt
+Backend Agent:
+  - Thêm test validation còn thiếu cho bulk-change:
+    selectedTenantIds rỗng, targetPlan invalid, effectiveAt invalid, auditReason thiếu.
+  - Thêm route metadata test cho Tenant Service để khóa 4 path `/api/owner/*`,
+    platform scope, OwnerSuperAdmin role, plans.read/plans.write permission.
+  - Giữ nguyên DTO/response shape cho FE A9.
+
+Architect Agent:
+  - Boundary không đổi: Tenant Service sở hữu contract/stub hiện tại, API Gateway expose route consistency.
+  - Không kéo Billing Service, DB repository, migration 0002 hoặc persistence vào A.3.
+
+QA Agent:
+  - Verify static/build/test PASS.
+  - Smoke local Development PASS cho Tenant Service :5006 và API Gateway :5018.
+  - Negative guard PASS: ClinicAdmin 403 cho 4 endpoint, invalid owner role 403, validation 400.
+```
+
+### 17.8 Verify Đã Chạy
+
+```powershell
+git diff --check
+C:\Users\nvhoa2\.dotnet\dotnet.exe restore backend/ClinicSaaS.Backend.sln
+C:\Users\nvhoa2\.dotnet\dotnet.exe build backend/ClinicSaaS.Backend.sln --no-restore
+C:\Users\nvhoa2\.dotnet\dotnet.exe test backend/ClinicSaaS.Backend.sln --no-build
+```
+
+Kết quả:
+
+```txt
+diff --check PASS.
+restore PASS.
+build PASS, 0 warning, 0 error.
+test PASS, 29/29 tests.
+Local smoke PASS:
+  http://localhost:5006 Tenant Service
+  http://localhost:5018 API Gateway
+  GET /health, GET /openapi/v1.json
+  GET /api/owner/plans
+  GET /api/owner/modules
+  GET /api/owner/tenant-plan-assignments
+  POST /api/owner/tenant-plan-assignments/bulk-change
+  ClinicAdmin 403, invalid role 403, validation 400 cases
+```
+
+### 17.9 Verify Readiness Bổ Sung
+
+```txt
+Mục tiêu:
+  Xác nhận Backend Phase 4 Wave A.2 `/api/owner/*` đã sẵn sàng thật cho FE A9.
+
+Agents:
+  Lead + Architect + Backend + QA + Documentation.
+
+Kết quả:
+  Code endpoint Tenant Service + API Gateway đã rà, không lệch 4 route `/api/owner/*`.
+  Runtime container local không verify được vì Docker CLI không có trong PATH.
+  Đã dựng runtime local bằng dotnet theo Budget Mode:
+    Tenant Service: http://localhost:5006
+    API Gateway: http://localhost:5018
+  OpenAPI có đủ 4 route `/api/owner/*`.
+  Response shape giữ nguyên và PASS smoke.
+  400 validation PASS: missing auditReason, invalid effectiveAt, invalid targetPlan, empty selectedTenantIds.
+  403 guard PASS: ClinicAdmin và invalid owner role bị chặn ở 4 endpoint, kể cả khi gửi X-Tenant-Id.
+  Tenant isolation: `/api/owner/*` là platform-scoped OwnerSuperAdmin use case; X-Tenant-Id không làm ClinicAdmin bypass được.
+  409 conflict: không áp dụng trong A.2/A.3 stub vì chưa có persistence/conflict path; sẽ cover ở §16 nếu owner duyệt persistence.
 ```
