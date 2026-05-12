@@ -11,7 +11,7 @@ Mọi feature mới phải chạy theo "Feature Team Execution Workflow" (Step 0
 
 | Workstream | Task file | Plan file | Trạng thái ngắn | Bước tiếp theo |
 |---|---|---|---|---|
-| Backend/DevOps | `docs/current-task.backend.md` | `temp/plan.backend.md` | ✅ BE A.2/A.3 `/api/owner/*` readiness QA PASS cho Tenant Service + API Gateway local runtime. Contract giữ nguyên; persistence owner đề xuất là Tenant Service, Billing Service phase sau | Chờ owner duyệt `temp/plan.backend.md` §16 trước khi tạo migration/schema/code persistence. Có thể smoke real API với FE A9 khi cần |
+| Backend/DevOps | `docs/current-task.backend.md` | `temp/plan.backend.md` | 🟡 A.10 preparation rerun Fast/Budget full team PASS baseline backend, nhưng thiếu spec/contract thật nên chưa implement. BE A.2/A.3 `/api/owner/*` vẫn QA PASS trên Tenant Service + API Gateway local runtime | Cần owner/Lead chốt A.10 service/path/request-response/guard/persistence/acceptance trước khi code; persistence plan module vẫn chờ duyệt `temp/plan.backend.md` §16 |
 | Frontend | `docs/current-task.frontend.md` | `temp/plan.frontend.md` | ✅ FE A9 `/plans` wired với BE A.2 contract ở client layer, mock/auto fallback giữ nguyên. typecheck/build PASS, HTTP smoke 5 route PASS | Smoke real API khi backend runtime/gateway bật; nếu owner yêu cầu commit thì split FE A9 riêng, không kèm artifact/log |
 | DevOps | (dashboard này) | `temp/plan.devops.md` | ✅ Pre-Phase 4 Hardening DevOps lane (P1.4 + P1.8) committed. Sẵn sàng support Wave A backend mock + Wave B edge resolver subdomain → tenantId | Wave B backend dep: nginx hoặc Cloudflare Worker meta tag inject tenant id |
 | Database | (dashboard này) | (note trong dashboard) | ✅ Pre-Phase 4 Hardening database lane (P1.5) committed. Phase 4 chưa cần lane riêng. P2 candidate: chuyển sang DbUp/FluentMigrator runner | Theo dõi schema mới khi Wave D Catalog/Customer/Records APSO bắt đầu |
@@ -27,6 +27,10 @@ Mọi feature mới phải chạy theo "Feature Team Execution Workflow" (Step 0
 - `temp/plan.md` là index tương thích cũ, không dùng làm plan chi tiết cho backend hoặc frontend.
 
 ## Notes / Unclassified
+
+- 2026-05-12: Backend/DevOps Phase 4 A.10 preparation rerun Full Team Fast/Budget PASS baseline backend. Không implement vì A.10 vẫn thiếu service/path/method/request-response/acceptance riêng. Đã rà Tenant Service + API Gateway `/api/owner/*`, giữ stub/fallback vì persistence §16 chưa duyệt. Verify PASS: `git diff --check`, restore/build/test 29/29, local dotnet runtime Tenant Service `:5006` + API Gateway `:5018`, health/OpenAPI, happy path 4 route, ClinicAdmin + `X-Tenant-Id` 403, bulk-change validation 400 cho missing auditReason/invalid targetPlan/invalid effectiveAt/empty selectedTenantIds. Đã tắt runtime và xóa `temp/a10-prep-*.log`. Chi tiết: `docs/current-task.backend.md`, `temp/plan.backend.md` §18.5.
+
+- 2026-05-12: Backend/DevOps Phase 4 task A.10 chạy Full Team giả lập Fast/Budget Mode. Kết luận: thiếu spec/contract A.10 thật trong `docs/`, `temp/`, `backend/`, nên không implement endpoint mới. Baseline backend PASS: `git diff --check`, restore/build/test PASS 29/29; local Development smoke Tenant Service `:5006` và API Gateway `:5018` PASS cho `/api/owner/*`, ClinicAdmin 403, missing auditReason 400. Đã tắt runtime và xóa log tạm `temp/a10-*.log`. Chi tiết: `docs/current-task.backend.md`, `temp/plan.backend.md` §18.
 
 - 2026-05-12: BE A.3 Contract Hardening + FE A9 support **QA PASS** trong Backend/DevOps lane. Đã bổ sung Tenant Service validation/route metadata tests; local Development smoke Tenant Service `:5006` và API Gateway `:5018` PASS cho 4 endpoint `/api/owner/*`, ClinicAdmin 403, invalid role 403, và bulk-change validation 400. Không migration/schema, không persistence, không Billing, không sửa frontend. Chi tiết: `docs/current-task.backend.md`, `temp/plan.backend.md` §17.
 

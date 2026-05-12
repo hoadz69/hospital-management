@@ -1564,3 +1564,154 @@ Kết quả:
   Tenant isolation: `/api/owner/*` là platform-scoped OwnerSuperAdmin use case; X-Tenant-Id không làm ClinicAdmin bypass được.
   409 conflict: không áp dụng trong A.2/A.3 stub vì chưa có persistence/conflict path; sẽ cover ở §16 nếu owner duyệt persistence.
 ```
+
+## 18. Backend/DevOps Phase 4 Task A.10 Full Team Fast/Budget - 2026-05-12
+
+Trạng thái: **Plan/blocker + QA baseline PASS**. Chưa implement code vì A.10 chưa có spec/contract thật trong source of truth hiện có.
+
+### 18.1 Lane Và Agents
+
+```txt
+Lane: Backend/DevOps.
+Mode: Full team giả lập theo Fast/Budget Mode.
+Agents:
+  Lead Agent: điều phối, giữ scope và guardrail.
+  Architect Agent: kiểm tra service boundary Tenant Service + API Gateway, tenant isolation.
+  Backend Agent: rà endpoints hiện có, validation, guard, OpenAPI.
+  QA Agent: chạy static/build/test và local smoke.
+  Documentation Agent: cập nhật docs lane/dashboard.
+Không sửa frontend.
+Không stage/commit/push.
+Không đụng `.env`, secret, key, `.claude/settings.local.json`.
+```
+
+### 18.2 Kết Luận Scope A.10
+
+```txt
+Đã tìm `A.10`, `A10`, `Step A10`, `Wave A Step A10`, `BE A.10` trong `docs/`, `temp/`, `backend/`.
+Không thấy định nghĩa endpoint, request/response, acceptance criteria, service owner hoặc verify command riêng cho A.10.
+Vì thiếu spec, không được tự tạo endpoint mới hoặc tự bịa contract.
+```
+
+Spec liên quan nhưng không phải A.10:
+
+```txt
+A.2/A.3 Owner Plan Module contract/stub:
+  GET /api/owner/plans
+  GET /api/owner/modules
+  GET /api/owner/tenant-plan-assignments
+  POST /api/owner/tenant-plan-assignments/bulk-change
+Service owner hiện tại: Tenant Service.
+API Gateway expose contract/stub, không truy DB.
+Guard: OwnerSuperAdmin + plans.read/plans.write; ClinicAdmin 403.
+Persistence/transaction/409: chưa áp dụng cho stub; nằm ở §16 nếu owner duyệt.
+```
+
+### 18.3 Verify Đã Chạy
+
+```powershell
+git status --branch --short
+git diff --stat
+git diff --check
+C:\Users\nvhoa2\.dotnet\dotnet.exe restore backend/ClinicSaaS.Backend.sln
+C:\Users\nvhoa2\.dotnet\dotnet.exe build backend/ClinicSaaS.Backend.sln --no-restore
+C:\Users\nvhoa2\.dotnet\dotnet.exe test backend/ClinicSaaS.Backend.sln --no-build
+```
+
+Kết quả:
+
+```txt
+diff --check PASS, chỉ warning LF/CRLF trên Windows.
+restore PASS.
+build PASS, 0 warning, 0 error.
+test PASS, 29/29 tests.
+Runtime ban đầu không có backend process ở :5005/:5006/:5018.
+Đã dựng local Development runtime bằng dotnet:
+  Tenant Service: http://localhost:5006
+  API Gateway: http://localhost:5018
+Smoke PASS trên cả hai service:
+  GET /health -> 200.
+  GET /openapi/v1.json -> 200 và có `/api/owner/plans`.
+  3 GET `/api/owner/*` -> 200.
+  POST bulk-change hợp lệ -> 200.
+  ClinicAdmin + X-Tenant-Id trên 4 endpoint -> 403.
+  bulk-change thiếu auditReason -> 400.
+Đã tắt runtime sau smoke và xóa log tạm `temp/a10-*.log`.
+```
+
+### 18.4 Điểm Dừng / Blocker
+
+```txt
+Blocker còn lại: cần spec A.10 thật trước khi implement.
+Cần chốt:
+  1. A.10 thuộc service nào.
+  2. Endpoint path/method.
+  3. Request/response contract.
+  4. Guard/tenant scope.
+  5. Có persistence/transaction/409 hay chỉ stub.
+  6. Acceptance criteria và smoke case.
+```
+
+### 18.5 Preparation Rerun - Fast/Budget Full Team 2026-05-12
+
+```txt
+Owner prompt: chuẩn bị lane Backend/DevOps Phase 4 A.10, full team, không hỏi owner.
+Kết luận: chuẩn bị lane xong, QA baseline PASS, không implement code vì A.10 vẫn thiếu spec thật.
+```
+
+Agents và boundary:
+
+```txt
+Lead: điều phối, kiểm tra worktree, report dirty/untracked, không stage/commit/push.
+Architect: read-only review, giữ boundary Tenant Service + API Gateway, xác nhận `/api/owner/*` là platform-scoped OwnerSuperAdmin.
+Backend: rà endpoint/spec hiện có; không tạo endpoint mới; giữ stub/fallback vì persistence §16 chưa duyệt.
+QA: chạy static/build/test và smoke runtime hiện có.
+Documentation: cập nhật `docs/current-task.backend.md`, `temp/plan.backend.md`, `docs/current-task.md`.
+```
+
+Code baseline đã rà:
+
+```txt
+Tenant Service:
+  backend/services/tenant-service/src/TenantService.Api/Endpoints/OwnerPlanCatalogEndpoints.cs
+API Gateway:
+  backend/services/api-gateway/src/ApiGateway.Api/Endpoints/OwnerPlanCatalogContractEndpoints.cs
+Tests:
+  backend/services/tenant-service/tests/TenantService.Tests/OwnerPlanCatalogStubHandlerTests.cs
+  backend/services/tenant-service/tests/TenantService.Tests/OwnerPlanCatalogEndpointMetadataTests.cs
+```
+
+Verify rerun:
+
+```txt
+git diff --check: PASS, chỉ warning LF/CRLF.
+restore backend solution: PASS.
+build backend solution: PASS, 0 warning, 0 error.
+test backend solution: PASS, 29/29 tests.
+Runtime ban đầu: không có backend process ở :5005/:5006/:5018.
+Local runtime dotnet:
+  Tenant Service :5006.
+  API Gateway :5018.
+Smoke cả hai service:
+  health 200.
+  openapi 200 và có `/api/owner/plans`.
+  GET /api/owner/plans 200.
+  GET /api/owner/modules 200.
+  GET /api/owner/tenant-plan-assignments 200.
+  POST /api/owner/tenant-plan-assignments/bulk-change valid 200.
+  ClinicAdmin + X-Tenant-Id trên 4 route 403.
+  bulk-change missing auditReason 400.
+  bulk-change invalid targetPlan 400.
+  bulk-change invalid effectiveAt 400.
+  bulk-change empty selectedTenantIds 400.
+Cleanup: đã tắt runtime và xóa `temp/a10-prep-*.log`.
+```
+
+Điểm dừng:
+
+```txt
+Không sửa frontend.
+Không stage/commit/push.
+Không đụng `.env`, secret, key, `.claude/settings.local.json`.
+A.10 cần owner/Lead chốt spec thật trước khi bất kỳ code implementation nào.
+```
