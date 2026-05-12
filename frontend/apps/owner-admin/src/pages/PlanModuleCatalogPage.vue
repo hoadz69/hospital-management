@@ -1,21 +1,25 @@
 <script setup lang="ts">
-import type { TenantPlanCode } from "@clinic-saas/shared-types";
+import type {
+  OwnerModuleCatalogRow,
+  OwnerModuleEntitlement,
+  OwnerPlanCatalogItem,
+  OwnerTenantPlanAssignment,
+  TenantPlanCode
+} from "@clinic-saas/shared-types";
 import { AppButton, AppCard, KPITile, PlanBadge } from "@clinic-saas/ui";
-import { computed, ref } from "vue";
-import {
-  getPlanPrice,
-  moduleCatalog,
-  planCatalog,
-  tenantPlanAssignments,
-  type ModuleCatalogRow,
-  type TenantPlanAssignment
-} from "../services/planCatalogMock";
+import { computed, onMounted, ref } from "vue";
+import { planCatalogClient } from "../services/planCatalogClient";
 
-const assignments = ref<TenantPlanAssignment[]>(tenantPlanAssignments.map((assignment) => ({ ...assignment })));
+const planCatalog = ref<OwnerPlanCatalogItem[]>([]);
+const moduleCatalog = ref<OwnerModuleCatalogRow[]>([]);
+const assignments = ref<OwnerTenantPlanAssignment[]>([]);
+const isLoading = ref(true);
+const isBulkChanging = ref(false);
+const loadError = ref<string | null>(null);
 const lastBulkAction = ref<string | null>(null);
 
 const selectedAssignments = computed(() => assignments.value.filter((assignment) => assignment.selected));
-const totalTenants = computed(() => planCatalog.reduce((total, plan) => total + plan.tenantCount, 0));
+const totalTenants = computed(() => planCatalog.value.reduce((total, plan) => total + plan.tenantCount, 0));
 const totalMrr = computed(() => assignments.value.reduce((total, assignment) => total + assignment.currentMrr, 0));
 const selectedMrrDiff = computed(() =>
   selectedAssignments.value.reduce((total, assignment) => total + planDiff(assignment), 0)
@@ -38,11 +42,11 @@ function planTone(planCode: TenantPlanCode) {
 }
 
 function moduleSummary(planCode: TenantPlanCode) {
-  const includedCount = moduleCatalog.filter((module) => module[planCode] !== false).length;
-  return `${includedCount}/${moduleCatalog.length} module`;
+  const includedCount = moduleCatalog.value.filter((module) => module[planCode] !== false).length;
+  return `${includedCount}/${moduleCatalog.value.length} module`;
 }
 
-function formatCell(value: ModuleCatalogRow["starter"]) {
+function formatCell(value: OwnerModuleEntitlement) {
   if (value === true) {
     return "✓";
   }
@@ -54,7 +58,7 @@ function formatCell(value: ModuleCatalogRow["starter"]) {
   return value;
 }
 
-function cellClass(value: ModuleCatalogRow["starter"]) {
+function cellClass(value: OwnerModuleEntitlement) {
   if (value === true) {
     return "is-included";
   }
@@ -66,11 +70,15 @@ function cellClass(value: ModuleCatalogRow["starter"]) {
   return "is-limit";
 }
 
-function planDiff(assignment: TenantPlanAssignment) {
+function getPlanPrice(planCode: TenantPlanCode) {
+  return planCatalog.value.find((plan) => plan.code === planCode)?.price ?? 0;
+}
+
+function planDiff(assignment: OwnerTenantPlanAssignment) {
   return getPlanPrice(assignment.targetPlan) - assignment.currentMrr;
 }
 
-function diffLabel(assignment: TenantPlanAssignment) {
+function diffLabel(assignment: OwnerTenantPlanAssignment) {
   const diff = planDiff(assignment);
 
   if (diff === 0) {
@@ -80,7 +88,7 @@ function diffLabel(assignment: TenantPlanAssignment) {
   return `${diff > 0 ? "+" : "-"}${formatCurrency(Math.abs(diff))}`;
 }
 
-function diffTone(assignment: TenantPlanAssignment) {
+function diffTone(assignment: OwnerTenantPlanAssignment) {
   const diff = planDiff(assignment);
 
   if (diff > 0) {
@@ -94,7 +102,28 @@ function diffTone(assignment: TenantPlanAssignment) {
   return "neutral";
 }
 
-function bulkChangePlan() {
+async function loadPlanCatalog() {
+  isLoading.value = true;
+  loadError.value = null;
+
+  try {
+    const [plans, modules, tenantAssignments] = await Promise.all([
+      planCatalogClient.listPlans(),
+      planCatalogClient.listModules(),
+      planCatalogClient.listTenantPlanAssignments()
+    ]);
+
+    planCatalog.value = plans;
+    moduleCatalog.value = modules;
+    assignments.value = tenantAssignments.map((assignment) => ({ ...assignment }));
+  } catch (error) {
+    loadError.value = error instanceof Error ? error.message : "Không tải được Plan & Module Catalog.";
+  } finally {
+    isLoading.value = false;
+  }
+}
+
+async function bulkChangePlan() {
   const selectedCount = selectedAssignments.value.length;
 
   if (selectedCount === 0) {
@@ -102,131 +131,176 @@ function bulkChangePlan() {
     return;
   }
 
-  lastBulkAction.value = `${selectedCount} tenant sẽ đổi gói ở chu kỳ kế tiếp. MRR dự kiến ${
-    selectedMrrDiff.value >= 0 ? "tăng" : "giảm"
-  } ${formatCurrency(Math.abs(selectedMrrDiff.value))}.`;
+  const firstTargetPlan = selectedAssignments.value[0]?.targetPlan ?? "growth";
+  isBulkChanging.value = true;
+  lastBulkAction.value = null;
+
+  try {
+    const response = await planCatalogClient.bulkChangeTenantPlans({
+      selectedTenantIds: selectedAssignments.value.map((assignment) => assignment.id),
+      targetPlan: firstTargetPlan,
+      effectiveAt: "next_renewal",
+      auditReason: "Owner Admin A9 plan catalog wiring smoke."
+    });
+    const diffVerb = response.mrrDiff >= 0 ? "tăng" : "giảm";
+
+    lastBulkAction.value = `${response.message} MRR dự kiến ${diffVerb} ${formatCurrency(
+      Math.abs(response.mrrDiff)
+    )}.`;
+  } catch (error) {
+    lastBulkAction.value = error instanceof Error ? error.message : "Không đổi được gói tenant.";
+  } finally {
+    isBulkChanging.value = false;
+  }
 }
+
+onMounted(() => {
+  void loadPlanCatalog();
+});
 </script>
 
 <template>
   <div class="plans-page">
     <section class="page-heading">
       <div>
-        <p class="eyebrow">Owner Admin · Wave A8</p>
+        <p class="eyebrow">Owner Admin · Wave A9</p>
         <h2>Plan & Module Catalog</h2>
         <p class="heading-copy">
-          Mock-first catalog cho gói dịch vụ, module entitlement và thao tác đổi gói tenant ở chu kỳ kế tiếp.
+          Real contract-first catalog cho gói dịch vụ, module entitlement và mock fallback khi API chưa sẵn sàng.
         </p>
       </div>
-      <AppButton label="Bulk change plan" variant="secondary" @click="bulkChangePlan" />
+      <AppButton label="Tải lại" variant="secondary" :disabled="isLoading" @click="loadPlanCatalog" />
     </section>
 
-    <div class="kpi-grid">
-      <KPITile label="Tổng tenant" :value="totalTenants" meta="Theo mock plan catalog" tone="info" />
-      <KPITile label="Plan active" :value="planCatalog.length" meta="Starter, Growth, Premium" tone="neutral" />
-      <KPITile label="MRR bảng mẫu" :value="formatCurrency(totalMrr)" meta="Từ assignment mock" tone="warning" />
-      <KPITile label="Selected diff" :value="formatCurrency(selectedMrrDiff)" meta="Hiệu lực kỳ gia hạn kế tiếp" tone="specialty" />
-    </div>
+    <AppCard v-if="loadError" class="state-card">
+      <strong>Không tải được catalog</strong>
+      <span>{{ loadError }}</span>
+      <AppButton label="Thử lại" variant="secondary" @click="loadPlanCatalog" />
+    </AppCard>
 
-    <section class="plan-grid" aria-label="Plan cards">
-      <AppCard
-        v-for="plan in planCatalog"
-        :key="plan.code"
-        class="plan-card"
-        :class="[`plan-card--${plan.code}`, { featured: plan.popular }]"
-      >
-        <span v-if="plan.popular" class="popular-pill">Most popular</span>
-        <div class="plan-card__header">
-          <h3>{{ plan.name }}</h3>
-          <PlanBadge :label="plan.name" :tone="planTone(plan.code)" />
-        </div>
-        <div class="plan-price">
-          <strong>{{ formatCurrency(plan.price) }}</strong>
-          <span>/tháng</span>
-        </div>
-        <p>{{ plan.description }}</p>
-        <div class="plan-card__footer">
-          <span>
-            <b>{{ plan.tenantCount }}</b>
-            tenants
-          </span>
-          <span>
-            <b>{{ moduleSummary(plan.code) }}</b>
-            enabled
-          </span>
+    <AppCard v-else-if="isLoading" class="state-card">
+      <strong>Đang tải Plan & Module Catalog</strong>
+      <span>Owner Admin đang gọi BE A.2 contract hoặc mock fallback.</span>
+    </AppCard>
+
+    <template v-else>
+      <div class="kpi-grid">
+        <KPITile label="Tổng tenant" :value="totalTenants" meta="Theo plan catalog" tone="info" />
+        <KPITile label="Plan active" :value="planCatalog.length" meta="Starter, Growth, Premium" tone="neutral" />
+        <KPITile label="MRR bảng mẫu" :value="formatCurrency(totalMrr)" meta="Từ assignment contract" tone="warning" />
+        <KPITile
+          label="Selected diff"
+          :value="formatCurrency(selectedMrrDiff)"
+          meta="Hiệu lực kỳ gia hạn kế tiếp"
+          tone="specialty"
+        />
+      </div>
+
+      <section class="plan-grid" aria-label="Plan cards">
+        <AppCard
+          v-for="plan in planCatalog"
+          :key="plan.code"
+          class="plan-card"
+          :class="[`plan-card--${plan.code}`, { featured: plan.popular }]"
+        >
+          <span v-if="plan.popular" class="popular-pill">Most popular</span>
+          <div class="plan-card__header">
+            <h3>{{ plan.name }}</h3>
+            <PlanBadge :label="plan.name" :tone="planTone(plan.code)" />
+          </div>
+          <div class="plan-price">
+            <strong>{{ formatCurrency(plan.price) }}</strong>
+            <span>/tháng</span>
+          </div>
+          <p>{{ plan.description }}</p>
+          <div class="plan-card__footer">
+            <span>
+              <b>{{ plan.tenantCount }}</b>
+              tenants
+            </span>
+            <span>
+              <b>{{ moduleSummary(plan.code) }}</b>
+              enabled
+            </span>
+          </div>
+        </AppCard>
+      </section>
+
+      <AppCard class="matrix-card" :padded="false">
+        <header class="section-heading">
+          <div>
+            <h3>Module toggle matrix</h3>
+            <p>12 module x 3 plan, cell là check, giới hạn hoặc chưa bật.</p>
+          </div>
+        </header>
+
+        <div class="matrix-table" role="table" aria-label="Module toggle matrix">
+          <div class="matrix-row matrix-row--head" role="row">
+            <span>Module</span>
+            <span>Category</span>
+            <span>Starter</span>
+            <span>Growth</span>
+            <span>Premium</span>
+          </div>
+          <div v-for="module in moduleCatalog" :key="module.id" class="matrix-row" role="row">
+            <strong>{{ module.name }}</strong>
+            <span>{{ module.category }}</span>
+            <span :class="cellClass(module.starter)">{{ formatCell(module.starter) }}</span>
+            <span :class="cellClass(module.growth)">{{ formatCell(module.growth) }}</span>
+            <span :class="cellClass(module.premium)">{{ formatCell(module.premium) }}</span>
+          </div>
         </div>
       </AppCard>
-    </section>
 
-    <AppCard class="matrix-card" :padded="false">
-      <header class="section-heading">
-        <div>
-          <h3>Module toggle matrix</h3>
-          <p>12 module x 3 plan, cell là check, giới hạn hoặc chưa bật.</p>
-        </div>
-      </header>
+      <AppCard class="assignment-card" :padded="false">
+        <header class="section-heading assignment-heading">
+          <div>
+            <h3>Tenant plan assignment</h3>
+            <p>{{ selectedAssignments.length }} tenant selected · effective next renewal · audit reason gửi BE A.2.</p>
+          </div>
+          <AppButton
+            :label="`Apply change (${selectedAssignments.length})`"
+            :disabled="selectedAssignments.length === 0"
+            :loading="isBulkChanging"
+            @click="bulkChangePlan"
+          />
+        </header>
 
-      <div class="matrix-table" role="table" aria-label="Module toggle matrix">
-        <div class="matrix-row matrix-row--head" role="row">
-          <span>Module</span>
-          <span>Category</span>
-          <span>Starter</span>
-          <span>Growth</span>
-          <span>Premium</span>
+        <div class="assignment-table" role="table" aria-label="Tenant plan assignment">
+          <div class="assignment-row assignment-row--head" role="row">
+            <span>Tenant</span>
+            <span>Current plan</span>
+            <span>MRR</span>
+            <span>Next renewal</span>
+            <span>Change to</span>
+            <span>Diff</span>
+          </div>
+          <div v-for="assignment in assignments" :key="assignment.id" class="assignment-row" role="row">
+            <label class="tenant-check">
+              <input v-model="assignment.selected" type="checkbox" />
+              <span>{{ assignment.slug }}</span>
+            </label>
+            <PlanBadge :label="assignment.currentPlanName" :tone="planTone(assignment.currentPlan)" />
+            <strong>{{ formatCurrency(assignment.currentMrr) }}</strong>
+            <span>{{ assignment.nextRenewal }}</span>
+            <select v-model="assignment.targetPlan" :aria-label="`Đổi gói cho ${assignment.slug}`">
+              <option v-for="plan in planCatalog" :key="plan.code" :value="plan.code">{{ plan.name }}</option>
+            </select>
+            <b :data-tone="diffTone(assignment)">{{ diffLabel(assignment) }}</b>
+          </div>
         </div>
-        <div v-for="module in moduleCatalog" :key="module.id" class="matrix-row" role="row">
-          <strong>{{ module.name }}</strong>
-          <span>{{ module.category }}</span>
-          <span :class="cellClass(module.starter)">{{ formatCell(module.starter) }}</span>
-          <span :class="cellClass(module.growth)">{{ formatCell(module.growth) }}</span>
-          <span :class="cellClass(module.premium)">{{ formatCell(module.premium) }}</span>
-        </div>
-      </div>
-    </AppCard>
 
-    <AppCard class="assignment-card" :padded="false">
-      <header class="section-heading assignment-heading">
-        <div>
-          <h3>Tenant plan assignment</h3>
-          <p>{{ selectedAssignments.length }} tenant selected · effective next renewal · audit reason pending BE.</p>
-        </div>
-        <AppButton :label="`Apply mock change (${selectedAssignments.length})`" @click="bulkChangePlan" />
-      </header>
+        <p v-if="lastBulkAction" class="bulk-result" role="status">{{ lastBulkAction }}</p>
+      </AppCard>
 
-      <div class="assignment-table" role="table" aria-label="Tenant plan assignment">
-        <div class="assignment-row assignment-row--head" role="row">
-          <span>Tenant</span>
-          <span>Current plan</span>
-          <span>MRR</span>
-          <span>Next renewal</span>
-          <span>Change to</span>
-          <span>Diff</span>
-        </div>
-        <div v-for="assignment in assignments" :key="assignment.id" class="assignment-row" role="row">
-          <label class="tenant-check">
-            <input v-model="assignment.selected" type="checkbox" />
-            <span>{{ assignment.slug }}</span>
-          </label>
-          <PlanBadge :label="assignment.currentPlanName" :tone="planTone(assignment.currentPlan)" />
-          <strong>{{ formatCurrency(assignment.currentMrr) }}</strong>
-          <span>{{ assignment.nextRenewal }}</span>
-          <select v-model="assignment.targetPlan" :aria-label="`Đổi gói cho ${assignment.slug}`">
-            <option v-for="plan in planCatalog" :key="plan.code" :value="plan.code">{{ plan.name }}</option>
-          </select>
-          <b :data-tone="diffTone(assignment)">{{ diffLabel(assignment) }}</b>
-        </div>
-      </div>
-
-      <p v-if="lastBulkAction" class="bulk-result" role="status">{{ lastBulkAction }}</p>
-    </AppCard>
-
-    <aside class="handoff-note">
-      <strong>BE handoff request</strong>
-      <span>
-        Cần contract plan catalog, module entitlement, tenant assignment bulk-change và audit reason trước khi chuyển mock
-        sang real API.
-      </span>
-    </aside>
+      <aside class="handoff-note">
+        <strong>BE A.2 contract</strong>
+        <span>
+          Trang này gọi `/api/owner/plans`, `/api/owner/modules`, `/api/owner/tenant-plan-assignments` và
+          bulk-change, vẫn fallback mock trong auto mode khi runtime backend chưa bật.
+        </span>
+      </aside>
+    </template>
   </div>
 </template>
 
@@ -282,6 +356,23 @@ function bulkChangePlan() {
   font-size: 14px;
   font-weight: 650;
   line-height: 22px;
+}
+
+.state-card {
+  display: grid;
+  justify-items: start;
+  gap: var(--space-3);
+}
+
+.state-card strong {
+  color: var(--color-text-primary);
+  font-size: 16px;
+}
+
+.state-card span {
+  color: var(--color-text-secondary);
+  font-size: 13px;
+  font-weight: 700;
 }
 
 .kpi-grid {

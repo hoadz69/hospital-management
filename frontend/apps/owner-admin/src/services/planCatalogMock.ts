@@ -1,36 +1,11 @@
-import type { TenantPlanCode } from "@clinic-saas/shared-types";
+import type {
+  OwnerModuleCatalogRow,
+  OwnerPlanCatalogItem,
+  OwnerTenantPlanAssignment,
+  TenantPlanCode
+} from "@clinic-saas/shared-types";
 
-export type PlanCatalogItem = {
-  code: TenantPlanCode;
-  name: string;
-  price: number;
-  description: string;
-  tenantCount: number;
-  tone: "info" | "neutral" | "warning";
-  popular?: boolean;
-};
-
-export type ModuleCatalogRow = {
-  id: string;
-  name: string;
-  category: string;
-  starter: string | boolean;
-  growth: string | boolean;
-  premium: string | boolean;
-};
-
-export type TenantPlanAssignment = {
-  id: string;
-  slug: string;
-  currentPlan: TenantPlanCode;
-  currentPlanName: string;
-  currentMrr: number;
-  nextRenewal: string;
-  selected: boolean;
-  targetPlan: TenantPlanCode;
-};
-
-export const planCatalog: PlanCatalogItem[] = [
+export const planCatalog: OwnerPlanCatalogItem[] = [
   {
     code: "starter",
     name: "Starter",
@@ -58,7 +33,7 @@ export const planCatalog: PlanCatalogItem[] = [
   }
 ];
 
-export const moduleCatalog: ModuleCatalogRow[] = [
+export const moduleCatalog: OwnerModuleCatalogRow[] = [
   { id: "public-website", name: "Public Website", category: "Website", starter: "limit-3-pages", growth: "unlimited", premium: "unlimited" },
   { id: "booking-online", name: "Booking Online", category: "Booking", starter: "100/month", growth: "1000/month", premium: "unlimited" },
   { id: "doctor-schedule", name: "Doctor Schedule", category: "Clinic Ops", starter: true, growth: true, premium: true },
@@ -73,7 +48,7 @@ export const moduleCatalog: ModuleCatalogRow[] = [
   { id: "priority-support", name: "Priority support", category: "Support", starter: false, growth: "email", premium: "phone+email 24/7" }
 ];
 
-export const tenantPlanAssignments: TenantPlanAssignment[] = [
+export const tenantPlanAssignments: OwnerTenantPlanAssignment[] = [
   {
     id: "tenant-aurora-dental",
     slug: "aurora-dental",
