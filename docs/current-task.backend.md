@@ -563,3 +563,121 @@ Resume tiếp theo:
 3. Wave tiếp theo: persistence thật cho Domain/Template/CMS khi owner duyệt Phase 4 Wave B/D backend.
 4. Dotnet hiện dùng user-local full path C:\Users\nvhoa2\.dotnet\dotnet.exe nếu PATH chưa refresh.
 ```
+
+## Cập Nhật 2026-05-12 - Backend Phase 4 Wave B Owner Plan/Module Persistence Preparation
+
+Trạng thái: 🟡 **Plan ready / approval gate** trong Backend/DevOps lane. Chưa implement code, chưa tạo migration/schema, chưa dùng DB/server/secret thật, không sửa frontend.
+
+Agents Lead đã chọn:
+
+```txt
+Lead Agent: điều phối lane, cập nhật plan/handoff/dashboard.
+Architect Agent: quyết định service ownership Tenant Service vs Billing Service.
+Database Agent: thiết kế schema dự kiến, constraint/index, migration guardrail.
+Backend Agent: chuẩn bị hướng repository/use case/API wiring sau khi owner duyệt.
+QA Agent: định nghĩa smoke cho list plans, list modules, list assignments, bulk-change, ClinicAdmin 403.
+Documentation Agent: cập nhật docs lane.
+DevOps Agent: chỉ tham gia sau khi cần runtime DB smoke, không dùng server thật ở lượt này.
+```
+
+Architect + Database decision:
+
+```txt
+Persistence owner hiện tại: Tenant Service.
+Lý do: plan catalog, module entitlement và tenant-plan assignment gắn tenant lifecycle,
+create clinic flow và module enablement; Tenant Service đã sở hữu platform.tenants
+và platform.tenant_modules.
+
+Billing Service để phase sau:
+  Sở hữu subscription, invoice, payment, renewal và payment provider integration.
+  Không query trực tiếp bảng private của Tenant Service; tích hợp sau qua API/event.
+
+API Gateway: không truy DB; khi implement persistence sẽ thay static contract stub bằng forwarding/typed HttpClient tới Tenant Service cho `/api/owner/*`.
+Security: `/api/owner/*` là Owner Super Admin cross-tenant explicit use case;
+ClinicAdmin phải 403.
+```
+
+Schema dự kiến để owner duyệt:
+
+```txt
+platform.plans
+platform.modules
+platform.plan_module_entitlements
+platform.tenant_plan_assignments
+platform.tenant_plan_assignment_changes (đề xuất audit tối thiểu cho bulk-change)
+```
+
+Migration/backfill dự kiến nếu owner duyệt:
+
+```txt
+Migration: backend/services/tenant-service/src/TenantService.Infrastructure/Migrations/0002_add_owner_plan_module_persistence.sql
+Seed idempotent Starter/Growth/Premium + module matrix từ contract A.2.
+Backfill tenant_plan_assignments từ platform.tenants.plan_code/plan_display_name.
+Giữ platform.tenants.plan_code/plan_display_name trong wave đầu để tương thích Phase 2.
+Giữ platform.tenant_modules là snapshot/override theo tenant; plan_module_entitlements là source template theo plan.
+Không drop/truncate/destructive.
+```
+
+Test/smoke plan:
+
+```txt
+Static/build:
+  git diff --check
+  C:\Users\nvhoa2\.dotnet\dotnet.exe restore backend/ClinicSaaS.Backend.sln
+  C:\Users\nvhoa2\.dotnet\dotnet.exe build backend/ClinicSaaS.Backend.sln --no-restore
+  C:\Users\nvhoa2\.dotnet\dotnet.exe test backend/ClinicSaaS.Backend.sln --no-build
+
+API smoke Tenant Service + API Gateway:
+  GET /api/owner/plans -> 200, data từ DB
+  GET /api/owner/modules -> 200, module matrix từ DB
+  GET /api/owner/tenant-plan-assignments -> 200, join tenant hiện có
+  POST /api/owner/tenant-plan-assignments/bulk-change -> 200, transaction update đúng
+  POST bulk-change thiếu auditReason -> 400 validation
+  POST bulk-change targetPlan không hợp lệ -> 400 validation
+  ClinicAdmin 403 cho `/api/owner/*`, tối thiểu assignment list và bulk-change
+```
+
+Song song với FE A9:
+
+```txt
+Có thể chạy song song nếu Backend giữ nguyên endpoint/response field hiện tại và chỉ thay source data từ stub sang DB.
+FE A9 có thể tiếp tục mock/auto mode hoặc gọi contract `/api/owner/*`.
+Nếu FE A9 đổi payload `/plans` hoặc owner đổi service owner sang Billing Service ngay, cần sync lại trước khi implement.
+```
+
+Resume tiếp theo:
+
+```txt
+1. Chờ owner duyệt plan §16 trong temp/plan.backend.md trước khi tạo migration/schema/code persistence.
+2. Nếu duyệt implement: bắt đầu Tenant Service migration 0002 + Dapper repository + tests/smoke đúng §16.
+3. Không stage/commit/push trong lượt này.
+```
+
+## Cập Nhật 2026-05-12 - BE A.3 Contract Hardening + FE A9 Support Plan
+
+Trạng thái: 🟡 **Plan-only / có thể chạy song song FE A9**, chưa implement code, chưa tạo migration/schema.
+
+Scope song song không chặn FE:
+
+```txt
+- Giữ nguyên `/api/owner/*` response shape cho FE A9.
+- Tăng test guard cho Owner Plan Module contract/stub:
+  ClinicAdmin forbidden, missing/invalid owner role, bulk-change validation.
+- Rà OpenAPI/gateway consistency cho `/api/owner/plans`, `/api/owner/modules`,
+  `/api/owner/tenant-plan-assignments`, `/api/owner/tenant-plan-assignments/bulk-change`.
+- Không persistence, không DB, không Billing, không đổi contract field.
+```
+
+Agents đề xuất:
+
+```txt
+Lead + Architect + Backend + QA + Documentation.
+Database chỉ review "no migration"; DevOps chỉ tham gia nếu cần local runtime smoke.
+```
+
+Điểm dừng:
+
+```txt
+BE A.3 có thể implement sau nếu owner muốn hardening song song.
+Plan/Module persistence thật vẫn giữ ở §16 và cần owner duyệt riêng.
+```

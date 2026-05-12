@@ -1114,3 +1114,383 @@ feat(backend): add owner plan module contract stubs
 test(backend): cover owner plan module stub handler
 docs(backend): record owner plan module contract handoff
 ```
+
+## 16. Backend Phase 4 Wave B - Owner Plan/Module Persistence Preparation - 2026-05-12
+
+Trạng thái: 🟡 **Plan ready / approval gate**. Chưa implement code, chưa tạo migration/schema, chưa dùng DB/server/secret thật.
+
+### 16.1 Lane Và Agents
+
+```txt
+Lane: Backend/DevOps.
+Không sửa frontend.
+Không stage/commit/push.
+
+Agents tự chọn:
+  Lead Agent: điều phối, cập nhật plan/handoff/dashboard.
+  Architect Agent: chốt service boundary Tenant Service vs Billing Service.
+  Database Agent: thiết kế schema dự kiến, query path, index và migration guardrail.
+  Backend Agent: chuẩn bị hướng implement repository/use case/API wiring sau khi owner duyệt.
+  QA Agent: định nghĩa test/smoke cho endpoint owner plan/module.
+  Documentation Agent: cập nhật docs lane và dashboard ngắn.
+  DevOps Agent: chỉ tham gia sau khi cần runtime DB smoke, không dùng server thật ở planning này.
+```
+
+### 16.2 Architect + Database Decision
+
+```txt
+Service owner hiện tại: Tenant Service.
+
+Lý do:
+  - Plan catalog, module entitlement và tenant-plan assignment đang gắn trực tiếp với tenant lifecycle,
+    create clinic flow và module enablement.
+  - Existing Tenant Service đã sở hữu platform.tenants và platform.tenant_modules.
+  - FE A8/A9 cần cùng endpoint contract `/api/owner/*`, không cần Billing payment runtime.
+
+Billing Service phase sau:
+  - Sở hữu subscription, invoice, payment, renewal collection và payment provider integration.
+  - Không query trực tiếp bảng private của Tenant Service.
+  - Tích hợp qua API/event khi Billing thật được duyệt, ví dụ TenantPlanChanged hoặc SubscriptionRenewed.
+
+API Gateway:
+  - Không truy database.
+  - Giai đoạn persistence thay static contract stub bằng forwarding/typed HttpClient tới Tenant Service cho `/api/owner/*`.
+
+Security:
+  - `/api/owner/*` là Owner Super Admin platform-scoped/cross-tenant explicit use case.
+  - ClinicAdmin phải nhận 403, tối thiểu với list assignment và bulk-change; đề xuất áp dụng cho cả 4 endpoint owner plan/module.
+```
+
+### 16.3 Scope Nếu Owner Duyệt Implement
+
+```txt
+Implement persistence thật cho endpoint A.2 hiện có:
+  GET  /api/owner/plans
+  GET  /api/owner/modules
+  GET  /api/owner/tenant-plan-assignments
+  POST /api/owner/tenant-plan-assignments/bulk-change
+
+Mục tiêu:
+  - Thay data in-memory bằng repository Dapper/Npgsql trong Tenant Service.
+  - Giữ response contract hiện tại để không phá FE A8/A9.
+  - Bulk-change chạy transaction rõ ràng khi update nhiều tenant assignment.
+  - Map validation/conflict/not-found thành ProblemDetails/ValidationProblem rõ.
+  - API Gateway tiếp tục không truy DB.
+```
+
+### 16.4 Out Of Scope
+
+```txt
+Không tạo migration/schema trước khi owner duyệt.
+Không implement Billing Service.
+Không tích hợp Stripe/VNPay.
+Không đổi frontend/API shape trừ khi owner duyệt riêng.
+Không dùng DB/server/connection string/secret thật.
+Không sửa `frontend/`.
+Không tạo Figma file.
+Không commit/push/stage.
+```
+
+### 16.5 Allowed File Areas Khi Được Duyệt
+
+```txt
+backend/shared/contracts/Tenancy/**
+backend/shared/contracts/Authorization/**
+backend/services/tenant-service/src/TenantService.Domain/**
+backend/services/tenant-service/src/TenantService.Application/Plans/**
+backend/services/tenant-service/src/TenantService.Application/Tenants/**
+backend/services/tenant-service/src/TenantService.Infrastructure/Persistence/**
+backend/services/tenant-service/src/TenantService.Infrastructure/Migrations/**
+backend/services/tenant-service/src/TenantService.Api/Endpoints/**
+backend/services/tenant-service/tests/TenantService.Tests/**
+backend/services/api-gateway/src/ApiGateway.Api/Endpoints/**
+docs/current-task.backend.md
+temp/plan.backend.md
+docs/current-task.md
+```
+
+### 16.6 Schema Dự Kiến
+
+Chỉ là thiết kế để owner duyệt, chưa tạo migration.
+
+```txt
+platform.plans
+  plan_code text primary key
+  name text not null
+  description text null
+  price_monthly numeric(12,2) not null
+  currency_code text not null default 'USD'
+  tone text null
+  is_popular boolean not null default false
+  display_order integer not null
+  is_active boolean not null default true
+  created_at_utc timestamptz not null
+  updated_at_utc timestamptz not null
+
+platform.modules
+  module_code text primary key
+  name text not null
+  category text not null
+  description text null
+  display_order integer not null
+  is_active boolean not null default true
+  created_at_utc timestamptz not null
+  updated_at_utc timestamptz not null
+
+platform.plan_module_entitlements
+  plan_code text not null references platform.plans(plan_code)
+  module_code text not null references platform.modules(module_code)
+  is_enabled boolean not null
+  limit_value text null
+  display_value text null
+  created_at_utc timestamptz not null
+  updated_at_utc timestamptz not null
+  primary key (plan_code, module_code)
+
+platform.tenant_plan_assignments
+  id uuid primary key
+  tenant_id uuid not null references platform.tenants(id)
+  current_plan_code text not null references platform.plans(plan_code)
+  target_plan_code text null references platform.plans(plan_code)
+  effective_at text not null default 'next_renewal'
+  next_renewal_date date null
+  current_mrr numeric(12,2) not null
+  currency_code text not null default 'USD'
+  status text not null default 'active'
+  audit_reason text null
+  assigned_by_user_id text null
+  assigned_at_utc timestamptz not null
+  updated_at_utc timestamptz not null
+  version integer not null default 1
+
+platform.tenant_plan_assignment_changes (đề xuất kèm để giữ audit tối thiểu)
+  id uuid primary key
+  bulk_operation_id uuid null
+  tenant_id uuid not null references platform.tenants(id)
+  from_plan_code text not null
+  to_plan_code text not null
+  effective_at text not null
+  audit_reason text not null
+  actor_user_id text null
+  created_at_utc timestamptz not null
+```
+
+### 16.7 Constraint Và Index Dự Kiến
+
+```txt
+plans:
+  ck_plans_price_monthly_non_negative
+  ck_plans_currency_code_not_empty
+  idx_plans_is_active_display_order
+
+modules:
+  idx_modules_category_display_order
+  idx_modules_is_active_display_order
+
+plan_module_entitlements:
+  idx_plan_module_entitlements_plan_code
+  idx_plan_module_entitlements_module_code
+
+tenant_plan_assignments:
+  ux_tenant_plan_assignments_tenant_id
+  idx_tenant_plan_assignments_current_plan_code
+  idx_tenant_plan_assignments_target_plan_code
+  idx_tenant_plan_assignments_status_next_renewal_date
+  ck_tenant_plan_assignments_effective_at
+  ck_tenant_plan_assignments_status
+  ck_tenant_plan_assignments_current_mrr_non_negative
+
+tenant_plan_assignment_changes:
+  idx_tenant_plan_assignment_changes_tenant_id_created_at
+  idx_tenant_plan_assignment_changes_bulk_operation_id
+```
+
+### 16.8 Migration/Backfill Strategy Dự Kiến
+
+```txt
+Migration đề xuất sau duyệt: 0002_add_owner_plan_module_persistence.sql.
+
+1. Tạo bảng catalog platform.plans, platform.modules, platform.plan_module_entitlements.
+2. Seed idempotent Starter/Growth/Premium và module matrix từ contract A.2.
+3. Tạo platform.tenant_plan_assignments.
+4. Backfill assignment từ platform.tenants.plan_code, plan_display_name và current tenant list.
+5. Giữ platform.tenants.plan_code/plan_display_name làm snapshot tương thích Phase 2 ở wave đầu;
+   không drop/rename trong migration này.
+6. Giữ platform.tenant_modules làm tenant-owned module enablement thực tế; plan_module_entitlements là source
+   template theo plan, còn tenant_modules là snapshot/override theo tenant.
+7. Ghi SQL comment tiếng Việt + COMMENT ON cho table/column/index quan trọng.
+8. Không destructive/drop/truncate.
+```
+
+### 16.9 Backend Implementation Plan Sau Duyệt
+
+```txt
+1. Thêm domain/application model tối thiểu cho plan catalog, module entitlement và tenant assignment.
+2. Tách interface repository khỏi OwnerPlanCatalogStubHandler:
+   - IPlanCatalogRepository
+   - ITenantPlanAssignmentRepository
+3. Implement Dapper repository trong TenantService.Infrastructure.
+4. List plans/modules đọc từ PostgreSQL, sort theo display_order/category.
+5. List assignments join platform.tenants + tenant_plan_assignments, trả contract hiện tại.
+6. Bulk-change:
+   - validate selectedTenantIds, targetPlan, effectiveAt, auditReason.
+   - transaction update tenant_plan_assignments + insert tenant_plan_assignment_changes.
+   - tính changedCount và mrrDiff từ current_mrr/target plan price.
+7. Cập nhật DI để dùng repository thật; giữ stub chỉ nếu cần test hoặc fallback dev đã được duyệt.
+8. Thay API Gateway static stub bằng forwarding/typed HttpClient tới Tenant Service, không thêm DB dependency vào gateway.
+9. Không đổi endpoint path/response field cho FE.
+```
+
+### 16.10 Test/Smoke Plan
+
+```txt
+Static/build:
+  git diff --check
+  C:\Users\nvhoa2\.dotnet\dotnet.exe restore backend/ClinicSaaS.Backend.sln
+  C:\Users\nvhoa2\.dotnet\dotnet.exe build backend/ClinicSaaS.Backend.sln --no-restore
+  C:\Users\nvhoa2\.dotnet\dotnet.exe test backend/ClinicSaaS.Backend.sln --no-build
+
+Database verify sau khi có migration:
+  Apply migration trên DB dev/local được owner duyệt.
+  Verify tables/constraints/indexes tồn tại.
+  Verify seed Starter/Growth/Premium + module matrix.
+  Verify backfill tenant_plan_assignments từ tenant hiện có.
+
+API smoke Tenant Service:
+  GET /health -> 200
+  GET /openapi/v1.json -> 200 trong Development
+  GET /api/owner/plans -> 200, trả plan từ DB, không rỗng
+  GET /api/owner/modules -> 200, trả module matrix từ DB
+  GET /api/owner/tenant-plan-assignments -> 200, join đúng tenant hiện có
+  POST /api/owner/tenant-plan-assignments/bulk-change -> 200, transaction update đúng
+  POST bulk-change thiếu auditReason -> 400 validation
+  POST bulk-change targetPlan không hợp lệ -> 400 validation
+  ClinicAdmin 403 cho `/api/owner/*`, tối thiểu assignment list và bulk-change
+
+API smoke API Gateway:
+  Lặp lại 4 endpoint `/api/owner/*` qua gateway.
+  Verify ClinicAdmin 403 qua gateway.
+  Verify gateway không cần DB connection string.
+```
+
+### 16.11 Acceptance Criteria
+
+```txt
+- Service ownership ghi rõ: Tenant Service hiện tại, Billing Service phase sau.
+- Không có frontend diff.
+- Không có migration/schema khi chưa được owner duyệt.
+- Schema dự kiến đủ plans/modules/tenant_plan_assignments và audit tối thiểu.
+- Query path + index dự kiến rõ.
+- Bulk-change có transaction boundary rõ.
+- Test/smoke cover list plans, list modules, list assignments, bulk change, ClinicAdmin 403.
+- API contract hiện tại giữ ổn định cho FE A8/A9.
+```
+
+### 16.12 Có Thể Chạy Song Song Với FE A9
+
+```txt
+Có thể chạy song song:
+  - FE A9 tiếp tục dùng contract hiện có `/api/owner/*` hoặc mock/auto mode.
+  - Backend persistence implement phía sau cùng response shape, không cần FE đổi trước.
+  - Backend unit/integration test có thể chạy độc lập.
+  - API Gateway route shape giữ nguyên nên không block FE.
+
+Không nên chạy song song nếu:
+  - FE A9 muốn đổi field contract của `/plans` hoặc assignment payload.
+  - Owner quyết định chuyển service owner sang Billing Service ngay trong wave này.
+  - Owner muốn implement Billing payment/subscription thật cùng lúc.
+
+Coordination note:
+  - Nếu Backend đổi validation/status message, phải báo FE để cập nhật error state copy.
+  - Nếu thêm field response, chỉ add-only để không phá FE.
+```
+
+### 16.13 Điểm Dừng Và Owner Approval Cần Có
+
+```txt
+Dừng tại plan. Chờ owner duyệt rõ trước khi code/migration:
+  "Tôi duyệt plan Backend Phase 4 Wave B persistence, bắt đầu implement"
+  hoặc "Duyệt, tạo migration Tenant Service 0002".
+
+Nếu owner chỉ muốn chuẩn bị tiếp mà chưa tạo schema:
+  - Có thể tách task tiếp theo thành design-only review/OpenAPI contract review.
+```
+
+## 17. BE A.3 Contract Hardening + FE A9 Support Plan - 2026-05-12
+
+Trạng thái: **Plan ready / có thể chạy song song FE A9; chưa implement code**.
+
+### 17.1 Mục Tiêu
+
+```txt
+Tăng độ chắc của contract BE A.2 để FE A9 gọi `/api/owner/*` ổn định hơn,
+không đụng persistence/schema/migration và không đổi response shape hiện tại.
+```
+
+### 17.2 Agents
+
+```txt
+Lead Agent: điều phối lane và report song song với FE.
+Architect Agent: giữ service boundary Tenant Service + API Gateway, không kéo Billing/DB vào wave này.
+Backend Agent: bổ sung test/guard nếu owner duyệt implement.
+QA Agent: restore/build/test + local Development smoke service/gateway.
+Documentation Agent: cập nhật backend lane.
+Database Agent: chỉ xác nhận no migration.
+```
+
+### 17.3 Scope Có Thể Làm Song Song
+
+```txt
+- Không đổi endpoint/field contract:
+  GET /api/owner/plans
+  GET /api/owner/modules
+  GET /api/owner/tenant-plan-assignments
+  POST /api/owner/tenant-plan-assignments/bulk-change
+- Tăng test cho ClinicAdmin 403, owner role invalid, validation bulk-change.
+- Rà OpenAPI/gateway consistency để FE A9 real smoke không gặp lệch route.
+- Không persistence, không Billing/subscription, không migration 0002.
+```
+
+### 17.4 Allowed Files Nếu Owner Duyệt Implement
+
+```txt
+backend/shared/contracts/**
+backend/services/tenant-service/src/TenantService.Api/**
+backend/services/tenant-service/src/TenantService.Application/Plans/**
+backend/services/tenant-service/tests/**
+backend/services/api-gateway/src/ApiGateway.Api/**
+backend/services/api-gateway/tests/**
+docs/current-task.backend.md
+temp/plan.backend.md
+```
+
+### 17.5 Verify Commands
+
+```powershell
+git diff --check
+C:\Users\nvhoa2\.dotnet\dotnet.exe restore backend/ClinicSaaS.Backend.sln
+C:\Users\nvhoa2\.dotnet\dotnet.exe build backend/ClinicSaaS.Backend.sln --no-restore
+C:\Users\nvhoa2\.dotnet\dotnet.exe test backend/ClinicSaaS.Backend.sln --no-build
+```
+
+Local smoke nếu runtime bật:
+
+```txt
+Tenant Service + API Gateway:
+  GET /health
+  GET /openapi/v1.json
+  GET /api/owner/plans
+  GET /api/owner/modules
+  GET /api/owner/tenant-plan-assignments
+  POST /api/owner/tenant-plan-assignments/bulk-change
+  Negative: ClinicAdmin 403, invalid targetPlan 400, missing auditReason 400.
+```
+
+### 17.6 Out Of Scope / Approval Gate
+
+```txt
+- Không tạo schema/migration/repository persistence trong A.3.
+- Không triển khai Billing Service/subscription/invoice/payment.
+- Không đổi FE A9 contract hoặc UI.
+- Persistence thật vẫn theo §16, chờ owner duyệt riêng.
+```
