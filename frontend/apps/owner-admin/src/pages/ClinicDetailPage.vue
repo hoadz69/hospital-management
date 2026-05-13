@@ -11,7 +11,8 @@ import TenantLifecycleConfirmModal from "../components/TenantLifecycleConfirmMod
 import { formatDomainStatus, formatModuleCode, formatTenantStatus } from "../services/labels";
 import { tenantClient } from "../services/tenantClient";
 
-type LifecycleAction = "suspend" | "archive" | "restore";
+type LifecycleAction = "activate" | "suspend" | "archive" | "restore";
+type LifecycleModalState = "idle" | "loading" | "success" | "error";
 type DomainSurface = "dns" | "ssl";
 type DomainOperationState = "ready" | "loading" | "empty" | "error" | "success";
 
@@ -25,10 +26,13 @@ const loading = ref(false);
 const error = ref<string | null>(null);
 const lifecycleAction = ref<LifecycleAction>("suspend");
 const lifecycleModalOpen = ref(false);
+const lifecycleState = ref<LifecycleModalState>("idle");
+const lifecycleMessage = ref<string | undefined>();
 const activeDomainSurface = ref<DomainSurface>("dns");
 const domainOperationState = ref<DomainOperationState>("ready");
 const domainOperationMessage = ref<string | undefined>();
 let retryTimer: ReturnType<typeof window.setTimeout> | undefined;
+let lifecycleTimer: ReturnType<typeof window.setTimeout> | undefined;
 
 const detailHeading = computed(() => {
   if (tenant.value) {
@@ -42,13 +46,25 @@ const detailHeading = computed(() => {
   return "Đang tải phòng khám...";
 });
 
-const nextStatus = computed<TenantStatus>(() => {
-  if (!tenant.value || tenant.value.status !== "Active") {
-    return "Active";
+const primaryLifecycleAction = computed<LifecycleAction>(() => {
+  if (!tenant.value) {
+    return "activate";
   }
 
-  return "Suspended";
+  if (tenant.value.status === "Draft") {
+    return "activate";
+  }
+
+  if (tenant.value.status === "Active") {
+    return "suspend";
+  }
+
+  return "restore";
 });
+
+const primaryLifecycleLabel = computed(() => lifecycleActionLabel(primaryLifecycleAction.value));
+const isLifecycleBusy = computed(() => lifecycleState.value === "loading");
+const lifecycleTargetStatus = computed(() => targetStatusForAction(lifecycleAction.value));
 
 const domainCards = computed<TenantDomain[]>(() => {
   if (!tenant.value) {
@@ -211,13 +227,44 @@ function moduleChipItems(moduleCodes: TenantDetail["moduleCodes"]) {
   }));
 }
 
+function lifecycleActionLabel(action: LifecycleAction) {
+  if (action === "activate") {
+    return "Kích hoạt phòng khám";
+  }
+
+  if (action === "restore") {
+    return "Khôi phục phòng khám";
+  }
+
+  if (action === "archive") {
+    return "Lưu trữ tenant";
+  }
+
+  return "Tạm ngưng phòng khám";
+}
+
+function targetStatusForAction(action: LifecycleAction): TenantStatus {
+  if (action === "archive") {
+    return "Archived";
+  }
+
+  if (action === "suspend") {
+    return "Suspended";
+  }
+
+  return "Active";
+}
+
 async function loadTenant() {
   clearRetryTimer();
+  clearLifecycleTimer();
   loading.value = true;
   error.value = null;
   tenant.value = undefined;
   domainOperationState.value = "ready";
   domainOperationMessage.value = undefined;
+  lifecycleState.value = "idle";
+  lifecycleMessage.value = undefined;
 
   try {
     tenant.value = await tenantClient.getTenant(props.tenantId);
@@ -234,35 +281,62 @@ async function loadTenant() {
 }
 
 function updateCurrentStatus() {
-  openLifecycleModal(nextStatus.value === "Active" ? "restore" : "suspend");
+  openLifecycleModal(primaryLifecycleAction.value);
 }
 
 function openLifecycleModal(action: LifecycleAction) {
-  lifecycleAction.value = action;
-  lifecycleModalOpen.value = true;
-}
-
-async function confirmLifecycle(action: LifecycleAction) {
-  lifecycleModalOpen.value = false;
-
-  const status: TenantStatus = action === "archive" ? "Archived" : action === "restore" ? "Active" : "Suspended";
-  await updateStatus(status);
-}
-
-async function updateStatus(status: TenantStatus) {
-  if (!tenant.value) {
+  if (isLifecycleBusy.value) {
     return;
   }
 
-  loading.value = true;
+  lifecycleAction.value = action;
+  lifecycleState.value = "idle";
+  lifecycleMessage.value = undefined;
+  lifecycleModalOpen.value = true;
+}
 
-  try {
-    tenant.value = await tenantClient.updateTenantStatus(tenant.value.id, { status });
-  } catch (updateError) {
-    error.value = (updateError as { message?: string }).message ?? "Không cập nhật được trạng thái phòng khám.";
-  } finally {
-    loading.value = false;
+function closeLifecycleModal() {
+  if (isLifecycleBusy.value) {
+    return;
   }
+
+  lifecycleModalOpen.value = false;
+  lifecycleState.value = "idle";
+  lifecycleMessage.value = undefined;
+}
+
+function confirmLifecycle(action: LifecycleAction, reason: string) {
+  if (!tenant.value) {
+    lifecycleState.value = "error";
+    lifecycleMessage.value = "Không tìm thấy tenant trong UI state hiện tại.";
+    return;
+  }
+
+  clearLifecycleTimer();
+  lifecycleState.value = "loading";
+  lifecycleMessage.value = reason
+    ? `Đang áp dụng ${lifecycleActionLabel(action).toLowerCase()} với lý do: ${reason}`
+    : `Đang áp dụng ${lifecycleActionLabel(action).toLowerCase()} bằng mock local state.`;
+
+  lifecycleTimer = window.setTimeout(() => {
+    if (!tenant.value) {
+      lifecycleState.value = "error";
+      lifecycleMessage.value = "Tenant đã rời khỏi trang trước khi mock lifecycle hoàn tất.";
+      lifecycleTimer = undefined;
+      return;
+    }
+
+    const status = targetStatusForAction(action);
+    tenant.value = { ...tenant.value, status };
+    lifecycleState.value = "success";
+    lifecycleMessage.value = `${tenant.value.displayName} đã chuyển sang ${status} trong local UI state.`;
+    lifecycleTimer = window.setTimeout(() => {
+      lifecycleModalOpen.value = false;
+      lifecycleState.value = "idle";
+      lifecycleMessage.value = undefined;
+      lifecycleTimer = undefined;
+    }, 760);
+  }, 720);
 }
 
 function handleDomainAction(status: TenantDomainStatus, key: string) {
@@ -280,6 +354,13 @@ function clearRetryTimer() {
   if (retryTimer !== undefined) {
     window.clearTimeout(retryTimer);
     retryTimer = undefined;
+  }
+}
+
+function clearLifecycleTimer() {
+  if (lifecycleTimer !== undefined) {
+    window.clearTimeout(lifecycleTimer);
+    lifecycleTimer = undefined;
   }
 }
 
@@ -319,7 +400,10 @@ function retrySslRow(rowId: string) {
 }
 
 onMounted(loadTenant);
-onUnmounted(clearRetryTimer);
+onUnmounted(() => {
+  clearRetryTimer();
+  clearLifecycleTimer();
+});
 watch(() => props.tenantId, loadTenant);
 </script>
 
@@ -336,16 +420,18 @@ watch(() => props.tenantId, loadTenant);
         </RouterLink>
         <AppButton
           v-if="tenant"
-          :label="nextStatus === 'Active' ? 'Kích hoạt phòng khám' : 'Tạm ngưng phòng khám'"
-          :variant="nextStatus === 'Active' ? 'primary' : 'danger'"
-          :loading="loading"
+          :label="primaryLifecycleLabel"
+          :variant="primaryLifecycleAction === 'suspend' ? 'danger' : 'primary'"
+          :disabled="isLifecycleBusy"
+          :loading="isLifecycleBusy"
           @click="updateCurrentStatus"
         />
         <AppButton
           v-if="tenant && tenant.status !== 'Archived'"
           label="Lưu trữ tenant"
           variant="danger"
-          :loading="loading"
+          :disabled="isLifecycleBusy"
+          :loading="isLifecycleBusy && lifecycleAction === 'archive'"
           @click="openLifecycleModal('archive')"
         />
       </div>
@@ -475,8 +561,11 @@ watch(() => props.tenantId, loadTenant);
       :action="lifecycleAction"
       :tenant-name="tenant.displayName"
       :tenant-slug="tenant.slug"
-      :loading="loading"
-      @close="lifecycleModalOpen = false"
+      :current-status="tenant.status"
+      :target-status="lifecycleTargetStatus"
+      :state="lifecycleState"
+      :message="lifecycleMessage"
+      @close="closeLifecycleModal"
       @confirm="confirmLifecycle"
     />
   </div>

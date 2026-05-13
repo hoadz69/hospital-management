@@ -9,7 +9,7 @@ import SslPendingState from "./SslPendingState.vue";
 import TenantLifecycleConfirmModal from "./TenantLifecycleConfirmModal.vue";
 import { formatDomainStatus, formatModuleCode, formatTenantStatus } from "../services/labels";
 
-type LifecycleAction = "suspend" | "archive" | "restore";
+type LifecycleAction = "activate" | "suspend" | "archive" | "restore";
 type DomainSurface = "dns" | "ssl" | null;
 
 const props = defineProps<{
@@ -26,13 +26,23 @@ const emit = defineEmits<{
   updateStatus: [status: TenantStatus];
 }>();
 
-const nextStatus = computed<TenantStatus>(() => {
-  if (!props.tenant || props.tenant.status !== "Active") {
-    return "Active";
+const primaryLifecycleAction = computed<LifecycleAction>(() => {
+  if (!props.tenant) {
+    return "activate";
   }
 
-  return "Suspended";
+  if (props.tenant.status === "Draft") {
+    return "activate";
+  }
+
+  if (props.tenant.status === "Active") {
+    return "suspend";
+  }
+
+  return "restore";
 });
+const primaryLifecycleLabel = computed(() => lifecycleActionLabel(primaryLifecycleAction.value));
+const lifecycleTargetStatus = computed(() => targetStatusForAction(lifecycleAction.value));
 
 const lifecycleAction = ref<LifecycleAction>("suspend");
 const lifecycleModalOpen = ref(false);
@@ -157,6 +167,34 @@ function moduleChipItems(moduleCodes: TenantDetail["moduleCodes"]) {
   }));
 }
 
+function lifecycleActionLabel(action: LifecycleAction) {
+  if (action === "activate") {
+    return "Kích hoạt phòng khám";
+  }
+
+  if (action === "restore") {
+    return "Khôi phục phòng khám";
+  }
+
+  if (action === "archive") {
+    return "Lưu trữ tenant";
+  }
+
+  return "Tạm ngưng phòng khám";
+}
+
+function targetStatusForAction(action: LifecycleAction): TenantStatus {
+  if (action === "archive") {
+    return "Archived";
+  }
+
+  if (action === "suspend") {
+    return "Suspended";
+  }
+
+  return "Active";
+}
+
 function openLifecycleModal(action: LifecycleAction) {
   lifecycleAction.value = action;
   lifecycleModalOpen.value = true;
@@ -164,18 +202,7 @@ function openLifecycleModal(action: LifecycleAction) {
 
 function confirmLifecycle(action: LifecycleAction) {
   lifecycleModalOpen.value = false;
-
-  if (action === "archive") {
-    emit("updateStatus", "Archived");
-    return;
-  }
-
-  if (action === "restore") {
-    emit("updateStatus", "Active");
-    return;
-  }
-
-  emit("updateStatus", "Suspended");
+  emit("updateStatus", targetStatusForAction(action));
 }
 
 function handleDomainAction(status: TenantDomainStatus, key: string) {
@@ -329,9 +356,9 @@ onBeforeUnmount(() => {
               <AppButton label="Mở trang chi tiết" variant="secondary" />
             </RouterLink>
             <AppButton
-              :label="nextStatus === 'Active' ? 'Kích hoạt phòng khám' : 'Tạm ngưng phòng khám'"
-              :variant="nextStatus === 'Active' ? 'primary' : 'danger'"
-              @click="openLifecycleModal(nextStatus === 'Active' ? 'restore' : 'suspend')"
+              :label="primaryLifecycleLabel"
+              :variant="primaryLifecycleAction === 'suspend' ? 'danger' : 'primary'"
+              @click="openLifecycleModal(primaryLifecycleAction)"
             />
             <AppButton
               v-if="tenant.status !== 'Archived'"
@@ -349,7 +376,8 @@ onBeforeUnmount(() => {
         :action="lifecycleAction"
         :tenant-name="tenant.displayName"
         :tenant-slug="tenant.slug"
-        :loading="loading"
+        :current-status="tenant.status"
+        :target-status="lifecycleTargetStatus"
         @close="lifecycleModalOpen = false"
         @confirm="confirmLifecycle"
       />

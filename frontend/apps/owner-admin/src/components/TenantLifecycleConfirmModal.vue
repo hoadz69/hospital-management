@@ -1,8 +1,10 @@
 <script setup lang="ts">
-import { AppButton, useFocusTrap } from "@clinic-saas/ui";
+import type { TenantStatus } from "@clinic-saas/shared-types";
+import { AppButton, StatePanel, StatusPill, useFocusTrap } from "@clinic-saas/ui";
 import { computed, nextTick, onBeforeUnmount, ref, watch } from "vue";
 
-type TenantLifecycleAction = "suspend" | "archive" | "restore";
+type TenantLifecycleAction = "activate" | "suspend" | "archive" | "restore";
+type LifecycleModalState = "idle" | "loading" | "success" | "error";
 
 const props = withDefaults(
   defineProps<{
@@ -10,10 +12,14 @@ const props = withDefaults(
     action: TenantLifecycleAction;
     tenantName: string;
     tenantSlug: string;
-    loading?: boolean;
+    currentStatus: TenantStatus;
+    targetStatus: TenantStatus;
+    state?: LifecycleModalState;
+    message?: string;
   }>(),
   {
-    loading: false
+    state: "idle",
+    message: undefined
   }
 );
 
@@ -30,6 +36,21 @@ const focusTrap = useFocusTrap(modalRef, {
 });
 
 const actionConfig = computed(() => {
+  if (props.action === "activate") {
+    return {
+      tone: "success",
+      icon: "AC",
+      title: "Kích hoạt tenant?",
+      description: "Tenant draft sẽ chuyển sang Active bằng mock lifecycle action. DNS/SSL vẫn giữ trạng thái hiện tại.",
+      confirmLabel: "Xác nhận kích hoạt",
+      reasonLabel: "",
+      reasonPlaceholder: "",
+      warning: "",
+      preview: "Tenant chuyển Active và Owner Admin có thể tiếp tục vận hành cấu hình.",
+      effects: ["Tenant status thành Active", "Clinic admin được phép đăng nhập", "Public site dùng domain state hiện có", "Không gọi API lifecycle mới"]
+    };
+  }
+
   if (props.action === "archive") {
     return {
       tone: "danger",
@@ -37,9 +58,10 @@ const actionConfig = computed(() => {
       title: "Lưu trữ tenant?",
       description:
         "Hành động này khóa tenant khỏi vận hành và đưa vào hàng đợi lưu trữ. Dữ liệu chỉ được xử lý tiếp khi backend lifecycle contract sẵn sàng.",
-      confirmLabel: "Xác nhận Archive",
+      confirmLabel: "Xác nhận lưu trữ",
       reasonLabel: "Lý do lưu trữ *",
       reasonPlaceholder: "Vd: Tenant ngừng hợp đồng hoặc cần khóa dữ liệu...",
+      warning: "Archive là hành động rủi ro cao: public site bị dừng, admin tenant bị khóa, và domain release chỉ nên làm khi đã có quyết định vận hành rõ ràng.",
       preview: "Tenant sẽ chuyển sang trạng thái lưu trữ và subdomain bị đóng băng.",
       effects: [
         "Tenant chuyển archived state",
@@ -57,9 +79,10 @@ const actionConfig = computed(() => {
       title: "Khôi phục tenant?",
       description:
         "Reactivate tenant từ trạng thái tạm ngừng hoặc lưu trữ. Public site sẽ resume sau khi DNS check hoàn tất.",
-      confirmLabel: "Xác nhận Restore",
+      confirmLabel: "Xác nhận khôi phục",
       reasonLabel: "",
       reasonPlaceholder: "",
+      warning: "",
       preview: "Tenant active trở lại, DNS recheck được đưa vào hàng đợi.",
       effects: [
         "Tenant active trở lại",
@@ -76,9 +99,10 @@ const actionConfig = computed(() => {
     title: "Tạm ngừng tenant?",
     description:
       "Public site sẽ chuyển sang fallback page. Clinic admin không truy cập được. Dữ liệu giữ nguyên.",
-    confirmLabel: "Xác nhận Suspend",
+    confirmLabel: "Xác nhận tạm ngừng",
     reasonLabel: "Lý do tạm ngừng *",
     reasonPlaceholder: "Vd: Tenant không thanh toán plan...",
+    warning: "Suspend sẽ chặn clinic admin và đưa public site về fallback page. Chỉ dùng khi có lý do vận hành rõ ràng.",
     preview: "Tạm ngừng vận hành - vui lòng liên hệ chủ phòng khám.",
     effects: [
       "Public site chuyển sang maintenance page",
@@ -89,8 +113,62 @@ const actionConfig = computed(() => {
   };
 });
 
-const requiresReason = computed(() => props.action !== "restore");
-const confirmDisabled = computed(() => requiresReason.value && reason.value.trim().length < 4);
+const isBusy = computed(() => props.state === "loading");
+const requiresReason = computed(() => props.action === "suspend" || props.action === "archive");
+const reasonLength = computed(() => reason.value.trim().length);
+const confirmDisabled = computed(() => isBusy.value || props.state === "success" || (requiresReason.value && reasonLength.value < 8));
+const statePanelTone = computed(() => {
+  if (props.state === "loading") {
+    return "loading";
+  }
+
+  if (props.state === "success") {
+    return "success";
+  }
+
+  if (props.state === "error") {
+    return "danger";
+  }
+
+  return "info";
+});
+const stateTitle = computed(() => {
+  if (props.state === "loading") {
+    return "Đang xử lý lifecycle";
+  }
+
+  if (props.state === "success") {
+    return "Đã áp dụng lifecycle action";
+  }
+
+  if (props.state === "error") {
+    return "Không áp dụng được lifecycle action";
+  }
+
+  return "";
+});
+const statusTone = computed(() => {
+  if (props.currentStatus === "Active") {
+    return "success";
+  }
+
+  if (props.currentStatus === "Suspended" || props.currentStatus === "Archived") {
+    return "danger";
+  }
+
+  return "warning";
+});
+const targetStatusTone = computed(() => {
+  if (props.targetStatus === "Active") {
+    return "success";
+  }
+
+  if (props.targetStatus === "Suspended" || props.targetStatus === "Archived") {
+    return "danger";
+  }
+
+  return "warning";
+});
 
 watch(
   () => props.open,
@@ -144,11 +222,35 @@ function confirmAction() {
           <span class="lifecycle-icon" aria-hidden="true">{{ actionConfig.icon }}</span>
           <div>
             <h2 :id="`tenant-lifecycle-${action}`">{{ actionConfig.title }}</h2>
-            <p>Tenant: {{ tenantSlug }}</p>
+            <p>{{ tenantName }} · {{ tenantSlug }}</p>
           </div>
         </header>
 
+        <div class="status-strip" aria-label="Lifecycle status change">
+          <div>
+            <span>Hiện tại</span>
+            <StatusPill :label="currentStatus" :tone="statusTone" />
+          </div>
+          <strong aria-hidden="true">→</strong>
+          <div>
+            <span>Sau confirm</span>
+            <StatusPill :label="targetStatus" :tone="targetStatusTone" />
+          </div>
+        </div>
+
         <p class="lifecycle-description">{{ actionConfig.description }}</p>
+
+        <StatePanel
+          v-if="state !== 'idle'"
+          :title="stateTitle"
+          :description="message"
+          :tone="statePanelTone"
+          :busy="state === 'loading'"
+        />
+
+        <div v-if="actionConfig.warning" class="warning-box" role="alert">
+          {{ actionConfig.warning }}
+        </div>
 
         <div class="impact-box">
           <p>Hệ quả</p>
@@ -162,9 +264,12 @@ function confirmAction() {
           <textarea
             v-model="reason"
             :placeholder="actionConfig.reasonPlaceholder"
-            :disabled="loading"
+            :disabled="isBusy || state === 'success'"
             rows="3"
           ></textarea>
+          <small :data-invalid="requiresReason && reasonLength < 8 ? 'true' : 'false'">
+            Tối thiểu 8 ký tự · hiện có {{ reasonLength }} ký tự
+          </small>
         </label>
 
         <div class="preview-box">
@@ -173,11 +278,11 @@ function confirmAction() {
         </div>
 
         <footer class="lifecycle-actions">
-          <AppButton label="Hủy" variant="secondary" :disabled="loading" @click="$emit('close')" />
+          <AppButton label="Hủy" variant="secondary" :disabled="isBusy" @click="$emit('close')" />
           <AppButton
             :label="actionConfig.confirmLabel"
             :variant="actionConfig.tone === 'danger' || actionConfig.tone === 'warning' ? 'danger' : 'primary'"
-            :loading="loading"
+            :loading="isBusy"
             :disabled="confirmDisabled"
             @click="confirmAction"
           />
@@ -238,6 +343,7 @@ function confirmAction() {
 .lifecycle-description,
 .impact-box p,
 .impact-box ul,
+.warning-box,
 .preview-box span,
 .preview-box strong {
   margin: 0;
@@ -256,12 +362,52 @@ function confirmAction() {
   line-height: 20px;
 }
 
+.status-strip {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+  align-items: center;
+  gap: var(--space-3);
+  border: 1px solid var(--color-border-subtle);
+  border-radius: var(--radius-input);
+  padding: var(--space-3);
+  background: var(--color-surface-muted);
+}
+
+.status-strip div {
+  display: grid;
+  justify-items: start;
+  gap: var(--space-2);
+  min-width: 0;
+}
+
+.status-strip span {
+  color: var(--color-text-secondary);
+  font-size: 11px;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
+.status-strip strong {
+  color: var(--color-text-muted);
+}
+
 .impact-box,
+.warning-box,
 .preview-box,
 .reason-field textarea {
   border: 1px solid var(--color-border-subtle);
   border-radius: var(--radius-input);
   background: var(--color-surface-muted);
+}
+
+.warning-box {
+  border-color: color-mix(in srgb, var(--lifecycle-color) 32%, var(--color-border-subtle));
+  padding: var(--space-3);
+  background: color-mix(in srgb, var(--lifecycle-color) 11%, var(--color-surface-elevated));
+  color: var(--color-text-primary);
+  font-size: 12px;
+  font-weight: 800;
+  line-height: 18px;
 }
 
 .impact-box {
@@ -291,6 +437,16 @@ function confirmAction() {
 .reason-field {
   display: grid;
   gap: var(--space-2);
+}
+
+.reason-field small {
+  color: var(--color-text-muted);
+  font-size: 11px;
+  font-weight: 750;
+}
+
+.reason-field small[data-invalid="true"] {
+  color: var(--color-status-danger);
 }
 
 .reason-field textarea {
@@ -353,6 +509,14 @@ function confirmAction() {
 
   .lifecycle-actions {
     flex-direction: column-reverse;
+  }
+
+  .status-strip {
+    grid-template-columns: 1fr;
+  }
+
+  .status-strip strong {
+    display: none;
   }
 
   .lifecycle-actions :deep(.app-button) {
