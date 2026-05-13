@@ -10,15 +10,24 @@ Archive chi tiết: `temp/archive/plan.frontend.history.md`. Chỉ đọc archiv
 
 ## Current Active Slice
 
-**Không có implementation đang dở. Last completed slice: FE A6 Owner Admin V3 visual polish.**
+**Không có implementation đang dở. Last completed slice: Owner Admin Domain DNS Retry + SSL Pending UI mock-first.**
 
-Prompt 2026-05-13 đã cho Lead làm tiếp A6 Owner Admin V3 visual polish cho `/dashboard`, `/clinics`, `/clinics/create`, `/clinics/:tenantId`, `/plans`, dựa trên `StatePanel` A7. Slice đã hoàn tất, không đổi backend/API contract/store/route.
+Prompt 2026-05-13 yêu cầu làm luôn frontend-only, không backend/server/SSH/Docker, không đổi API contract thật. Slice đã hoàn tất trên `/clinics/:tenantId`, dùng tenant/domain data hiện có để hiển thị mock-first domain operations panel.
+
+Acceptance riêng cho slice này:
+
+- `/clinics/:tenantId` có Domain DNS Retry card/state, SSL Pending card/state, DNS record table mock và retry verify action mock. Done.
+- Loading/empty/error/success state được hỗ trợ trong UI state local, không gọi backend mới. Done.
+- Responsive desktop/mobile, dùng shared UI/design token hiện có. Done.
+- Không sửa backend, server, API contract thật, store hoặc route ngoài scope. Done.
+- Verify: `git diff --check`, `cd frontend && npm run typecheck`, `cd frontend && npm run build`; smoke route liên quan nếu chạy được. PASS 2026-05-13.
 
 Ứng viên slice tiếp theo:
 
 1. A7 follow-up nhỏ: mở rộng `StatePanel` vào component-level states nếu phát sinh màn mới.
 2. `/plans` polish nhỏ nếu backend owner-plan persistence được duyệt và contract thay đổi.
-3. Slice frontend mới theo Owner/Lead chỉ định, phải ghi acceptance criteria trước khi code.
+3. Domain operations nối backend thật khi có domain-service/DNS/SSL API contract được duyệt riêng.
+4. Slice frontend mới theo Owner/Lead chỉ định, phải ghi acceptance criteria trước khi code.
 
 ## Last Stopping Point
 
@@ -28,6 +37,7 @@ Prompt 2026-05-13 đã cho Lead làm tiếp A6 Owner Admin V3 visual polish cho 
 - A9 `/plans` API wiring: Done/Verified.
 - A7 state surfaces: Done/Verified ngay 2026-05-13.
 - A6 Owner Admin V3 visual polish: Done/Verified ngay 2026-05-13.
+- Owner Admin Domain DNS Retry + SSL Pending UI mock-first: Done/Verified ngay 2026-05-13.
 - FE real API smoke: PASS có caveat owner-plan backend vẫn là contract stub.
 - Không có frontend implementation đang dở.
 
@@ -41,6 +51,7 @@ Prompt 2026-05-13 đã cho Lead làm tiếp A6 Owner Admin V3 visual polish cho 
 | A9 `/plans` | Done/Verified | Page dùng `planCatalogClient`, mock fallback còn giữ, bulk-change dùng BE A.2 payload. |
 | A7 state surfaces | Done/Verified | Thêm shared `StatePanel`; adopt loading/error surface cho Dashboard, Clinics, Clinic detail, Create wizard, Plans catalog. |
 | A6 visual polish | Done/Verified | Thống nhất V3 page heading surface, KPI/card/table density, hover/focus polish, create wizard preview, Plan Catalog cards/matrix và StatePanel accent rail cho 5 route chính. |
+| Domain DNS Retry + SSL Pending UI | Done/Verified | `/clinics/:tenantId` có mock-first domain operations panel, DNS record table, retry verify local state, SSL pending pipeline, loading/empty/error/success states. |
 | Wave A tiếp theo | Chưa chốt | Cần owner/Lead chọn slice mới trước khi code. |
 
 ## Known Touched / Resume Files
@@ -54,6 +65,8 @@ frontend/apps/owner-admin/src/pages/ClinicsPage.vue
 frontend/apps/owner-admin/src/pages/ClinicDetailPage.vue
 frontend/apps/owner-admin/src/pages/CreateClinicPage.vue
 frontend/apps/owner-admin/src/components/CreateTenantWizard.vue
+frontend/apps/owner-admin/src/components/DomainDnsRetryState.vue
+frontend/apps/owner-admin/src/components/SslPendingState.vue
 frontend/apps/owner-admin/src/components/TenantTable.vue
 frontend/apps/owner-admin/src/services/planCatalogClient.ts
 frontend/apps/owner-admin/src/services/planCatalogMock.ts
@@ -113,6 +126,14 @@ FE A6 acceptance đã hoàn tất:
 - Không đổi API contract, route, store hoặc backend behavior.
 - `git diff --check`, `cd frontend && npm run typecheck`, `cd frontend && npm run build` PASS.
 
+Owner Admin Domain DNS Retry + SSL Pending UI acceptance đã hoàn tất:
+
+- `/clinics/:tenantId` có domain operations panel mock-first với DNS Retry card, SSL Pending card, DNS record table, retry verify action.
+- DNS/SSL loading, empty, error và success states dùng local UI state; không gọi backend mới.
+- Không đổi route/API contract thật/store/backend behavior.
+- `git diff --check`, `cd frontend && npm run typecheck`, `cd frontend && npm run build` PASS.
+- Smoke route `http://127.0.0.1:5185/clinics/tenant-river-eye` mock mode HTTP 200; Playwright render DNS retry queue, retry success state và SSL pending pipeline PASS.
+
 ## Verify Plan
 
 Docs-only/no-code:
@@ -143,7 +164,8 @@ Route/API smoke chỉ chạy khi task đổi route, UI behavior hoặc API flow:
 
 - Owner-plan endpoints chạy qua backend/gateway thật nhưng implementation vẫn là contract stub BE A.2/A.3.
 - Owner-plan persistence/schema cần Backend/DB approval riêng; frontend không tự chuyển stub thành persistence.
-- Wave A step tiếp theo sau A6 chưa chốt; không code frontend mới nếu chưa có prompt/action trigger cụ thể.
+- Domain DNS Retry + SSL Pending hiện là UI mock-first local state; backend DNS/SSL retry API cần contract riêng trước khi nối thật.
+- Wave A step tiếp theo sau Domain DNS Retry + SSL Pending UI chưa chốt; không code frontend mới nếu chưa có prompt/action trigger cụ thể.
 
 ## Archive Index
 

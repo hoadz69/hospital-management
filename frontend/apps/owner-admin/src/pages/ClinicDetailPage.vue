@@ -2,9 +2,9 @@
 // Trang chi tiết tenant tương ứng route `/clinics/:tenantId`.
 // Page này có cùng dữ liệu nguồn với drawer ở `/clinics`, nhưng được trình bày dạng full-page
 // để Owner Admin có thể bookmark/chia sẻ link riêng từng tenant.
-import type { TenantDetail, TenantDomainStatus, TenantStatus } from "@clinic-saas/shared-types";
+import type { TenantDetail, TenantDomain, TenantDomainStatus, TenantStatus } from "@clinic-saas/shared-types";
 import { AppButton, AppCard, DomainStateRow, ModuleChips, PlanBadge, StatePanel, StatusPill } from "@clinic-saas/ui";
-import { computed, onMounted, ref, watch } from "vue";
+import { computed, onMounted, onUnmounted, ref, watch } from "vue";
 import DomainDnsRetryState from "../components/DomainDnsRetryState.vue";
 import SslPendingState from "../components/SslPendingState.vue";
 import TenantLifecycleConfirmModal from "../components/TenantLifecycleConfirmModal.vue";
@@ -12,7 +12,8 @@ import { formatDomainStatus, formatModuleCode, formatTenantStatus } from "../ser
 import { tenantClient } from "../services/tenantClient";
 
 type LifecycleAction = "suspend" | "archive" | "restore";
-type DomainSurface = "dns" | "ssl" | null;
+type DomainSurface = "dns" | "ssl";
+type DomainOperationState = "ready" | "loading" | "empty" | "error" | "success";
 
 const props = defineProps<{
   /** Tenant ID lấy từ route params, dùng để fetch chi tiết. */
@@ -24,7 +25,10 @@ const loading = ref(false);
 const error = ref<string | null>(null);
 const lifecycleAction = ref<LifecycleAction>("suspend");
 const lifecycleModalOpen = ref(false);
-const activeDomainSurface = ref<DomainSurface>(null);
+const activeDomainSurface = ref<DomainSurface>("dns");
+const domainOperationState = ref<DomainOperationState>("ready");
+const domainOperationMessage = ref<string | undefined>();
+let retryTimer: ReturnType<typeof window.setTimeout> | undefined;
 
 const detailHeading = computed(() => {
   if (tenant.value) {
@@ -44,6 +48,74 @@ const nextStatus = computed<TenantStatus>(() => {
   }
 
   return "Suspended";
+});
+
+const domainCards = computed<TenantDomain[]>(() => {
+  if (!tenant.value) {
+    return [];
+  }
+
+  if (tenant.value.domains.length > 0) {
+    return tenant.value.domains;
+  }
+
+  return [
+    {
+      id: `${tenant.value.id}-default-domain`,
+      domainName: tenant.value.defaultDomainName || `${tenant.value.slug}.clinicos.vn`,
+      isPrimary: true,
+      status: tenant.value.domainStatus
+    }
+  ];
+});
+
+const dnsRetryRows = computed(() =>
+  domainCards.value
+    .filter((domain) => domain.status !== "verified")
+    .map((domain) => ({
+      id: `dns-${domain.id}`,
+      domainName: domain.domainName,
+      tenantSlug: tenant.value?.slug ?? "tenant",
+      recordType: domain.isPrimary ? ("CNAME" as const) : ("TXT" as const),
+      host: domain.isPrimary ? domain.domainName : `_clinicos.${domain.domainName}`,
+      issue: domain.status === "failed" ? "Record mismatch" : domain.status === "pending" ? "Propagation pending" : "Resolver pending",
+      lastCheck: domain.status === "failed" ? "5 phút trước" : "1 phút trước",
+      status: domain.status === "failed" ? ("failed" as const) : domain.status === "pending" ? ("pending" as const) : ("propagating" as const),
+      selected: domain.status !== "verified",
+      expanded: domain.status === "failed",
+      expected: domain.isPrimary ? "cname.owner-gateway.clinicos.vn" : `clinicos-tenant-verify=${tenant.value?.slug ?? "tenant"}`,
+      actual: domain.status === "failed" ? "legacy-gateway.clinicos.vn" : "Đang chờ resolver"
+    }))
+);
+
+const sslPendingRows = computed(() =>
+  domainCards.value
+    .filter((domain) => domain.status === "pending")
+    .map((domain, index) => ({
+      id: `ssl-${domain.id}`,
+      domainName: domain.domainName,
+      tenantSlug: tenant.value?.slug ?? "tenant",
+      orderId: `mock-acme-${tenant.value?.slug ?? "tenant"}-${index + 1}`,
+      status: index % 2 === 0 ? "Verifying ACME challenge" : "Submitting CSR",
+      eta: index % 2 === 0 ? "ETA 45s" : "ETA 2m",
+      progress: index % 2 === 0 ? 68 : 34
+    }))
+);
+
+const dnsSurfaceState = computed<DomainOperationState>(() => {
+  if (activeDomainSurface.value === "dns" && domainOperationState.value !== "ready") {
+    return domainOperationState.value;
+  }
+
+  return dnsRetryRows.value.length === 0 ? "empty" : "ready";
+});
+
+const sslSurfaceState = computed<DomainOperationState>(() => {
+  if (activeDomainSurface.value === "ssl" && domainOperationState.value !== "ready") {
+    return domainOperationState.value;
+  }
+
+  return sslPendingRows.value.length === 0 ? "empty" : "ready";
 });
 
 function statusTone(status: TenantStatus) {
@@ -140,9 +212,12 @@ function moduleChipItems(moduleCodes: TenantDetail["moduleCodes"]) {
 }
 
 async function loadTenant() {
+  clearRetryTimer();
   loading.value = true;
   error.value = null;
   tenant.value = undefined;
+  domainOperationState.value = "ready";
+  domainOperationMessage.value = undefined;
 
   try {
     tenant.value = await tenantClient.getTenant(props.tenantId);
@@ -192,16 +267,59 @@ async function updateStatus(status: TenantStatus) {
 
 function handleDomainAction(status: TenantDomainStatus, key: string) {
   if (status === "failed" || key === "View error") {
-    activeDomainSurface.value = "dns";
+    selectDomainSurface("dns");
     return;
   }
 
   if (status === "pending" || key === "Recheck") {
-    activeDomainSurface.value = "ssl";
+    selectDomainSurface("ssl");
   }
 }
 
+function clearRetryTimer() {
+  if (retryTimer !== undefined) {
+    window.clearTimeout(retryTimer);
+    retryTimer = undefined;
+  }
+}
+
+function selectDomainSurface(surface: DomainSurface) {
+  activeDomainSurface.value = surface;
+  domainOperationState.value = "ready";
+  domainOperationMessage.value = undefined;
+}
+
+function runMockRetry(label: string) {
+  clearRetryTimer();
+  domainOperationState.value = "loading";
+  domainOperationMessage.value = `${label} đang chạy mock verify trong Owner Admin.`;
+
+  retryTimer = window.setTimeout(() => {
+    domainOperationState.value = "success";
+    domainOperationMessage.value = `${label} đã nhận lệnh retry verify ở UI local.`;
+    retryTimer = undefined;
+  }, 700);
+}
+
+function runMockDiagnostic(rowId: string) {
+  domainOperationState.value = "error";
+  domainOperationMessage.value = `Diagnostic mock cho ${rowId} phát hiện record chưa khớp expected value.`;
+}
+
+function retryDnsRow(rowId: string) {
+  runMockRetry(`DNS record ${rowId}`);
+}
+
+function retryDnsRows(rowIds: string[]) {
+  runMockRetry(`${rowIds.length} DNS record`);
+}
+
+function retrySslRow(rowId: string) {
+  runMockRetry(`SSL order ${rowId}`);
+}
+
 onMounted(loadTenant);
+onUnmounted(clearRetryTimer);
 watch(() => props.tenantId, loadTenant);
 </script>
 
@@ -292,7 +410,7 @@ watch(() => props.tenantId, loadTenant);
           <h3>Tên miền</h3>
           <div class="domain-list">
             <DomainStateRow
-              v-for="domain in tenant.domains"
+              v-for="domain in domainCards"
               :key="domain.id"
               :label="domain.domainName"
               :value="formatDomainStatus(domain.status)"
@@ -310,13 +428,44 @@ watch(() => props.tenantId, loadTenant);
         <ModuleChips :items="moduleChipItems(tenant.moduleCodes)" :total="tenant.moduleCodes.length" />
       </AppCard>
 
-      <AppCard v-if="activeDomainSurface" class="state-surface-card">
+      <AppCard class="state-surface-card">
         <div class="state-surface-heading">
-          <h3>{{ activeDomainSurface === "dns" ? "DNS retry state" : "SSL pending state" }}</h3>
-          <button type="button" @click="activeDomainSurface = null">Ẩn state surface</button>
+          <div>
+            <p class="eyebrow">Domain operations</p>
+            <h3>{{ activeDomainSurface === "dns" ? "DNS retry state" : "SSL pending state" }}</h3>
+          </div>
+          <span class="mock-badge">Mock-first</span>
         </div>
-        <DomainDnsRetryState v-if="activeDomainSurface === 'dns'" />
-        <SslPendingState v-else />
+
+        <div class="operation-switch" aria-label="Chọn domain operation">
+          <button type="button" class="operation-card" :data-active="activeDomainSurface === 'dns'" @click="selectDomainSurface('dns')">
+            <span>DNS Retry</span>
+            <strong>{{ dnsRetryRows.length }}</strong>
+            <small>{{ dnsRetryRows.length === 0 ? "Không có record cần retry" : "CNAME/TXT cần verify lại" }}</small>
+          </button>
+          <button type="button" class="operation-card" :data-active="activeDomainSurface === 'ssl'" @click="selectDomainSurface('ssl')">
+            <span>SSL Pending</span>
+            <strong>{{ sslPendingRows.length }}</strong>
+            <small>{{ sslPendingRows.length === 0 ? "Không có cert pending" : "ACME order đang chờ" }}</small>
+          </button>
+        </div>
+
+        <DomainDnsRetryState
+          v-if="activeDomainSurface === 'dns'"
+          :rows="dnsRetryRows"
+          :state="dnsSurfaceState"
+          :state-message="domainOperationMessage"
+          @retry="retryDnsRow"
+          @bulk-retry="retryDnsRows"
+          @diagnostic="runMockDiagnostic"
+        />
+        <SslPendingState
+          v-else
+          :rows="sslPendingRows"
+          :state="sslSurfaceState"
+          :state-message="domainOperationMessage"
+          @reissue="retrySslRow"
+        />
       </AppCard>
     </template>
 
@@ -360,6 +509,7 @@ watch(() => props.tenantId, loadTenant);
 }
 
 .page-heading p,
+.state-surface-heading p,
 .page-heading h2,
 h3,
 dl {
@@ -444,20 +594,79 @@ dd {
   margin-bottom: var(--space-4);
 }
 
-.state-surface-heading button {
-  min-height: 32px;
-  border: 1px solid var(--color-border-subtle);
-  border-radius: var(--radius-input);
-  padding: 0 var(--space-3);
-  background: var(--color-surface-elevated);
-  color: var(--color-text-secondary);
-  cursor: pointer;
-  font: inherit;
-  font-size: 12px;
-  font-weight: 800;
+.state-surface-heading h3 {
+  margin-top: var(--space-1);
 }
 
-.state-surface-heading button:focus-visible {
+.mock-badge {
+  display: inline-flex;
+  min-height: 28px;
+  align-items: center;
+  border-radius: var(--radius-pill);
+  padding: 0 var(--space-3);
+  background: color-mix(in srgb, var(--color-status-specialty) 13%, var(--color-surface-muted));
+  color: var(--color-status-specialty);
+  font-size: 11px;
+  font-weight: 900;
+  white-space: nowrap;
+}
+
+.operation-switch {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--space-3);
+  margin-bottom: var(--space-4);
+}
+
+.operation-card {
+  display: grid;
+  gap: var(--space-1);
+  min-width: 0;
+  border: 1px solid var(--color-border-subtle);
+  border-radius: var(--radius-card);
+  padding: var(--space-4);
+  background: var(--color-surface-elevated);
+  color: var(--color-text-primary);
+  cursor: pointer;
+  text-align: left;
+  font: inherit;
+  box-shadow: var(--shadow-elevation-1);
+  transition:
+    border-color var(--motion-duration-sm) var(--motion-ease-standard),
+    background var(--motion-duration-sm) var(--motion-ease-standard),
+    transform var(--motion-duration-xs) var(--motion-ease-standard);
+}
+
+.operation-card:hover {
+  transform: translateY(-1px);
+}
+
+.operation-card[data-active="true"] {
+  border-color: color-mix(in srgb, var(--color-brand-primary) 42%, var(--color-border-subtle));
+  background: color-mix(in srgb, var(--color-brand-primary) 8%, var(--color-surface-elevated));
+}
+
+.operation-card span {
+  color: var(--color-text-secondary);
+  font-size: 12px;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
+.operation-card strong {
+  color: var(--color-text-primary);
+  font-size: 26px;
+  line-height: 32px;
+}
+
+.operation-card small {
+  overflow-wrap: anywhere;
+  color: var(--color-text-muted);
+  font-size: 12px;
+  font-weight: 750;
+}
+
+.operation-card:focus-visible {
   outline: 2px solid color-mix(in srgb, var(--color-brand-primary) 28%, transparent);
   outline-offset: 2px;
 }
@@ -470,12 +679,17 @@ dd {
 
 @media (max-width: 640px) {
   .page-heading,
-  .heading-actions {
+  .heading-actions,
+  .state-surface-heading {
     align-items: stretch;
     flex-direction: column;
   }
 
   dl {
+    grid-template-columns: 1fr;
+  }
+
+  .operation-switch {
     grid-template-columns: 1fr;
   }
 }

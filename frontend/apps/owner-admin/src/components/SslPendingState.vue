@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { computed } from "vue";
+import { AppButton, StatePanel } from "@clinic-saas/ui";
 
 export type SslPendingRow = {
   id: string;
@@ -11,12 +12,18 @@ export type SslPendingRow = {
   progress: number;
 };
 
+type SslPendingState = "ready" | "loading" | "empty" | "error" | "success";
+
 const props = withDefaults(
   defineProps<{
     rows?: SslPendingRow[];
+    state?: SslPendingState;
+    stateMessage?: string;
   }>(),
   {
-    rows: () => []
+    rows: () => [],
+    state: "ready",
+    stateMessage: undefined
   }
 );
 
@@ -56,6 +63,57 @@ const fallbackRows: SslPendingRow[] = [
 
 const displayRows = computed(() => (props.rows.length > 0 ? props.rows : fallbackRows));
 const pipelineSteps = ["Domain verified", "Create CSR", "Submit challenge", "ACME validate", "Issue cert", "Active"];
+const averageProgress = computed(() => {
+  if (displayRows.value.length === 0) {
+    return 0;
+  }
+
+  return Math.round(displayRows.value.reduce((total, row) => total + row.progress, 0) / displayRows.value.length);
+});
+
+const stateTitle = computed(() => {
+  if (props.state === "loading") {
+    return "Đang retry SSL verify";
+  }
+
+  if (props.state === "empty") {
+    return "Không có chứng chỉ đang pending";
+  }
+
+  if (props.state === "error") {
+    return "SSL pending cần kiểm tra lại";
+  }
+
+  if (props.state === "success") {
+    return "SSL verify đã nhận lệnh";
+  }
+
+  return "";
+});
+
+const stateDescription = computed(() => {
+  if (props.stateMessage) {
+    return props.stateMessage;
+  }
+
+  if (props.state === "loading") {
+    return "Mock SSL pipeline đang kiểm tra ACME challenge và certificate order.";
+  }
+
+  if (props.state === "empty") {
+    return "Tenant này không còn certificate order pending trong mock queue.";
+  }
+
+  if (props.state === "error") {
+    return "Mock pipeline chưa xác minh được ACME challenge. Cần retry sau khi DNS đã khớp.";
+  }
+
+  if (props.state === "success") {
+    return "Retry verify đã cập nhật state local. Chưa gọi backend thật.";
+  }
+
+  return "";
+});
 
 function progressWidth(progress: number) {
   return `${Math.min(Math.max(progress, 8), 100)}%`;
@@ -69,12 +127,27 @@ function progressWidth(progress: number) {
         <p class="surface-eyebrow">SSL pipeline</p>
         <h3 id="ssl-pending-title">SSL Issuing Pipeline</h3>
       </div>
-      <span class="ssl-count">SSL issuing ({{ displayRows.length }})</span>
+      <div class="ssl-summary">
+        <span class="ssl-count">SSL issuing ({{ displayRows.length }})</span>
+        <span class="ssl-count secondary">{{ averageProgress }}% avg</span>
+      </div>
     </header>
 
     <p class="eta-copy">ETA Let's Encrypt: 1-3 phút mỗi cert · Auto-renew 30 ngày trước expiry</p>
 
-    <div class="ssl-table" role="table" aria-label="Danh sách SSL pending">
+    <StatePanel
+      v-if="state !== 'ready'"
+      :title="stateTitle"
+      :description="stateDescription"
+      :tone="state === 'loading' ? 'loading' : state === 'success' ? 'success' : state === 'error' ? 'danger' : 'neutral'"
+      :busy="state === 'loading'"
+    >
+      <template v-if="state === 'error' && displayRows.length > 0" #action>
+        <AppButton label="Retry verify" variant="secondary" @click="$emit('reissue', displayRows[0].id)" />
+      </template>
+    </StatePanel>
+
+    <div v-if="state !== 'loading' && state !== 'empty'" class="ssl-table" role="table" aria-label="Danh sách SSL pending">
       <article v-for="row in displayRows" :key="row.id" class="ssl-row" role="row">
         <div class="ssl-row-top">
           <div class="domain-cell">
@@ -83,7 +156,7 @@ function progressWidth(progress: number) {
           </div>
           <span class="status-pill">{{ row.status }}</span>
           <span class="eta">{{ row.eta }}</span>
-          <button type="button" @click="$emit('reissue', row.id)">Re-issue</button>
+          <AppButton label="Retry verify" variant="secondary" @click="$emit('reissue', row.id)" />
         </div>
         <div class="progress-track" aria-hidden="true">
           <span :style="{ width: progressWidth(row.progress) }"></span>
@@ -111,6 +184,7 @@ function progressWidth(progress: number) {
 }
 
 .surface-header,
+.ssl-summary,
 .ssl-row-top,
 .pipeline {
   display: flex;
@@ -153,6 +227,11 @@ function progressWidth(progress: number) {
   font-size: 11px;
   font-weight: 900;
   white-space: nowrap;
+}
+
+.ssl-count.secondary {
+  background: color-mix(in srgb, var(--color-status-info) 14%, var(--color-surface-muted));
+  color: var(--color-status-info);
 }
 
 .eta-copy {
@@ -222,24 +301,6 @@ function progressWidth(progress: number) {
   white-space: nowrap;
 }
 
-button {
-  min-height: 32px;
-  border: 1px solid var(--color-border-subtle);
-  border-radius: 8px;
-  padding: 0 var(--space-3);
-  background: var(--color-surface-elevated);
-  color: var(--color-text-secondary);
-  cursor: pointer;
-  font: inherit;
-  font-size: 11px;
-  font-weight: 800;
-}
-
-button:focus-visible {
-  outline: 2px solid color-mix(in srgb, var(--color-status-specialty) 35%, transparent);
-  outline-offset: 2px;
-}
-
 .progress-track {
   height: 6px;
   overflow: hidden;
@@ -301,6 +362,7 @@ button:focus-visible {
 
 @media (max-width: 900px) {
   .surface-header,
+  .ssl-summary,
   .ssl-row-top {
     align-items: stretch;
     flex-direction: column;
