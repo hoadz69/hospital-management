@@ -7,6 +7,7 @@ import { AppButton, AppCard, DomainStateRow, ModuleChips, PlanBadge, StatePanel,
 import { computed, onMounted, onUnmounted, ref, watch } from "vue";
 import DomainDnsRetryState from "../components/DomainDnsRetryState.vue";
 import SslPendingState from "../components/SslPendingState.vue";
+import TenantAuditLogDrawer, { type TenantAuditEvent } from "../components/TenantAuditLogDrawer.vue";
 import TenantLifecycleConfirmModal from "../components/TenantLifecycleConfirmModal.vue";
 import { formatDomainStatus, formatModuleCode, formatTenantStatus } from "../services/labels";
 import { tenantClient } from "../services/tenantClient";
@@ -28,11 +29,16 @@ const lifecycleAction = ref<LifecycleAction>("suspend");
 const lifecycleModalOpen = ref(false);
 const lifecycleState = ref<LifecycleModalState>("idle");
 const lifecycleMessage = ref<string | undefined>();
+const auditDrawerOpen = ref(false);
+const auditLoading = ref(false);
+const auditError = ref<string | undefined>();
+const localAuditEvents = ref<TenantAuditEvent[]>([]);
 const activeDomainSurface = ref<DomainSurface>("dns");
 const domainOperationState = ref<DomainOperationState>("ready");
 const domainOperationMessage = ref<string | undefined>();
 let retryTimer: ReturnType<typeof window.setTimeout> | undefined;
 let lifecycleTimer: ReturnType<typeof window.setTimeout> | undefined;
+let auditTimer: ReturnType<typeof window.setTimeout> | undefined;
 
 const detailHeading = computed(() => {
   if (tenant.value) {
@@ -132,6 +138,16 @@ const sslSurfaceState = computed<DomainOperationState>(() => {
   }
 
   return sslPendingRows.value.length === 0 ? "empty" : "ready";
+});
+
+const auditEvents = computed<TenantAuditEvent[]>(() => {
+  if (!tenant.value) {
+    return [];
+  }
+
+  return [...localAuditEvents.value, ...baseAuditEvents(tenant.value)].sort(
+    (left, right) => new Date(right.occurredAt).getTime() - new Date(left.occurredAt).getTime()
+  );
 });
 
 function statusTone(status: TenantStatus) {
@@ -255,9 +271,65 @@ function targetStatusForAction(action: LifecycleAction): TenantStatus {
   return "Active";
 }
 
+function minutesAgo(minutes: number) {
+  return new Date(Date.now() - minutes * 60 * 1000).toISOString();
+}
+
+function daysAgo(days: number) {
+  return new Date(Date.now() - days * 24 * 60 * 60 * 1000).toISOString();
+}
+
+function baseAuditEvents(currentTenant: TenantDetail): TenantAuditEvent[] {
+  const domainStatus = formatDomainStatus(currentTenant.domainStatus);
+
+  return [
+    {
+      id: `${currentTenant.id}-audit-domain`,
+      type: "domain",
+      title: "Domain verification snapshot",
+      detail: `${currentTenant.defaultDomainName || `${currentTenant.slug}.clinicos.vn`} đang ở trạng thái ${domainStatus}.`,
+      actor: "domain-service mock",
+      occurredAt: minutesAgo(18),
+      outcome: currentTenant.domainStatus === "failed" ? "danger" : currentTenant.domainStatus === "pending" ? "warning" : "success",
+      metadata: ["DNS", "SSL"]
+    },
+    {
+      id: `${currentTenant.id}-audit-plan`,
+      type: "plan",
+      title: "Plan entitlement checked",
+      detail: `${currentTenant.planDisplayName} đang bật ${currentTenant.moduleCodes.length} module cho tenant.`,
+      actor: "Owner Admin",
+      occurredAt: daysAgo(1),
+      outcome: "neutral",
+      metadata: [currentTenant.planCode, `${currentTenant.moduleCodes.length} modules`]
+    },
+    {
+      id: `${currentTenant.id}-audit-lifecycle`,
+      type: "lifecycle",
+      title: "Tenant status loaded",
+      detail: `Hồ sơ tenant được mở ở trạng thái ${currentTenant.status}.`,
+      actor: "Owner Admin",
+      occurredAt: daysAgo(2),
+      outcome: currentTenant.status === "Active" ? "success" : currentTenant.status === "Draft" ? "warning" : "danger",
+      metadata: [currentTenant.status]
+    },
+    {
+      id: `${currentTenant.id}-audit-mock`,
+      type: "mock",
+      title: "Mock-first audit source",
+      detail: "Audit drawer dùng dữ liệu local UI state trong khi backend audit API chưa được chốt contract.",
+      actor: "frontend mock",
+      occurredAt: daysAgo(5),
+      outcome: "neutral",
+      metadata: ["contract-first", "no-api-call"]
+    }
+  ];
+}
+
 async function loadTenant() {
   clearRetryTimer();
   clearLifecycleTimer();
+  clearAuditTimer();
   loading.value = true;
   error.value = null;
   tenant.value = undefined;
@@ -265,6 +337,10 @@ async function loadTenant() {
   domainOperationMessage.value = undefined;
   lifecycleState.value = "idle";
   lifecycleMessage.value = undefined;
+  auditDrawerOpen.value = false;
+  auditLoading.value = false;
+  auditError.value = undefined;
+  localAuditEvents.value = [];
 
   try {
     tenant.value = await tenantClient.getTenant(props.tenantId);
@@ -305,6 +381,22 @@ function closeLifecycleModal() {
   lifecycleMessage.value = undefined;
 }
 
+function openAuditDrawer() {
+  auditDrawerOpen.value = true;
+  refreshAuditLog();
+}
+
+function refreshAuditLog() {
+  clearAuditTimer();
+  auditLoading.value = true;
+  auditError.value = undefined;
+
+  auditTimer = window.setTimeout(() => {
+    auditLoading.value = false;
+    auditTimer = undefined;
+  }, 420);
+}
+
 function confirmLifecycle(action: LifecycleAction, reason: string) {
   if (!tenant.value) {
     lifecycleState.value = "error";
@@ -328,6 +420,16 @@ function confirmLifecycle(action: LifecycleAction, reason: string) {
 
     const status = targetStatusForAction(action);
     tenant.value = { ...tenant.value, status };
+    localAuditEvents.value.unshift({
+      id: `audit-${action}-${Date.now()}`,
+      type: "lifecycle",
+      title: `${lifecycleActionLabel(action)} đã xác nhận`,
+      detail: reason ? `Owner Super Admin xác nhận với lý do: ${reason}` : "Owner Super Admin xác nhận bằng local lifecycle state.",
+      actor: "Owner Super Admin",
+      occurredAt: new Date().toISOString(),
+      outcome: status === "Active" ? "success" : "warning",
+      metadata: [status, "mock-local"]
+    });
     lifecycleState.value = "success";
     lifecycleMessage.value = `${tenant.value.displayName} đã chuyển sang ${status} trong local UI state.`;
     lifecycleTimer = window.setTimeout(() => {
@@ -361,6 +463,13 @@ function clearLifecycleTimer() {
   if (lifecycleTimer !== undefined) {
     window.clearTimeout(lifecycleTimer);
     lifecycleTimer = undefined;
+  }
+}
+
+function clearAuditTimer() {
+  if (auditTimer !== undefined) {
+    window.clearTimeout(auditTimer);
+    auditTimer = undefined;
   }
 }
 
@@ -403,6 +512,7 @@ onMounted(loadTenant);
 onUnmounted(() => {
   clearRetryTimer();
   clearLifecycleTimer();
+  clearAuditTimer();
 });
 watch(() => props.tenantId, loadTenant);
 </script>
@@ -418,6 +528,7 @@ watch(() => props.tenantId, loadTenant);
         <RouterLink to="/clinics">
           <AppButton label="Quay lại danh sách" variant="secondary" />
         </RouterLink>
+        <AppButton v-if="tenant" label="Audit log" variant="secondary" @click="openAuditDrawer" />
         <AppButton
           v-if="tenant"
           :label="primaryLifecycleLabel"
@@ -567,6 +678,18 @@ watch(() => props.tenantId, loadTenant);
       :message="lifecycleMessage"
       @close="closeLifecycleModal"
       @confirm="confirmLifecycle"
+    />
+
+    <TenantAuditLogDrawer
+      v-if="tenant"
+      :open="auditDrawerOpen"
+      :tenant-name="tenant.displayName"
+      :tenant-slug="tenant.slug"
+      :events="auditEvents"
+      :loading="auditLoading"
+      :error="auditError"
+      @close="auditDrawerOpen = false"
+      @refresh="refreshAuditLog"
     />
   </div>
 </template>

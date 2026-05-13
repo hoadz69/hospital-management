@@ -10,20 +10,21 @@ Archive chi tiết: `temp/archive/plan.frontend.history.md`. Chỉ đọc archiv
 
 ## Current Active Slice
 
-**Không có implementation đang dở. Last completed slice: Owner Admin Tenant Lifecycle Confirm Modal mock-first.**
+**Không có implementation đang dở. Last completed slice: Owner Admin Audit Log Drawer mock-first.**
 
-Prompt 2026-05-13 yêu cầu làm luôn frontend-only, không backend/server/SSH/Docker, không đổi API contract thật. Slice đã hoàn tất trên `/clinics/:tenantId`, nâng cấp `TenantLifecycleConfirmModal` cho activate/suspend/archive/restore theo mock/local action trước.
+Prompt 2026-05-13 yêu cầu làm luôn frontend-only, không backend/server/SSH/Docker, không đổi API contract thật. Slice đã hoàn tất trên `/clinics/:tenantId`, thêm Audit Log Drawer mock-first cho tenant lifecycle/domain/plan events.
 
-Acceptance riêng cho slice Tenant Lifecycle Confirm Modal:
+Acceptance riêng cho slice Owner Admin Audit Log Drawer:
 
-- `/clinics/:tenantId` mở modal confirm cho activate/suspend/archive/restore nếu action khả dụng theo status hiện tại. Done.
-- Modal hiển thị rõ action, tenant name, slug, trạng thái hiện tại và target status. Done.
-- Suspend/archive có warning copy và reason textarea bắt buộc; activate/restore không bắt buộc reason. Done.
-- Modal có loading, success, error và disabled invalid state bằng local UI state; không đổi API contract thật. Done.
+- `/clinics/:tenantId` có nút mở Audit Log Drawer, không tạo route mới. Done.
+- Drawer hiển thị lịch sử mock tenant lifecycle/domain/plan events. Done.
+- Có filter event type, actor và date range dạng gọn. Done.
+- Có loading, empty và error state local. Done.
 - Responsive desktop/mobile, dùng shared UI/design token hiện có. Done.
+- Không đổi API contract thật, không sửa backend. Done.
 - Verify: `git diff --check`, `cd frontend && npm run typecheck`, `cd frontend && npm run build`; smoke route mock `/clinics/:tenantId` nếu chạy được. PASS 2026-05-13.
 
-Last completed slice trước đó: Owner Admin Domain DNS Retry + SSL Pending UI mock-first.
+Last completed slice trước đó: Owner Admin Tenant Lifecycle Confirm Modal mock-first.
 
 Ứng viên slice tiếp theo:
 
@@ -31,7 +32,8 @@ Last completed slice trước đó: Owner Admin Domain DNS Retry + SSL Pending U
 2. `/plans` polish nhỏ nếu backend owner-plan persistence được duyệt và contract thay đổi.
 3. Domain operations nối backend thật khi có domain-service/DNS/SSL API contract được duyệt riêng.
 4. Tenant lifecycle nối backend thật khi có lifecycle/audit reason contract được duyệt riêng.
-5. Slice frontend mới theo Owner/Lead chỉ định, phải ghi acceptance criteria trước khi code.
+5. Audit log nối backend thật khi có audit API contract/query filter được duyệt riêng.
+6. Slice frontend mới theo Owner/Lead chỉ định, phải ghi acceptance criteria trước khi code.
 
 ## Last Stopping Point
 
@@ -43,6 +45,7 @@ Last completed slice trước đó: Owner Admin Domain DNS Retry + SSL Pending U
 - A6 Owner Admin V3 visual polish: Done/Verified ngay 2026-05-13.
 - Owner Admin Domain DNS Retry + SSL Pending UI mock-first: Done/Verified ngay 2026-05-13.
 - Owner Admin Tenant Lifecycle Confirm Modal mock-first: Done/Verified ngay 2026-05-13.
+- Owner Admin Audit Log Drawer mock-first: Done/Verified ngay 2026-05-13.
 - FE real API smoke: PASS có caveat owner-plan backend vẫn là contract stub.
 - Không có frontend implementation đang dở.
 
@@ -58,6 +61,7 @@ Last completed slice trước đó: Owner Admin Domain DNS Retry + SSL Pending U
 | A6 visual polish | Done/Verified | Thống nhất V3 page heading surface, KPI/card/table density, hover/focus polish, create wizard preview, Plan Catalog cards/matrix và StatePanel accent rail cho 5 route chính. |
 | Domain DNS Retry + SSL Pending UI | Done/Verified | `/clinics/:tenantId` có mock-first domain operations panel, DNS record table, retry verify local state, SSL pending pipeline, loading/empty/error/success states. |
 | Tenant Lifecycle Confirm Modal | Done/Verified | `/clinics/:tenantId` modal confirm activate/suspend/archive/restore, reason bắt buộc cho suspend/archive, local loading/success/error state. |
+| Audit Log Drawer | Done/Verified | `/clinics/:tenantId` có drawer audit mock-first, timeline lifecycle/domain/plan/mock events, filter type/actor/date và loading/empty/error states. |
 | Wave A tiếp theo | Chưa chốt | Cần owner/Lead chọn slice mới trước khi code. |
 
 ## Known Touched / Resume Files
@@ -73,6 +77,7 @@ frontend/apps/owner-admin/src/pages/CreateClinicPage.vue
 frontend/apps/owner-admin/src/components/CreateTenantWizard.vue
 frontend/apps/owner-admin/src/components/DomainDnsRetryState.vue
 frontend/apps/owner-admin/src/components/SslPendingState.vue
+frontend/apps/owner-admin/src/components/TenantAuditLogDrawer.vue
 frontend/apps/owner-admin/src/components/TenantDetailDrawer.vue
 frontend/apps/owner-admin/src/components/TenantLifecycleConfirmModal.vue
 frontend/apps/owner-admin/src/components/TenantTable.vue
@@ -151,6 +156,15 @@ Owner Admin Tenant Lifecycle Confirm Modal acceptance đã hoàn tất:
 - `git diff --check`, `cd frontend && npm run typecheck`, `cd frontend && npm run build` PASS.
 - Smoke route `http://127.0.0.1:5186/clinics/tenant-aurora-dental` mock mode HTTP 200; Playwright mở Suspend modal, confirm disabled khi thiếu reason, nhập reason, confirm thành công và status local đổi sang Suspended.
 
+Owner Admin Audit Log Drawer acceptance đã hoàn tất:
+
+- `/clinics/:tenantId` có nút mở `TenantAuditLogDrawer`, không tạo route mới.
+- Drawer hiển thị mock timeline cho lifecycle, domain, plan và mock source events; lifecycle local action có thể đẩy thêm event vào đầu timeline.
+- Filter event type, actor và date range hoạt động trong UI local.
+- Loading, empty và error state có surface bằng `StatePanel`; không gọi backend audit API.
+- `git diff --check`, `cd frontend && npm run typecheck`, `cd frontend && npm run build` PASS.
+- Smoke route `http://127.0.0.1:5187/clinics/tenant-aurora-dental` mock mode HTTP 200; Playwright mở Audit log drawer, render 4 mock events và filter `Domain` còn 1 event.
+
 ## Verify Plan
 
 Docs-only/no-code:
@@ -183,7 +197,8 @@ Route/API smoke chỉ chạy khi task đổi route, UI behavior hoặc API flow:
 - Owner-plan persistence/schema cần Backend/DB approval riêng; frontend không tự chuyển stub thành persistence.
 - Domain DNS Retry + SSL Pending hiện là UI mock-first local state; backend DNS/SSL retry API cần contract riêng trước khi nối thật.
 - Tenant lifecycle modal hiện là mock-first local state; backend lifecycle/audit reason API cần contract riêng trước khi nối thật.
-- Wave A step tiếp theo sau Tenant Lifecycle Confirm Modal chưa chốt; không code frontend mới nếu chưa có prompt/action trigger cụ thể.
+- Audit Log Drawer hiện là mock-first local state; backend audit API và query filter contract cần duyệt riêng trước khi nối thật.
+- Wave A step tiếp theo sau Audit Log Drawer chưa chốt; không code frontend mới nếu chưa có prompt/action trigger cụ thể.
 
 ## Archive Index
 
