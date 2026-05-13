@@ -1,9 +1,12 @@
+using ApiGateway.Application.Tenants;
 using ClinicSaaS.BuildingBlocks.Authorization;
+using ClinicSaaS.BuildingBlocks.Security;
 using ClinicSaaS.BuildingBlocks.Tenancy;
 using ClinicSaaS.Contracts.Authorization;
 using ClinicSaaS.Contracts.Domains;
 using ClinicSaaS.Contracts.Templates;
 using ClinicSaaS.Contracts.WebsiteCms;
+using ClinicSaaS.Observability.Correlation;
 using HttpResults = Microsoft.AspNetCore.Http.Results;
 
 namespace ApiGateway.Api.Endpoints;
@@ -35,13 +38,26 @@ public static class Phase4ContractEndpoints
         var group = endpoints.MapGroup("/api/tenants/{tenantId:guid}")
             .WithTags("Phase 4 Domain Contract")
             .RequireTenantContext()
-            .RequireRole(RoleNames.ClinicAdmin)
-            .AddEndpointFilter(EnsureTenantRouteMatchesContextAsync);
+            .RequireRole(RoleNames.OwnerSuperAdmin)
+            .AddEndpointFilter(EnsureTenantRouteMatchesContextAsync)
+            .AddEndpointFilter(RequireOwnerWhenRoleIsPresentAsync);
 
-        group.MapGet("/domains", (Guid tenantId) => HttpResults.Ok(new DomainListResponse([BuildDomain(tenantId, GatewayDomainId)])))
+        group.MapGet("/domains", async (
+            Guid tenantId,
+            ITenantServiceClient tenantServiceClient,
+            HttpContext httpContext,
+            CancellationToken cancellationToken) =>
+            {
+                using var response = await tenantServiceClient.ListTenantDomainDnsSslStatesAsync(
+                    tenantId,
+                    GetCorrelationId(httpContext),
+                    cancellationToken);
+
+                return await ToGatewayResultAsync(response, httpContext, cancellationToken);
+            })
             .RequirePermission(PermissionCodes.DomainsRead)
             .WithName("ApiGatewayPhase4ListDomains")
-            .WithSummary("Returns Domain Service contract stub through API Gateway.");
+            .WithSummary("Forwards tenant domain DNS/SSL state requests to Tenant Service.");
 
         group.MapGet("/domains/{domainId:guid}", (Guid tenantId, Guid domainId) => HttpResults.Ok(BuildDomain(tenantId, domainId)))
             .RequirePermission(PermissionCodes.DomainsRead)
@@ -70,11 +86,43 @@ public static class Phase4ContractEndpoints
             .WithName("ApiGatewayPhase4GetDomainVerifyStatus")
             .WithSummary("Returns dummy DNS verify polling status through API Gateway.");
 
-        group.MapGet("/domains/{domainId:guid}/ssl-status", (Guid tenantId, Guid domainId) =>
-            HttpResults.Ok(BuildDomain(tenantId, domainId)))
+        group.MapPost("/domains/{domainId:guid}/dns-retry", async (
+            Guid tenantId,
+            Guid domainId,
+            ITenantServiceClient tenantServiceClient,
+            HttpContext httpContext,
+            CancellationToken cancellationToken) =>
+            {
+                using var response = await tenantServiceClient.RetryTenantDomainDnsAsync(
+                    tenantId,
+                    domainId,
+                    GetCorrelationId(httpContext),
+                    cancellationToken);
+
+                return await ToGatewayResultAsync(response, httpContext, cancellationToken);
+            })
+            .RequirePermission(PermissionCodes.DomainsWrite)
+            .WithName("ApiGatewayPhase4RetryDomainDns")
+            .WithSummary("Forwards DNS retry requests to Tenant Service persistence.");
+
+        group.MapGet("/domains/{domainId:guid}/ssl-status", async (
+            Guid tenantId,
+            Guid domainId,
+            ITenantServiceClient tenantServiceClient,
+            HttpContext httpContext,
+            CancellationToken cancellationToken) =>
+            {
+                using var response = await tenantServiceClient.GetTenantDomainSslStatusAsync(
+                    tenantId,
+                    domainId,
+                    GetCorrelationId(httpContext),
+                    cancellationToken);
+
+                return await ToGatewayResultAsync(response, httpContext, cancellationToken);
+            })
             .RequirePermission(PermissionCodes.DomainsRead)
             .WithName("ApiGatewayPhase4GetDomainSslStatus")
-            .WithSummary("Returns dummy SSL status through API Gateway.");
+            .WithSummary("Forwards tenant domain SSL status requests to Tenant Service.");
 
         group.MapPost("/publish", (Guid tenantId) => HttpResults.Ok(new DomainPublishResponse(
             tenantId,
@@ -259,6 +307,60 @@ public static class Phase4ContractEndpoints
         }
 
         return next(context);
+    }
+
+    private static ValueTask<object?> RequireOwnerWhenRoleIsPresentAsync(
+        EndpointFilterInvocationContext context,
+        EndpointFilterDelegate next)
+    {
+        var userContext = context.HttpContext.RequestServices.GetRequiredService<IUserContextAccessor>().Current;
+        var ownerRoleHeader = context.HttpContext.Request.Headers["X-Owner-Role"].FirstOrDefault();
+        var headerHasRole = !string.IsNullOrWhiteSpace(ownerRoleHeader);
+        var headerIsOwner = IsOwnerRole(ownerRoleHeader);
+
+        if ((headerHasRole && !headerIsOwner)
+            || (userContext.Roles.Count > 0 && !userContext.HasRole(RoleNames.OwnerSuperAdmin)))
+        {
+            return ValueTask.FromResult<object?>(HttpResults.Problem(
+                detail: "Owner Super Admin role is required for tenant domain DNS/SSL endpoints.",
+                statusCode: StatusCodes.Status403Forbidden,
+                title: "Owner role required"));
+        }
+
+        return next(context);
+    }
+
+    private static bool IsOwnerRole(string? role)
+    {
+        return string.Equals(role, RoleNames.OwnerSuperAdmin, StringComparison.Ordinal)
+            || string.Equals(role, "OwnerSuperAdmin", StringComparison.Ordinal);
+    }
+
+    private static string? GetCorrelationId(HttpContext httpContext)
+    {
+        return httpContext.Items.TryGetValue(CorrelationIdMiddleware.HeaderName, out var value)
+            ? value as string
+            : httpContext.Request.Headers[CorrelationIdMiddleware.HeaderName].FirstOrDefault();
+    }
+
+    private static async Task<IResult> ToGatewayResultAsync(
+        HttpResponseMessage response,
+        HttpContext httpContext,
+        CancellationToken cancellationToken)
+    {
+        if (response.Headers.Location is not null)
+        {
+            httpContext.Response.Headers.Location = response.Headers.Location.ToString();
+        }
+
+        var body = await response.Content.ReadAsStringAsync(cancellationToken);
+        if (string.IsNullOrEmpty(body))
+        {
+            return HttpResults.StatusCode((int)response.StatusCode);
+        }
+
+        var contentType = response.Content.Headers.ContentType?.ToString() ?? "application/json";
+        return HttpResults.Content(body, contentType, statusCode: (int)response.StatusCode);
     }
 
     private static DomainVerificationResponse BuildVerification(Guid domainId)

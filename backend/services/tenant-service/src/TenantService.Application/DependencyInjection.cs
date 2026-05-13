@@ -1,6 +1,7 @@
 using ClinicSaaS.BuildingBlocks.Tenancy;
 using ClinicSaaS.BuildingBlocks.Security;
 using Microsoft.Extensions.DependencyInjection;
+using TenantService.Application.Domains;
 using TenantService.Application.Plans;
 using TenantService.Application.Tenants;
 
@@ -24,7 +25,8 @@ public static class DependencyInjection
         services.AddScoped<GetTenantByIdHandler>();
         services.AddScoped<ListTenantsHandler>();
         services.AddScoped<UpdateTenantStatusHandler>();
-        services.AddScoped<OwnerPlanCatalogStubHandler>();
+        services.AddScoped<TenantDomainOperationsHandler>();
+        services.AddScoped<OwnerPlanCatalogHandler>();
 
         return services;
     }

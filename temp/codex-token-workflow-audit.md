@@ -172,3 +172,81 @@ Recommended commit message:
 ```txt
 docs: reduce Codex workflow token bloat
 ```
+
+## Session Update - 2026-05-13 Token Spike Investigation
+
+Owner bao token tiep tuc tang cao va yeu cau kiem tra task dang chay bang bang chung thuc te, khong doan. Da doi chieu:
+
+- Windows process list qua `Get-Process` va `Get-CimInstance Win32_Process`.
+- Codex session log tai `C:\Users\Hoadz\.codex\sessions\2026\05\13\*.jsonl`.
+- Token event that trong log: `event_msg.payload.type = token_count`.
+- Worktree status that qua `git status --short`.
+
+### Active/Recent Codex Sessions
+
+| Session file | Task thuc te | Trang thai tai luc kiem tra | Token log gan nhat |
+|---|---|---|---:|
+| `rollout-2026-05-13T20-42-55-019e2193-8185-78b2-8e6b-999d2a01c08f.jsonl` | FE Owner Admin Domain DNS/SSL, sau do Tenant Lifecycle Confirm Modal | Dang chay, chua co `task_complete` | `7,270,991 input`, `32,669 output` |
+| `rollout-2026-05-13T22-49-49-019e2207-ada4-72c3-b0b8-022632fce0ec.jsonl` | Backend/DevOps chuyen owner-plan API tu stub sang DB that | Complete luc 2026-05-13 23:26 local | `10,804,545 input`, `50,690 output` |
+| `rollout-2026-05-13T22-50-58-019e2208-be33-7953-8e20-288987d776b9.jsonl` | Subagent inventory FE API/mock | Complete | `671,292 input`, `4,427 output` |
+| `rollout-2026-05-13T22-50-58-019e2208-be88-78b2-9536-f6e8c5ba4716.jsonl` | Subagent khao sat backend owner-plan | Complete | `1,116,794 input`, `6,141 output` |
+| `rollout-2026-05-13T23-22-50-019e2225-e923-7f10-8076-8a6051863e3a.jsonl` | Token/workflow investigation hien tai | Dang chay luc kiem tra | `808,786 input`, `7,624 output` |
+
+Ket luan thuc te: token cao khong den tu mot request don le. Co it nhat 2 session lon dang/vua chay, kem 2 subagent da hoan tat. Session FE `20:42:55` van dang tiep tuc nen neu khong dong thi moi request tiep theo van co the bi nap context lon.
+
+### Process Snapshot
+
+| Process | PID/port | Nguon goc |
+|---|---|---|
+| `codex.exe app-server --analytics-default-enabled` | PID `7232` | VS Code ChatGPT/Codex extension, chay tu 2026-05-12 22:31 local |
+| `node.exe @playwright/mcp@latest` | Nhieu PID con cua `codex.exe` | Playwright MCP duoc spawn lap lai boi cac session/browser tool |
+| Vite owner-admin | PID `20848` listen `127.0.0.1:5185`; PID `23596` listen `127.0.0.1:5186` | FE smoke/dev server con mo |
+| `dotnet.exe MSBuild.dll /nodeReuse:true` | Nhieu PID | MSBuild node reuse sau build/test, khong phai nguon goi model/token |
+
+### Root Causes Confirmed
+
+1. Moi session Codex trong VS Code duoc bootstrap kem khoi AGENTS/instructions dai. Log cho thay request dau moi session da co khoang `22k-25k input`.
+2. Session backend `22:49:49` da goi `spawn_agent` 3 lan; mot lan co `fork_context: true`, copy context sang subagent. Hai subagent da them khoang `1.79M input`.
+3. Nhieu command tra output lon vao context:
+   - `rg -n "postgres|psql|migration|init.sql|deploy.local|deploy" -S . ...`: `40,095 chars`.
+   - `Get-Content -Raw backend/ClinicSaaS.Backend.sln | Select-String ...`: `40,095 chars`.
+   - `rg -n "OwnerPlanCatalog|owner-plan|tenant-plan|bulk-change|Domain|Template|WebsiteCms|Phase4Contract" ...`: `40,095 chars`.
+   - `git diff -- frontend/...`: `32,387 chars`.
+   - `Get-Content -Raw docs/current-task.md`: `16,986 chars`.
+4. Browser/Playwright tool duoc dung trong FE session: log co `browser_snapshot:6`, `browser_click:2`, `browser_navigate:1`. Browser snapshot khong ton token neu chi la process, nhung moi output snapshot/log dua ve model deu lam context tang.
+5. Context da phinh nen cac request sau do trong dashboard hien `~200k input/request` la hop ly theo log, khong phai do `node`/`dotnet` tu goi OpenAI.
+
+### Current Dirty Snapshot At Investigation Time
+
+Dirty files lien quan backend owner-plan persistence va FE confirm modal:
+
+- `backend/services/api-gateway/src/ApiGateway.Api/Endpoints/OwnerPlanCatalogContractEndpoints.cs`
+- `backend/services/api-gateway/src/ApiGateway.Application/Tenants/ITenantServiceClient.cs`
+- `backend/services/api-gateway/src/ApiGateway.Infrastructure/Tenants/TenantServiceClient.cs`
+- `backend/services/tenant-service/src/TenantService.Api/Endpoints/OwnerPlanCatalogEndpoints.cs`
+- `backend/services/tenant-service/src/TenantService.Application/DependencyInjection.cs`
+- `backend/services/tenant-service/src/TenantService.Application/Plans/IOwnerPlanCatalogRepository.cs`
+- `backend/services/tenant-service/src/TenantService.Application/Plans/OwnerPlanCatalogErrors.cs`
+- `backend/services/tenant-service/src/TenantService.Application/Plans/OwnerPlanCatalogHandler.cs`
+- `backend/services/tenant-service/src/TenantService.Infrastructure/Migrations/0002_add_owner_plan_module_persistence.sql`
+- `backend/services/tenant-service/src/TenantService.Infrastructure/Persistence/DapperOwnerPlanCatalogRepository.cs`
+- `backend/services/tenant-service/tests/TenantService.Tests/OwnerPlanCatalogHandlerTests.cs`
+- `backend/services/tenant-service/tests/TenantService.Tests/OwnerPlanCatalogEndpointMetadataTests.cs`
+- Deleted old stub files: `OwnerPlanCatalogStubHandler.cs`, `OwnerPlanCatalogStubHandlerTests.cs`.
+- `frontend/apps/owner-admin/src/components/TenantLifecycleConfirmModal.vue`
+- `temp/plan.frontend.md`
+
+### Operational Recommendations
+
+- Dong/huy session FE `20:42:55` neu khong can tiep tuc; day la session con dang chay va dang tich luy token.
+- Tat Vite smoke server port `5185` va `5186` neu khong con can visual/smoke artifact.
+- Khi task khong bat buoc, khong dung subagent; neu bat buoc dung thi khong `fork_context: true` tru khi co ly do ro.
+- Thay `Get-Content -Raw` bang doc theo section hoac `Select-String -Context` voi pattern cu the.
+- Gioi han `rg` bang folder/file gan nhat, dung `--glob` va pattern hep; khong search ca `frontend backend shared` neu task chi nam trong mot service/component.
+- Truoc khi chay verify/browser, neu da co session dai, nen ket thuc va mo session moi sau khi ghi handoff ngan vao active plan.
+
+### Verify
+
+- Investigation commands: PASS.
+- `git status --short`: dirty worktree co san tu backend/FE tasks truoc do.
+- Khong commit/stage trong luot investigation vi owner chua yeu cau commit ro rang.

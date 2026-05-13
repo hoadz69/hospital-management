@@ -1,174 +1,137 @@
-# Kế Hoạch Backend/DevOps - Living Active Plan
+# Ke Hoach Backend/DevOps - Living Active Plan
 
-Ngày cập nhật: 2026-05-13
+Ngay cap nhat: 2026-05-14
 
-## Vai Trò File
+## Vai Tro File
 
-File này là active plan để agent mới resume Backend/DevOps mà không phải đọc archive. Không dùng file này làm lịch sử append-only; sau mỗi lượt chỉ cập nhật trạng thái hiện tại, điểm dừng, bước tiếp theo, verify và blocker.
+File nay la active plan de agent moi resume Backend/DevOps ma khong phai doc archive. Khong dung file nay lam lich su append-only; sau moi luot chi cap nhat trang thai hien tai, diem dung, buoc tiep theo, verify va blocker.
 
-Archive chi tiết: `temp/archive/plan.backend.history.md`. Chỉ đọc archive khi owner yêu cầu rõ, active plan trỏ tới section cụ thể, hoặc cần bằng chứng debug cũ.
+Archive chi tiet: `temp/archive/plan.backend.history.md`. Chi doc archive khi owner yeu cau ro, active plan tro toi section cu the, hoac can bang chung debug cu.
 
 ## Current Active Slice
 
-**No active implementation slice approved.**
+**Domain DNS/SSL API toi thieu implemented backend ngay 2026-05-13; runtime smoke pending.**
 
-Backend hiện không có task code mới được duyệt để làm ngay.
+Owner da go blocker Domain cho scope toi thieu de FE thay mock. Domain Service hien van scaffold/stub, nen implementation dat trong Tenant Service vi da co `platform.tenant_domains`; API Gateway chi forward sang Tenant Service, khong truy DB.
 
-- A.10: **Blocked**, thiếu spec thật.
-- Owner-plan persistence: **Plan ready / approval gate**, chưa được duyệt implement.
-- `/api/owner/*`: đã sẵn sàng cho FE A9 ở mức contract/stub BE A.2/A.3.
+## API Contract FE Dung De Bo Mock
 
-Nếu owner nói "tiếp tục backend" mà không chỉ rõ task, agent không được tự tạo endpoint mới. Phải chốt một trong các hướng sau:
+| Method | Path | Guard | Status |
+|---|---|---|---|
+| GET | `/api/tenants/{tenantId}/domains` | `X-Tenant-Id` khop route + OwnerSuperAdmin | Implemented gateway forward -> Tenant Service. |
+| POST | `/api/tenants/{tenantId}/domains/{domainId}/dns-retry` | `X-Tenant-Id` khop route + OwnerSuperAdmin | Implemented: validate tenant/domain, tang `retryCount`, cap nhat `lastCheckedAt`, `nextRetryAt`, `message`. |
+| GET | `/api/tenants/{tenantId}/domains/{domainId}/ssl-status` | `X-Tenant-Id` khop route + OwnerSuperAdmin | Implemented: tra SSL state hien tai. |
 
-1. Owner duyệt owner-plan persistence -> implement theo approval gate bên dưới.
-2. Owner giao A.10 -> trước tiên cần spec thật; nếu chưa có thì report blocker.
-3. Owner yêu cầu verify/smoke BE thật -> chạy verify/smoke, không sửa code nếu chỉ verify.
-4. Task backend khác -> thêm active slice cụ thể vào file này trước khi implement nếu chưa có plan duyệt.
+Response item/list item:
+
+```txt
+domainId
+domainName
+dnsStatus
+dnsRecords
+lastCheckedAt
+retryCount
+nextRetryAt
+sslStatus
+sslIssuer
+expiresAt
+message
+```
+
+## Persistence / Stub Status
+
+- **Persistence implemented, runtime DB smoke pending.**
+- Tenant Service migration: `0003_add_tenant_domain_dns_ssl_state.sql`.
+- Table extended: `platform.tenant_domains` them `dns_status`, `dns_records`, `last_checked_at_utc`, `retry_count`, `next_retry_at_utc`, `ssl_status`, `ssl_issuer`, `expires_at_utc`, `status_message`.
+- Repository: Dapper/Npgsql `DapperTenantDomainOperationsRepository`.
+- Local bootstrap: `infrastructure/postgres/init.sql` co 0003 addendum cho domain DNS/SSL.
+- Khong co DNS resolver/ACME/background worker that trong slice nay; API ghi state retry de FE bo mock.
+- Cac route Domain legacy con lai trong `Phase4ContractEndpoints` (`GET /domains/{domainId}`, register, verify, verify-status, publish) van la contract stub va khong duoc tinh DB Done.
+
+## API Inventory Theo FE Hien Tai
+
+| Nhom | Endpoint FE dang goi/mock | Trang thai backend |
+|---|---|---|
+| Tenant | `GET/POST /api/tenants`, `GET/PATCH /api/tenants/{id}` | DB that Done/Verified tu Phase 2. |
+| Owner Plan | `GET /api/owner/plans`, `GET /api/owner/modules`, `GET /api/owner/tenant-plan-assignments`, `POST /api/owner/tenant-plan-assignments/bulk-change` | DB that PASS ngay 2026-05-13. |
+| Domain DNS/SSL | 3 endpoint tren `/api/tenants/{tenantId}/domains...` | Implemented PostgreSQL/Dapper + gateway forward; runtime smoke pending. |
+| Template | Khong thay FE API client that | Gateway contract stub, thieu FE need/spec that. |
+| Website CMS/settings/slider | Khong thay FE API client that; public-web dang dung `mockTenant` | Gateway contract stub, thieu FE need/spec that. |
+| Public/Clinic Admin | App placeholder dung `mockTenant`, chi co HTTP client context | Chua co endpoint FE can/spec that. |
 
 ## Last Stopping Point
 
 - Phase 2 Tenant API runtime smoke: Done/Verified.
-- BE A.2 Owner Plan Module contract/stub: Done/Verified.
-- BE A.3 contract hardening + FE A9 support: Done/Verified.
-- A.10 preparation: baseline verify PASS, nhưng không implement vì thiếu spec.
-- Owner-plan persistence: chỉ mới plan approval, chưa migration/schema/repository.
-- Không có backend implementation đang dở.
-
-## Progress Snapshot
-
-| Hạng mục | Trạng thái | Ghi chú |
-|---|---|---|
-| Phase 2 Tenant API | Done/Verified | create/list/detail/status/duplicate conflict đã PASS qua PostgreSQL/server test theo handoff gần nhất. |
-| BE A.2 `/api/owner/*` | Done/Verified | Tenant Service + API Gateway expose 4 route; không migration/persistence. |
-| BE A.3 hardening | Done/Verified | Tests/metadata/validation/403 guard PASS; giữ response shape cho FE A9. |
-| Owner-plan persistence | Approval gate | Chưa tạo migration/schema/repository. |
-| A.10 | Blocked | Chưa có service/path/request-response/acceptance/spec thật. |
-
-## A.10 Blocker
-
-A.10 chưa được định nghĩa trong source of truth. Trước khi implement cần chốt:
-
-1. Service owner.
-2. Endpoint path/method.
-3. Request/response contract.
-4. Guard/tenant scope.
-5. Persistence/transaction/409 hay chỉ stub.
-6. Acceptance criteria và smoke case.
-
-Các endpoint dưới đây là A.2/A.3, **không phải A.10**:
-
-```txt
-GET /api/owner/plans
-GET /api/owner/modules
-GET /api/owner/tenant-plan-assignments
-POST /api/owner/tenant-plan-assignments/bulk-change
-```
-
-Không được tự tạo endpoint mới hoặc bịa contract A.10 chỉ dựa trên tên task.
-
-## Owner-Plan Persistence Approval Gate
-
-Chỉ implement khi owner nói rõ đã duyệt. Mục tiêu khi được duyệt:
-
-- Implement persistence thật phía sau 4 endpoint `/api/owner/*` hiện có.
-- Tenant Service sở hữu plan catalog, module entitlement và tenant-plan assignment.
-- API Gateway không truy DB, chỉ forwarding/typed client tới Tenant Service.
-- Giữ response contract hiện tại để không phá FE A8/A9.
-- Bulk-change phải có transaction boundary rõ.
-
-Không làm trước khi được duyệt:
-
-- Không tạo migration 0002.
-- Không tạo repository/schema owner-plan persistence.
-- Không kéo Billing/payment provider vào scope.
-- Không sửa frontend contract nếu owner chưa duyệt riêng.
-
-Thiết kế chi tiết nằm ở archive section `16. Backend Phase 4 Wave B - Owner Plan/Module Persistence Preparation`.
+- Owner-plan persistence: Done/Verified ngay 2026-05-13.
+- Domain DNS/SSL API: code + migration + tests PASS; runtime smoke pending vi Docker daemon local offline va khong co server env trong session.
+- A.10: Blocked vi thieu spec.
 
 ## Known Touched / Resume Files
 
-Các file baseline đã được rà/verify trong A.2/A.3/A.10 preparation:
-
 ```txt
-backend/services/tenant-service/src/TenantService.Api/Endpoints/OwnerPlanCatalogEndpoints.cs
-backend/services/api-gateway/src/ApiGateway.Api/Endpoints/OwnerPlanCatalogContractEndpoints.cs
-backend/services/tenant-service/tests/TenantService.Tests/OwnerPlanCatalogStubHandlerTests.cs
-backend/services/tenant-service/tests/TenantService.Tests/OwnerPlanCatalogEndpointMetadataTests.cs
-```
-
-## Allowed Areas Khi Có Slice Mới
-
-Chỉ mở rộng các vùng này khi active slice mới đã ghi rõ scope:
-
-```txt
-backend/shared/contracts/**
-backend/services/tenant-service/src/TenantService.Api/Endpoints/**
-backend/services/tenant-service/src/TenantService.Application/Plans/**
-backend/services/tenant-service/src/TenantService.Application/Tenants/**
-backend/services/tenant-service/src/TenantService.Infrastructure/Persistence/**
-backend/services/tenant-service/src/TenantService.Infrastructure/Migrations/**
-backend/services/tenant-service/tests/**
-backend/services/api-gateway/src/ApiGateway.Api/Endpoints/**
-backend/services/api-gateway/tests/**
+backend/shared/contracts/Domains/DomainContracts.cs
+backend/services/tenant-service/src/TenantService.Api/Endpoints/TenantDomainOperationsEndpoints.cs
+backend/services/tenant-service/src/TenantService.Api/Program.cs
+backend/services/tenant-service/src/TenantService.Application/DependencyInjection.cs
+backend/services/tenant-service/src/TenantService.Application/Domains/ITenantDomainOperationsRepository.cs
+backend/services/tenant-service/src/TenantService.Application/Domains/TenantDomainOperationErrors.cs
+backend/services/tenant-service/src/TenantService.Application/Domains/TenantDomainOperationsHandler.cs
+backend/services/tenant-service/src/TenantService.Infrastructure/DependencyInjection.cs
+backend/services/tenant-service/src/TenantService.Infrastructure/Migrations/0003_add_tenant_domain_dns_ssl_state.sql
+backend/services/tenant-service/src/TenantService.Infrastructure/Persistence/DapperTenantDomainOperationsRepository.cs
+backend/services/tenant-service/tests/TenantService.Tests/TenantDomainOperationsEndpointMetadataTests.cs
+backend/services/tenant-service/tests/TenantService.Tests/TenantDomainOperationsHandlerTests.cs
+backend/services/api-gateway/src/ApiGateway.Api/Endpoints/Phase4ContractEndpoints.cs
+backend/services/api-gateway/src/ApiGateway.Application/Tenants/ITenantServiceClient.cs
+backend/services/api-gateway/src/ApiGateway.Infrastructure/Tenants/TenantServiceClient.cs
+infrastructure/postgres/init.sql
 docs/current-task.backend.md
 temp/plan.backend.md
+docs/current-task.md
 ```
 
-Không sửa frontend/Figma/Billing/payment provider nếu owner không giao rõ.
+Owner-plan files from previous dirty slice are still part of worktree and must not be reverted.
 
-## Acceptance Criteria
-
-Trước khi implement slice mới, phải bổ sung acceptance criteria riêng cho slice đó vào file này. Default tối thiểu:
-
-- `git diff --check` PASS.
-- Restore/build/test backend PASS nếu sửa backend code.
-- Owner/platform endpoint phải guard đúng OwnerSuperAdmin; ClinicAdmin không bypass được bằng `X-Tenant-Id`.
-- Tenant-owned data phải có tenant context hợp lệ.
-- DB write nhiều bước phải có transaction boundary.
-- API Gateway không truy DB trực tiếp.
-- Response contract thay đổi phải ghi rõ impact frontend và cập nhật plan trước khi code.
-
-## Verify Plan
-
-Docs-only/no-code:
+## Acceptance / Verify Snapshot
 
 ```txt
-git diff --check
+gitnexus analyze: PASS
+git diff --check: PASS (LF/CRLF warnings only)
+C:\Program Files\dotnet\dotnet.exe restore backend/ClinicSaaS.Backend.sln: PASS
+C:\Program Files\dotnet\dotnet.exe build backend/ClinicSaaS.Backend.sln --no-restore: PASS, 0 warning/error
+C:\Program Files\dotnet\dotnet.exe test backend/ClinicSaaS.Backend.sln --no-build: PASS, 35/35 tests
+docker compose -f infrastructure/docker/docker-compose.dev.yml config: PASS
+docker ps: FAIL, Docker daemon offline
+server smoke env: missing DEPLOY_HOST/API_GATEWAY_URL
+QA/checkpoint 2026-05-14: rerun restore/build/test PASS 35/35; diff secret scan khong thay private key/token/connection string that. QA doc lap danh dau FAIL push-gate vi runtime smoke DB/gateway va migration 0003 tren DB runtime van pending.
 ```
 
-Backend code:
+Runtime smoke pending:
 
 ```txt
-git diff --check
-dotnet restore backend/ClinicSaaS.Backend.sln
-dotnet build backend/ClinicSaaS.Backend.sln --no-restore
-dotnet test backend/ClinicSaaS.Backend.sln --no-build
-```
-
-Runtime smoke chỉ chạy khi task yêu cầu và runtime/env phù hợp:
-
-```txt
-GET /health
-GET /openapi/v1.json
-GET /api/owner/plans
-GET /api/owner/modules
-GET /api/owner/tenant-plan-assignments
-POST /api/owner/tenant-plan-assignments/bulk-change
-Negative: ClinicAdmin 403, invalid owner role 403, invalid/missing bulk-change request 400
-Tenant API smoke nếu task chạm tenant persistence
+GET /api/tenants/{tenantId}/domains via gateway: pending
+POST /api/tenants/{tenantId}/domains/{domainId}/dns-retry via gateway: pending
+GET /api/tenants/{tenantId}/domains/{domainId}/ssl-status via gateway: pending
+Negative 403 wrong role: pending
+Negative 400/404 invalid tenant/domain: pending
 ```
 
 ## Blockers / Caveats
 
-- A.10 thiếu spec thật.
-- Owner-plan persistence/schema chưa được duyệt; A.2/A.3 hiện là contract/stub.
-- 409 conflict cho owner-plan assignment chưa áp dụng trong stub; chỉ cover khi persistence được duyệt.
-- Không đánh dấu Done bằng stub/mock nếu server test có thể chạy API thật.
+- Chua apply migration 0003 vao DB runtime trong session nay.
+- Chua chay gateway smoke vi Docker daemon local offline va khong co server smoke env.
+- Domain DNS/SSL API chua lam DNS resolver/SSL provisioning thật; chi persist state/toi thieu de FE bo mock.
+- Template/Website CMS/Public/Clinic Admin API van ngoai scope.
+- Khong dung stub/mock de danh dau Done neu chua smoke duoc API that.
+
+## Next Step
+
+1. Co runtime: apply `0003_add_tenant_domain_dns_ssl_state.sql`, restart Tenant Service + API Gateway.
+2. Smoke qua gateway: happy path 200 cho 3 endpoint, wrong role 403, empty/missing tenant/domain 400/404.
+3. Neu owner yeu cau commit, split backend/database/gateway/docs hop ly, khong stage generated artifacts.
 
 ## Archive Index
 
-- Full backend plan history trước cleanup: `temp/archive/plan.backend.history.md`.
-- Full backend current-task history trước cleanup: `docs/archive/backend-history-2026-05.md`.
-- Owner-plan persistence design: archive section `16. Backend Phase 4 Wave B`.
-- A.3 evidence: archive section `17. BE A.3 Contract Hardening`.
-- A.10 blocker evidence: archive section `18. Backend/DevOps Phase 4 Task A.10`.
+- Full backend plan history truoc cleanup: `temp/archive/plan.backend.history.md`.
+- Full backend current-task history truoc cleanup: `docs/archive/backend-history-2026-05.md`.
+- Owner-plan persistence design cu: archive section `16. Backend Phase 4 Wave B`.

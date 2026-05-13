@@ -2,6 +2,8 @@ using ClinicSaaS.BuildingBlocks.Options;
 using Dapper;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using TenantService.Application.Domains;
+using TenantService.Application.Plans;
 using TenantService.Application.Tenants;
 using TenantService.Infrastructure.Persistence;
 
@@ -27,6 +29,8 @@ public static class DependencyInjection
         services.Configure<PostgreSqlOptions>(configuration.GetSection(PostgreSqlOptions.SectionName));
         services.AddSingleton<IPostgreSqlConnectionFactory, NpgsqlConnectionFactory>();
         services.AddScoped<ITenantRepository, DapperTenantRepository>();
+        services.AddScoped<ITenantDomainOperationsRepository, DapperTenantDomainOperationsRepository>();
+        services.AddScoped<IOwnerPlanCatalogRepository, DapperOwnerPlanCatalogRepository>();
 
         RegisterDapperTypeHandlersOnce();
 

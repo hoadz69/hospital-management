@@ -10,6 +10,7 @@ namespace ApiGateway.Infrastructure.Tenants;
 public sealed class TenantServiceClient : ITenantServiceClient
 {
     private const string CorrelationIdHeaderName = "X-Correlation-Id";
+    private const string TenantHeaderName = "X-Tenant-Id";
 
     private readonly HttpClient _httpClient;
 
@@ -106,6 +107,98 @@ public sealed class TenantServiceClient : ITenantServiceClient
             Content = JsonContent.Create(request)
         };
         AddCorrelationId(message, correlationId);
+
+        return _httpClient.SendAsync(message, cancellationToken);
+    }
+
+    /// <inheritdoc />
+    public Task<HttpResponseMessage> ListTenantDomainDnsSslStatesAsync(
+        Guid tenantId,
+        string? correlationId,
+        CancellationToken cancellationToken)
+        => SendTenantScopedAsync(
+            HttpMethod.Get,
+            $"/api/tenants/{tenantId}/domains",
+            tenantId,
+            correlationId,
+            cancellationToken);
+
+    /// <inheritdoc />
+    public Task<HttpResponseMessage> RetryTenantDomainDnsAsync(
+        Guid tenantId,
+        Guid domainId,
+        string? correlationId,
+        CancellationToken cancellationToken)
+        => SendTenantScopedAsync(
+            HttpMethod.Post,
+            $"/api/tenants/{tenantId}/domains/{domainId}/dns-retry",
+            tenantId,
+            correlationId,
+            cancellationToken);
+
+    /// <inheritdoc />
+    public Task<HttpResponseMessage> GetTenantDomainSslStatusAsync(
+        Guid tenantId,
+        Guid domainId,
+        string? correlationId,
+        CancellationToken cancellationToken)
+        => SendTenantScopedAsync(
+            HttpMethod.Get,
+            $"/api/tenants/{tenantId}/domains/{domainId}/ssl-status",
+            tenantId,
+            correlationId,
+            cancellationToken);
+
+    /// <inheritdoc />
+    public Task<HttpResponseMessage> ListOwnerPlansAsync(string? correlationId, CancellationToken cancellationToken)
+        => SendOwnerGetAsync("/api/owner/plans", correlationId, cancellationToken);
+
+    /// <inheritdoc />
+    public Task<HttpResponseMessage> ListOwnerModulesAsync(string? correlationId, CancellationToken cancellationToken)
+        => SendOwnerGetAsync("/api/owner/modules", correlationId, cancellationToken);
+
+    /// <inheritdoc />
+    public Task<HttpResponseMessage> ListOwnerTenantPlanAssignmentsAsync(
+        string? correlationId,
+        CancellationToken cancellationToken)
+        => SendOwnerGetAsync("/api/owner/tenant-plan-assignments", correlationId, cancellationToken);
+
+    /// <inheritdoc />
+    public Task<HttpResponseMessage> BulkChangeOwnerTenantPlansAsync(
+        BulkChangeTenantPlanRequest request,
+        string? correlationId,
+        CancellationToken cancellationToken)
+    {
+        var message = new HttpRequestMessage(HttpMethod.Post, "/api/owner/tenant-plan-assignments/bulk-change")
+        {
+            Content = JsonContent.Create(request)
+        };
+        AddCorrelationId(message, correlationId);
+
+        return _httpClient.SendAsync(message, cancellationToken);
+    }
+
+    private Task<HttpResponseMessage> SendOwnerGetAsync(
+        string path,
+        string? correlationId,
+        CancellationToken cancellationToken)
+    {
+        var message = new HttpRequestMessage(HttpMethod.Get, path);
+        AddCorrelationId(message, correlationId);
+
+        return _httpClient.SendAsync(message, cancellationToken);
+    }
+
+    private Task<HttpResponseMessage> SendTenantScopedAsync(
+        HttpMethod method,
+        string path,
+        Guid tenantId,
+        string? correlationId,
+        CancellationToken cancellationToken)
+    {
+        var message = new HttpRequestMessage(method, path);
+        AddCorrelationId(message, correlationId);
+        message.Headers.TryAddWithoutValidation(TenantHeaderName, tenantId.ToString());
 
         return _httpClient.SendAsync(message, cancellationToken);
     }

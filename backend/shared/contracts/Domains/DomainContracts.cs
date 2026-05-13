@@ -44,6 +44,56 @@ public sealed record DomainResponse(
 public sealed record DomainListResponse(IReadOnlyList<DomainResponse> Items);
 
 /// <summary>
+/// DNS record ma FE can hien thi trong hang retry/diagnostic cua domain.
+/// </summary>
+/// <param name="RecordType">Loai record DNS, vi du `CNAME` hoac `TXT`.</param>
+/// <param name="Host">Host/name ma tenant can cau hinh tai DNS provider.</param>
+/// <param name="ExpectedValue">Gia tri mong doi de Domain API xac minh.</param>
+/// <param name="ActualValue">Gia tri he thong doc duoc gan nhat neu co.</param>
+/// <param name="Status">Trang thai record: `pending`, `propagating`, `failed` hoac `verified`.</param>
+/// <param name="Message">Thong diep ngan an toan cho FE hien thi.</param>
+public sealed record DomainDnsRecordResponse(
+    string RecordType,
+    string Host,
+    string ExpectedValue,
+    string? ActualValue,
+    string Status,
+    string? Message);
+
+/// <summary>
+/// Trang thai DNS retry va SSL cua mot domain thuoc tenant.
+/// </summary>
+/// <param name="DomainId">Dinh danh domain record.</param>
+/// <param name="DomainName">Ten domain hien thi.</param>
+/// <param name="DnsStatus">Trang thai DNS tong hop: `pending`, `propagating`, `failed` hoac `verified`.</param>
+/// <param name="DnsRecords">Danh sach CNAME/TXT can FE hien thi de owner sua DNS.</param>
+/// <param name="LastCheckedAt">Thoi diem he thong kiem tra DNS gan nhat.</param>
+/// <param name="RetryCount">So lan owner da yeu cau retry DNS.</param>
+/// <param name="NextRetryAt">Thoi diem du kien co the kiem tra lai.</param>
+/// <param name="SslStatus">Trang thai SSL: `none`, `pending`, `issued` hoac `failed`.</param>
+/// <param name="SslIssuer">Issuer cua certificate neu da cap.</param>
+/// <param name="ExpiresAt">Thoi diem certificate het han neu co.</param>
+/// <param name="Message">Thong diep ngan an toan cho FE hien thi.</param>
+public sealed record DomainDnsSslStateResponse(
+    Guid DomainId,
+    string DomainName,
+    string DnsStatus,
+    IReadOnlyList<DomainDnsRecordResponse> DnsRecords,
+    DateTimeOffset? LastCheckedAt,
+    int RetryCount,
+    DateTimeOffset? NextRetryAt,
+    string SslStatus,
+    string? SslIssuer,
+    DateTimeOffset? ExpiresAt,
+    string? Message);
+
+/// <summary>
+/// Response danh sach trang thai DNS/SSL domain cua mot tenant.
+/// </summary>
+/// <param name="Items">Cac domain thuoc tenant kem trang thai DNS/SSL hien tai.</param>
+public sealed record DomainDnsSslListResponse(IReadOnlyList<DomainDnsSslStateResponse> Items);
+
+/// <summary>
 /// Response cho thao tác verify DNS dạng dummy trong Wave A.
 /// </summary>
 /// <param name="DomainId">Định danh domain được verify.</param>

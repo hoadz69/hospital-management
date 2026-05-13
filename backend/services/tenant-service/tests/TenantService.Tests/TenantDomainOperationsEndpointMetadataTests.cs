@@ -2,44 +2,44 @@ using ClinicSaaS.BuildingBlocks.Authorization;
 using ClinicSaaS.BuildingBlocks.Security;
 using ClinicSaaS.BuildingBlocks.Tenancy;
 using ClinicSaaS.Contracts.Authorization;
-using ClinicSaaS.Contracts.Tenancy;
+using ClinicSaaS.Contracts.Domains;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Routing;
 using Microsoft.Extensions.DependencyInjection;
 using TenantService.Api.Endpoints;
-using TenantService.Application.Plans;
+using TenantService.Application.Domains;
 using Xunit;
 
 namespace TenantService.Tests;
 
 /// <summary>
-/// Contract test cho metadata route `/api/owner/*` trong Tenant Service.
+/// Contract test cho metadata route Domain DNS/SSL trong Tenant Service.
 /// </summary>
-public sealed class OwnerPlanCatalogEndpointMetadataTests
+public sealed class TenantDomainOperationsEndpointMetadataTests
 {
     /// <summary>
-    /// Xác nhận bốn route Owner Plan được giữ đúng path, platform scope, role và permission cho FE A9.
+    /// Xac nhan ba route FE can co tenant scope, OwnerSuperAdmin role va permission dung.
     /// </summary>
     [Fact]
-    public void MapOwnerPlanCatalogEndpoints_RegistersOwnerRoutesWithExpectedSecurityMetadata()
+    public void MapTenantDomainOperationsEndpoints_RegistersExpectedSecurityMetadata()
     {
         var builder = WebApplication.CreateBuilder();
+        builder.Services.AddScoped<ITenantContextAccessor, TenantContextAccessor>();
         builder.Services.AddScoped<IUserContextAccessor, UserContextAccessor>();
-        builder.Services.AddScoped<IOwnerPlanCatalogRepository, ThrowingOwnerPlanCatalogRepository>();
-        builder.Services.AddScoped<OwnerPlanCatalogHandler>();
+        builder.Services.AddScoped<ITenantDomainOperationsRepository, ThrowingTenantDomainOperationsRepository>();
+        builder.Services.AddScoped<TenantDomainOperationsHandler>();
         var app = builder.Build();
 
-        app.MapOwnerPlanCatalogEndpoints();
+        app.MapTenantDomainOperationsEndpoints();
 
         var endpoints = ((IEndpointRouteBuilder)app).DataSources.SelectMany(dataSource => dataSource.Endpoints)
             .OfType<RouteEndpoint>()
             .ToArray();
         var expectedRoutes = new Dictionary<string, string>
         {
-            ["/api/owner/plans"] = PermissionCodes.PlansRead,
-            ["/api/owner/modules"] = PermissionCodes.PlansRead,
-            ["/api/owner/tenant-plan-assignments"] = PermissionCodes.PlansRead,
-            ["/api/owner/tenant-plan-assignments/bulk-change"] = PermissionCodes.PlansWrite
+            ["/api/tenants/{tenantId:guid}/domains"] = PermissionCodes.DomainsRead,
+            ["/api/tenants/{tenantId:guid}/domains/{domainId:guid}/dns-retry"] = PermissionCodes.DomainsWrite,
+            ["/api/tenants/{tenantId:guid}/domains/{domainId:guid}/ssl-status"] = PermissionCodes.DomainsRead
         };
 
         foreach (var (route, permission) in expectedRoutes)
@@ -54,25 +54,31 @@ public sealed class OwnerPlanCatalogEndpointMetadataTests
             Assert.NotNull(permissionMetadata);
             Assert.Contains(permission, permissionMetadata.Permissions);
             Assert.NotNull(scopeMetadata);
-            Assert.Equal(TenantEndpointScope.Platform, scopeMetadata.Scope);
+            Assert.Equal(TenantEndpointScope.Tenant, scopeMetadata.Scope);
         }
     }
 
-    private sealed class ThrowingOwnerPlanCatalogRepository : IOwnerPlanCatalogRepository
+    private sealed class ThrowingTenantDomainOperationsRepository : ITenantDomainOperationsRepository
     {
-        public Task<OwnerPlanCatalogResponse> ListPlansAsync(CancellationToken cancellationToken)
+        public Task<bool> TenantExistsAsync(Guid tenantId, CancellationToken cancellationToken)
             => throw new NotSupportedException("Metadata test does not invoke repository.");
 
-        public Task<OwnerModuleCatalogResponse> ListModulesAsync(CancellationToken cancellationToken)
+        public Task<IReadOnlyList<DomainDnsSslStateResponse>> ListDomainsAsync(
+            Guid tenantId,
+            CancellationToken cancellationToken)
             => throw new NotSupportedException("Metadata test does not invoke repository.");
 
-        public Task<TenantPlanAssignmentListResponse> ListTenantPlanAssignmentsAsync(CancellationToken cancellationToken)
+        public Task<DomainDnsSslStateResponse?> GetDomainAsync(
+            Guid tenantId,
+            Guid domainId,
+            CancellationToken cancellationToken)
             => throw new NotSupportedException("Metadata test does not invoke repository.");
 
-        public Task<ClinicSaaS.BuildingBlocks.Results.Result<BulkChangeTenantPlanResponse>> BulkChangeTenantPlansAsync(
-            BulkChangeTenantPlanRequest request,
-            string? actorUserId,
+        public Task<DomainDnsSslStateResponse?> RetryDnsAsync(
+            Guid tenantId,
+            Guid domainId,
             DateTimeOffset now,
+            DateTimeOffset nextRetryAt,
             CancellationToken cancellationToken)
             => throw new NotSupportedException("Metadata test does not invoke repository.");
     }
