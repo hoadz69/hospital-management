@@ -13,13 +13,14 @@ Archive la cold storage: khong doc trong task thuong ngay, khong dua vao default
 - Phase 3 Owner Admin Tenant Slice: Done/Verified.
 - FE real API smoke qua server test: PASS co caveat owner-plan API hien van la contract-stub backend implementation.
 - Tenant slices da smoke qua Tenant API persistence that tren PostgreSQL.
-- Phase 4 Wave A / Owner Admin V3 foundation: da co nhieu step FE A5-A9 hoan tat; task hien tai nen tiep tuc theo plan active trong `temp/plan.frontend.md`.
+- Phase 4 Wave A / Owner Admin V3 foundation: FE A5-A9 Done/Verified; FE A7 state surfaces Done/Verified; FE A6 Owner Admin V3 visual polish Done/Verified ngay 2026-05-13.
 - Khong commit/stage/push neu owner chua yeu cau ro.
 
 ## Latest Verify Snapshot
 
-- `cd frontend && npm run typecheck`: PASS trong lan verify gan nhat.
-- `cd frontend && npm run build`: PASS trong lan verify gan nhat.
+- `git diff --check`: PASS ngay 2026-05-13 cho A6, chi co canh bao LF/CRLF cua git tren Windows.
+- `cd frontend && npm run typecheck`: PASS ngay 2026-05-13 cho A6.
+- `cd frontend && npm run build`: PASS ngay 2026-05-13 cho A6.
 - Route smoke gan nhat: `/plans`, `/dashboard`, `/clinics`, `/clinics/create`, `/clinics/{tenantId that}` 200 qua FE real API smoke.
 - Browser/API smoke xac nhan `/plans` goi `/api/owner/*`; clinic routes goi `/api/tenants` va `/api/tenants/{tenantId}` qua gateway that.
 
@@ -32,7 +33,7 @@ Archive la cold storage: khong doc trong task thuong ngay, khong dua vao default
 ## Next Step
 
 1. Voi frontend task nho: doc file nay + `temp/plan.frontend.md` + rule frontend lien quan, khong doc archive.
-2. Neu tiep tuc Wave A: resume tu active plan trong `temp/plan.frontend.md`, chay verify toi thieu theo scope.
+2. Neu tiep tuc Wave A: chot slice moi trong `temp/plan.frontend.md` truoc khi code; A6/A7 hien da Done/Verified.
 3. Neu can doi chieu lich su A5-A9 hoac visual QA cu: doc section tuong ung trong `docs/archive/frontend-history-2026-05.md`.
 
 ## Archive Index

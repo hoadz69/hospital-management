@@ -6,7 +6,7 @@ import type {
   OwnerTenantPlanAssignment,
   TenantPlanCode
 } from "@clinic-saas/shared-types";
-import { AppButton, AppCard, KPITile, PlanBadge } from "@clinic-saas/ui";
+import { AppButton, AppCard, KPITile, PlanBadge, StatePanel } from "@clinic-saas/ui";
 import { computed, onMounted, ref } from "vue";
 import { planCatalogClient } from "../services/planCatalogClient";
 
@@ -172,16 +172,19 @@ onMounted(() => {
       <AppButton label="Tải lại" variant="secondary" :disabled="isLoading" @click="loadPlanCatalog" />
     </section>
 
-    <AppCard v-if="loadError" class="state-card">
-      <strong>Không tải được catalog</strong>
-      <span>{{ loadError }}</span>
-      <AppButton label="Thử lại" variant="secondary" @click="loadPlanCatalog" />
-    </AppCard>
+    <StatePanel v-if="loadError" title="Không tải được catalog" :description="loadError" tone="danger">
+      <template #action>
+        <AppButton label="Thử lại" variant="secondary" @click="loadPlanCatalog" />
+      </template>
+    </StatePanel>
 
-    <AppCard v-else-if="isLoading" class="state-card">
-      <strong>Đang tải Plan & Module Catalog</strong>
-      <span>Owner Admin đang gọi BE A.2 contract hoặc mock fallback.</span>
-    </AppCard>
+    <StatePanel
+      v-else-if="isLoading"
+      title="Đang tải Plan & Module Catalog"
+      description="Owner Admin đang gọi BE A.2 contract hoặc mock fallback."
+      tone="loading"
+      busy
+    />
 
     <template v-else>
       <div class="kpi-grid">
@@ -309,6 +312,7 @@ onMounted(() => {
   display: grid;
   gap: var(--space-5);
   color: var(--color-text-primary);
+  min-width: 0;
 }
 
 .page-heading,
@@ -320,6 +324,16 @@ onMounted(() => {
   align-items: center;
   justify-content: space-between;
   gap: var(--space-4);
+}
+
+.page-heading {
+  border: 1px solid color-mix(in srgb, var(--color-border-subtle) 78%, var(--color-status-specialty));
+  border-radius: var(--radius-card);
+  padding: var(--space-5);
+  background:
+    linear-gradient(135deg, color-mix(in srgb, var(--color-status-specialty) 10%, transparent), transparent 44%),
+    var(--color-surface-elevated);
+  box-shadow: var(--shadow-elevation-1);
 }
 
 .page-heading p,
@@ -358,27 +372,15 @@ onMounted(() => {
   line-height: 22px;
 }
 
-.state-card {
-  display: grid;
-  justify-items: start;
-  gap: var(--space-3);
-}
-
-.state-card strong {
-  color: var(--color-text-primary);
-  font-size: 16px;
-}
-
-.state-card span {
-  color: var(--color-text-secondary);
-  font-size: 13px;
-  font-weight: 700;
-}
-
 .kpi-grid {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: var(--space-3);
+}
+
+.kpi-grid :deep(.kpi-tile) {
+  min-height: 108px;
+  border-color: color-mix(in srgb, var(--color-border-subtle) 82%, var(--color-status-specialty));
 }
 
 .plan-grid {
@@ -396,6 +398,15 @@ onMounted(() => {
   border-width: 1.5px;
   background: linear-gradient(180deg, color-mix(in srgb, var(--color-surface-elevated) 94%, white), var(--color-surface-elevated));
   box-shadow: 0 16px 36px rgba(16, 42, 67, 0.08);
+  transition:
+    border-color var(--motion-duration-xs) var(--motion-ease-standard),
+    transform var(--motion-duration-xs) var(--motion-ease-standard),
+    box-shadow var(--motion-duration-xs) var(--motion-ease-standard);
+}
+
+.plan-card:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-elevation-3);
 }
 
 .plan-card.featured {
@@ -510,6 +521,11 @@ onMounted(() => {
   color: color-mix(in srgb, var(--color-text-secondary) 92%, var(--color-text-primary));
   font-size: 13px;
   font-weight: 700;
+}
+
+.matrix-row:not(.matrix-row--head):hover,
+.assignment-row:not(.assignment-row--head):hover {
+  background: color-mix(in srgb, var(--color-status-specialty) 7%, var(--color-surface-elevated));
 }
 
 .matrix-row:nth-child(even),

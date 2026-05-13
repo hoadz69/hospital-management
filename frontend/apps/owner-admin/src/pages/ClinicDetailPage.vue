@@ -3,7 +3,7 @@
 // Page này có cùng dữ liệu nguồn với drawer ở `/clinics`, nhưng được trình bày dạng full-page
 // để Owner Admin có thể bookmark/chia sẻ link riêng từng tenant.
 import type { TenantDetail, TenantDomainStatus, TenantStatus } from "@clinic-saas/shared-types";
-import { AppButton, AppCard, DomainStateRow, ModuleChips, PlanBadge, StatusPill } from "@clinic-saas/ui";
+import { AppButton, AppCard, DomainStateRow, ModuleChips, PlanBadge, StatePanel, StatusPill } from "@clinic-saas/ui";
 import { computed, onMounted, ref, watch } from "vue";
 import DomainDnsRetryState from "../components/DomainDnsRetryState.vue";
 import SslPendingState from "../components/SslPendingState.vue";
@@ -233,14 +233,19 @@ watch(() => props.tenantId, loadTenant);
       </div>
     </section>
 
-    <div v-if="error" class="error-state">
-      <span>{{ error }}</span>
-      <AppButton label="Thử lại" variant="secondary" @click="loadTenant" />
-    </div>
+    <StatePanel v-if="error" title="Không tải được hồ sơ phòng khám" :description="error" tone="danger">
+      <template #action>
+        <AppButton label="Thử lại" variant="secondary" @click="loadTenant" />
+      </template>
+    </StatePanel>
 
-    <AppCard v-if="loading && !tenant">
-      <div class="loading-state">Đang tải hồ sơ phòng khám...</div>
-    </AppCard>
+    <StatePanel
+      v-if="loading && !tenant"
+      title="Đang tải hồ sơ phòng khám"
+      description="Owner Admin đang lấy tenant detail, domain và module entitlement."
+      tone="loading"
+      busy
+    />
 
     <template v-else-if="tenant">
       <div class="detail-grid">
@@ -332,6 +337,7 @@ watch(() => props.tenantId, loadTenant);
 .detail-page {
   display: grid;
   gap: var(--space-5);
+  min-width: 0;
 }
 
 .page-heading,
@@ -344,6 +350,13 @@ watch(() => props.tenantId, loadTenant);
 
 .page-heading {
   justify-content: space-between;
+  border: 1px solid color-mix(in srgb, var(--color-border-subtle) 78%, var(--color-brand-primary));
+  border-radius: var(--radius-card);
+  padding: var(--space-5);
+  background:
+    linear-gradient(135deg, color-mix(in srgb, var(--color-status-info) 9%, transparent), transparent 44%),
+    var(--color-surface-elevated);
+  box-shadow: var(--shadow-elevation-1);
 }
 
 .page-heading p,
@@ -379,6 +392,10 @@ a {
   gap: var(--space-5);
 }
 
+.detail-grid :deep(.app-card) {
+  min-width: 0;
+}
+
 dl {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -396,6 +413,7 @@ dd {
   margin: 4px 0 0;
   overflow-wrap: anywhere;
   color: var(--color-text-primary);
+  font-weight: 750;
 }
 
 .wide {
@@ -406,6 +424,12 @@ dd {
   display: grid;
   gap: var(--space-3);
   margin: var(--space-4) 0 0;
+}
+
+.status-row {
+  flex-wrap: wrap;
+  border-bottom: 1px solid var(--color-border-subtle);
+  padding-bottom: var(--space-4);
 }
 
 .state-surface-card {
@@ -438,27 +462,6 @@ dd {
   outline-offset: 2px;
 }
 
-.error-state,
-.loading-state {
-  border-radius: var(--radius-input);
-  padding: var(--space-4);
-}
-
-.error-state {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: var(--space-4);
-  border: 1px solid color-mix(in srgb, var(--color-status-warning) 24%, var(--color-border-subtle));
-  background: color-mix(in srgb, var(--color-status-warning) 8%, var(--color-surface-elevated));
-  color: var(--color-status-warning);
-}
-
-.loading-state {
-  color: var(--color-text-secondary);
-  text-align: center;
-}
-
 @media (max-width: 980px) {
   .detail-grid {
     grid-template-columns: 1fr;
@@ -467,8 +470,7 @@ dd {
 
 @media (max-width: 640px) {
   .page-heading,
-  .heading-actions,
-  .error-state {
+  .heading-actions {
     align-items: stretch;
     flex-direction: column;
   }

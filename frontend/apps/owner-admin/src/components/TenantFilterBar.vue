@@ -1,7 +1,7 @@
 <script setup lang="ts">
 // Filter bar tenant theo Figma `V2 - Owner Admin Tenant Operations`.
-// Component dÃ¹ng v-model nháº­n object filters tá»« parent Ä‘á»ƒ giá»¯ stateless vÃ  dá»… test.
-// NÃºt Export lÃ  placeholder: backend domain-service chÆ°a cung cáº¥p endpoint export trong Phase 3.
+// Component dùng v-model nhận object filters từ parent để giữ stateless và dễ test.
+// Nút Export là placeholder: backend domain-service chưa cung cấp endpoint export trong Phase 3.
 import type { TenantDomainStatus, TenantPlanCode, TenantStatus } from "@clinic-saas/shared-types";
 import { AppButton } from "@clinic-saas/ui";
 import { formatDomainStatus, formatModuleCode, formatTenantStatus } from "../services/labels";
@@ -19,10 +19,9 @@ defineEmits<{
   reset: [];
 }>();
 
-// Option list cho tá»«ng select. GiÃ¡ trá»‹ giá»¯ nguyÃªn enum backend (Draft/Active/...) cÃ²n label dÃ¹ng formatter VN.
-// Plan giá»¯ tÃªn thÆ°Æ¡ng máº¡i Starter/Growth/Premium vÃ¬ lÃ  tÃªn gÃ³i, khÃ´ng cáº§n dá»‹ch.
+// Option list cho từng select. Giá trị giữ nguyên enum backend, label dùng formatter tiếng Việt.
 const statusOptions: { value: "all" | TenantStatus; label: string }[] = [
-  { value: "all", label: "Táº¥t cáº£ tráº¡ng thÃ¡i" },
+  { value: "all", label: "Tất cả trạng thái" },
   { value: "Draft", label: formatTenantStatus("Draft") },
   { value: "Active", label: formatTenantStatus("Active") },
   { value: "Suspended", label: formatTenantStatus("Suspended") },
@@ -30,14 +29,14 @@ const statusOptions: { value: "all" | TenantStatus; label: string }[] = [
 ];
 
 const planOptions: { value: "all" | TenantPlanCode; label: string }[] = [
-  { value: "all", label: "Táº¥t cáº£ gÃ³i" },
+  { value: "all", label: "Tất cả gói" },
   { value: "starter", label: "Starter" },
   { value: "growth", label: "Growth" },
   { value: "premium", label: "Premium" }
 ];
 
 const domainOptions: { value: "all" | TenantDomainStatus; label: string }[] = [
-  { value: "all", label: "Táº¥t cáº£ tÃªn miá»n" },
+  { value: "all", label: "Tất cả tên miền" },
   { value: "verified", label: formatDomainStatus("verified") },
   { value: "pending", label: formatDomainStatus("pending") },
   { value: "failed", label: formatDomainStatus("failed") },
@@ -45,7 +44,7 @@ const domainOptions: { value: "all" | TenantDomainStatus; label: string }[] = [
 ];
 
 const moduleOptions: { value: TenantFilters["moduleCode"]; label: string }[] = [
-  { value: "all", label: "Táº¥t cáº£ module" },
+  { value: "all", label: "Tất cả module" },
   { value: "website", label: formatModuleCode("website") },
   { value: "booking", label: formatModuleCode("booking") },
   { value: "catalog", label: formatModuleCode("catalog") },
@@ -86,8 +85,8 @@ function setModuleCodeFromEvent(event: Event) {
 <template>
   <div class="filter-bar">
     <div class="filter-group filter-group-status">
-      <span class="group-label">Tráº¡ng thÃ¡i</span>
-      <div class="status-segment" role="group" aria-label="Lá»c theo tráº¡ng thÃ¡i">
+      <span class="group-label">Trạng thái</span>
+      <div class="status-segment" role="group" aria-label="Lọc theo trạng thái">
         <button
           v-for="opt in statusOptions"
           :key="opt.value"
@@ -103,14 +102,14 @@ function setModuleCodeFromEvent(event: Event) {
     </div>
 
     <label class="filter-group">
-      <span class="group-label">GÃ³i</span>
+      <span class="group-label">Gói</span>
       <select class="filter-select" :value="filters.plan" @change="setPlanFromEvent">
         <option v-for="opt in planOptions" :key="opt.value" :value="opt.value">{{ opt.label }}</option>
       </select>
     </label>
 
     <label class="filter-group">
-      <span class="group-label">TÃªn miá»n</span>
+      <span class="group-label">Tên miền</span>
       <select class="filter-select" :value="filters.domainStatus" @change="setDomainStatusFromEvent">
         <option v-for="opt in domainOptions" :key="opt.value" :value="opt.value">{{ opt.label }}</option>
       </select>
@@ -124,8 +123,8 @@ function setModuleCodeFromEvent(event: Event) {
     </label>
 
     <div class="filter-actions">
-      <AppButton label="Äáº·t láº¡i" variant="secondary" @click="$emit('reset')" />
-      <AppButton label="Xuáº¥t file" variant="ghost" disabled />
+      <AppButton label="Đặt lại" variant="secondary" @click="$emit('reset')" />
+      <AppButton label="Xuất file" variant="ghost" disabled />
     </div>
   </div>
 </template>

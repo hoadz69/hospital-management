@@ -10,15 +10,15 @@ Archive chi tiết: `temp/archive/plan.frontend.history.md`. Chỉ đọc archiv
 
 ## Current Active Slice
 
-**No active implementation slice approved.**
+**Không có implementation đang dở. Last completed slice: FE A6 Owner Admin V3 visual polish.**
 
-Frontend hiện không có task code mới đã được duyệt để làm ngay. Các phần đã hoàn tất gần nhất là A5 shared UI foundation và A9 `/plans` API wiring. Nếu owner nói "tiếp tục frontend/Wave A" mà không chỉ rõ slice, Lead/Frontend Agent phải dừng ở plan/report và chốt một slice cụ thể trước khi code.
+Prompt 2026-05-13 đã cho Lead làm tiếp A6 Owner Admin V3 visual polish cho `/dashboard`, `/clinics`, `/clinics/create`, `/clinics/:tenantId`, `/plans`, dựa trên `StatePanel` A7. Slice đã hoàn tất, không đổi backend/API contract/store/route.
 
 Ứng viên slice tiếp theo:
 
-1. A6 Owner Admin V3 restyle/state surfaces theo Figma V3 frame liên quan.
-2. A7 empty/loading/error/conflict/detail states nếu ưu tiên state quality.
-3. `/plans` polish nhỏ nếu backend owner-plan persistence được duyệt và contract thay đổi.
+1. A7 follow-up nhỏ: mở rộng `StatePanel` vào component-level states nếu phát sinh màn mới.
+2. `/plans` polish nhỏ nếu backend owner-plan persistence được duyệt và contract thay đổi.
+3. Slice frontend mới theo Owner/Lead chỉ định, phải ghi acceptance criteria trước khi code.
 
 ## Last Stopping Point
 
@@ -26,6 +26,8 @@ Frontend hiện không có task code mới đã được duyệt để làm ngay
 - A5 shared UI foundation: Done/Verified.
 - A5 adoption vào Owner Admin: Done/Verified.
 - A9 `/plans` API wiring: Done/Verified.
+- A7 state surfaces: Done/Verified ngay 2026-05-13.
+- A6 Owner Admin V3 visual polish: Done/Verified ngay 2026-05-13.
 - FE real API smoke: PASS có caveat owner-plan backend vẫn là contract stub.
 - Không có frontend implementation đang dở.
 
@@ -37,7 +39,9 @@ Frontend hiện không có task code mới đã được duyệt để làm ngay
 | A5 shared UI | Done/Verified | `KPITile`, `ModuleChips`, `PlanBadge`, `EmptyState`, `DomainStateRow`, `CommandPalette`, `TenantSwitcher`; boundary check PASS. |
 | A5 adoption | Done/Verified | Dashboard/Clinics/Clinic detail/Create wizard đã dùng shared display components phù hợp. |
 | A9 `/plans` | Done/Verified | Page dùng `planCatalogClient`, mock fallback còn giữ, bulk-change dùng BE A.2 payload. |
-| Wave A tiếp theo | Chưa chốt | Cần owner/Lead chọn slice trước khi code. |
+| A7 state surfaces | Done/Verified | Thêm shared `StatePanel`; adopt loading/error surface cho Dashboard, Clinics, Clinic detail, Create wizard, Plans catalog. |
+| A6 visual polish | Done/Verified | Thống nhất V3 page heading surface, KPI/card/table density, hover/focus polish, create wizard preview, Plan Catalog cards/matrix và StatePanel accent rail cho 5 route chính. |
+| Wave A tiếp theo | Chưa chốt | Cần owner/Lead chọn slice mới trước khi code. |
 
 ## Known Touched / Resume Files
 
@@ -45,6 +49,12 @@ Các file này là ngữ cảnh thật từ A5/A9, chỉ đọc khi task mới l
 
 ```txt
 frontend/apps/owner-admin/src/pages/PlanModuleCatalogPage.vue
+frontend/apps/owner-admin/src/pages/DashboardPage.vue
+frontend/apps/owner-admin/src/pages/ClinicsPage.vue
+frontend/apps/owner-admin/src/pages/ClinicDetailPage.vue
+frontend/apps/owner-admin/src/pages/CreateClinicPage.vue
+frontend/apps/owner-admin/src/components/CreateTenantWizard.vue
+frontend/apps/owner-admin/src/components/TenantTable.vue
 frontend/apps/owner-admin/src/services/planCatalogClient.ts
 frontend/apps/owner-admin/src/services/planCatalogMock.ts
 frontend/packages/api-client/src/ownerPlanCatalogClient.ts
@@ -54,6 +64,7 @@ frontend/packages/ui/src/components/ModuleChips.vue
 frontend/packages/ui/src/components/PlanBadge.vue
 frontend/packages/ui/src/components/EmptyState.vue
 frontend/packages/ui/src/components/DomainStateRow.vue
+frontend/packages/ui/src/components/StatePanel.vue
 frontend/packages/ui/src/components/CommandPalette.vue
 frontend/packages/ui/src/components/TenantSwitcher.vue
 frontend/packages/ui/src/index.ts
@@ -88,6 +99,20 @@ Trước khi implement slice mới, phải bổ sung acceptance criteria riêng 
 - Shared UI component không import router, Pinia, API client, app store, env/storage.
 - Task visual/restyle lớn phải có visual QA/screenshot khi owner yêu cầu hoặc trước commit UI lớn.
 
+FE A7 acceptance đã hoàn tất:
+
+- Shared `StatePanel` nằm trong `frontend/packages/ui`, không import router/Pinia/API/env/storage.
+- Owner Admin loading/error surfaces dùng tone thống nhất cho `/dashboard`, `/clinics`, `/clinics/create`, `/clinics/:tenantId`, `/plans`.
+- Không đổi API contract, route, store hoặc backend behavior.
+- `git diff --check`, `cd frontend && npm run typecheck`, `cd frontend && npm run build` PASS.
+
+FE A6 acceptance đã hoàn tất:
+
+- `/dashboard`, `/clinics`, `/clinics/create`, `/clinics/:tenantId`, `/plans` có V3 visual polish nhất quán cho page heading, KPI/card/table/state surface.
+- `StatePanel` giữ shared UI boundary và có accent rail/box shadow nhẹ; không import router/Pinia/API/env/storage.
+- Không đổi API contract, route, store hoặc backend behavior.
+- `git diff --check`, `cd frontend && npm run typecheck`, `cd frontend && npm run build` PASS.
+
 ## Verify Plan
 
 Docs-only/no-code:
@@ -118,7 +143,7 @@ Route/API smoke chỉ chạy khi task đổi route, UI behavior hoặc API flow:
 
 - Owner-plan endpoints chạy qua backend/gateway thật nhưng implementation vẫn là contract stub BE A.2/A.3.
 - Owner-plan persistence/schema cần Backend/DB approval riêng; frontend không tự chuyển stub thành persistence.
-- Wave A step tiếp theo chưa chốt; không code frontend mới nếu chưa có active slice cụ thể.
+- Wave A step tiếp theo sau A6 chưa chốt; không code frontend mới nếu chưa có prompt/action trigger cụ thể.
 
 ## Archive Index
 

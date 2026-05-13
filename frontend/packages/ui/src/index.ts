@@ -7,6 +7,7 @@ export { default as KPITile } from "./components/KPITile.vue";
 export { default as MetricCard } from "./components/MetricCard.vue";
 export { default as ModuleChips } from "./components/ModuleChips.vue";
 export { default as PlanBadge } from "./components/PlanBadge.vue";
+export { default as StatePanel } from "./components/StatePanel.vue";
 export { default as StatusPill } from "./components/StatusPill.vue";
 export { default as TenantSwitcher } from "./components/TenantSwitcher.vue";
 export * from "./composables";

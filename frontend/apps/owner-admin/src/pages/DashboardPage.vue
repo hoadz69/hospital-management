@@ -1,7 +1,7 @@
 <script setup lang="ts">
 // Trang dashboard Owner Admin bám V3 cross-tenant cockpit, chỉ derive dữ liệu từ tenantClient hiện có.
 import type { TenantSummary } from "@clinic-saas/shared-types";
-import { AppButton, AppCard, EmptyState, KPITile, StatusPill } from "@clinic-saas/ui";
+import { AppButton, AppCard, EmptyState, KPITile, StatePanel, StatusPill } from "@clinic-saas/ui";
 import { computed, onMounted, ref } from "vue";
 import DomainDnsRetryState from "../components/DomainDnsRetryState.vue";
 import SslPendingState from "../components/SslPendingState.vue";
@@ -134,10 +134,19 @@ onMounted(loadDashboard);
       <KPITile label="Domain pending" :value="domainPendingCount" meta="Cần admin verify" tone="warning" />
     </div>
 
-    <div v-if="error" class="state">
-      <p>{{ error }}</p>
-      <AppButton label="Thử lại" variant="secondary" @click="loadDashboard" />
-    </div>
+    <StatePanel
+      v-if="loading && tenants.length === 0"
+      title="Đang tải dashboard"
+      description="Owner Admin đang lấy danh sách tenant để dựng cockpit cross-tenant."
+      tone="loading"
+      busy
+    />
+
+    <StatePanel v-else-if="error" title="Không tải được dashboard" :description="error" tone="danger">
+      <template #action>
+        <AppButton label="Thử lại" variant="secondary" @click="loadDashboard" />
+      </template>
+    </StatePanel>
 
     <EmptyState
       v-else-if="!loading && tenants.length === 0"
@@ -251,6 +260,7 @@ onMounted(loadDashboard);
 .dashboard-page {
   display: grid;
   gap: var(--space-5);
+  min-width: 0;
 }
 
 .page-heading,
@@ -261,11 +271,20 @@ onMounted(loadDashboard);
   gap: var(--space-4);
 }
 
+.page-heading {
+  border: 1px solid color-mix(in srgb, var(--color-border-subtle) 78%, var(--color-brand-primary));
+  border-radius: var(--radius-card);
+  padding: var(--space-5);
+  background:
+    linear-gradient(135deg, color-mix(in srgb, var(--color-brand-primary) 9%, transparent), transparent 42%),
+    var(--color-surface-elevated);
+  box-shadow: var(--shadow-elevation-1);
+}
+
 .page-heading p,
 .page-heading h2,
 .operations-header h3,
-.operations-header p,
-.state p {
+.operations-header p {
   margin: 0;
 }
 
@@ -291,6 +310,11 @@ onMounted(loadDashboard);
   gap: var(--space-3);
 }
 
+.metrics-grid :deep(.kpi-tile) {
+  min-height: 116px;
+  border-color: color-mix(in srgb, var(--color-border-subtle) 82%, var(--color-brand-primary));
+}
+
 .operations-header p {
   margin-top: var(--space-1);
   color: var(--color-text-secondary);
@@ -301,6 +325,15 @@ onMounted(loadDashboard);
   display: grid;
   grid-template-columns: minmax(0, 1.25fr) minmax(320px, 0.75fr);
   gap: var(--space-4);
+}
+
+.chart-card {
+  min-width: 0;
+  border-color: color-mix(in srgb, var(--color-border-subtle) 78%, var(--color-status-specialty));
+}
+
+.attention-card {
+  min-width: 0;
 }
 
 .tenant-card {
@@ -467,11 +500,15 @@ onMounted(loadDashboard);
   color: var(--color-text-secondary);
   font-size: 12px;
   text-decoration: none;
+  transition:
+    background var(--motion-duration-xs) var(--motion-ease-standard),
+    border-color var(--motion-duration-xs) var(--motion-ease-standard);
 }
 
 .tenant-row:hover,
 .tenant-row:focus-visible {
   background: var(--color-surface-muted);
+  border-color: color-mix(in srgb, var(--color-brand-primary) 32%, var(--color-border-subtle));
   outline: 2px solid color-mix(in srgb, var(--color-brand-primary) 35%, transparent);
   outline-offset: 2px;
 }
@@ -494,18 +531,6 @@ onMounted(loadDashboard);
   margin-top: 2px;
   color: var(--color-text-muted);
   font-size: 10px;
-}
-
-.state {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: var(--space-4);
-  border: 1px solid color-mix(in srgb, var(--color-status-warning) 22%, var(--color-border-subtle));
-  border-radius: var(--radius-card);
-  padding: var(--space-4);
-  background: color-mix(in srgb, var(--color-status-warning) 8%, var(--color-surface-elevated));
-  color: var(--color-status-warning);
 }
 
 a {
@@ -534,8 +559,7 @@ a {
 
 @media (max-width: 640px) {
   .page-heading,
-  .operations-header,
-  .state {
+  .operations-header {
     align-items: stretch;
     flex-direction: column;
   }

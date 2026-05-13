@@ -369,6 +369,10 @@ function submit() {
   min-width: 0;
 }
 
+.wizard-grid > :deep(.app-card) {
+  border-color: color-mix(in srgb, var(--color-border-subtle) 82%, var(--color-brand-primary));
+}
+
 .stepper {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
@@ -376,7 +380,7 @@ function submit() {
   border: 1px solid var(--color-border-subtle);
   border-radius: var(--radius-card);
   padding: var(--space-4) var(--space-5);
-  background: var(--color-surface-elevated);
+  background: color-mix(in srgb, var(--color-surface-muted) 52%, var(--color-surface-elevated));
 }
 
 .stepper button {
@@ -437,7 +441,7 @@ function submit() {
   z-index: 1;
   max-width: 120px;
   min-width: 0;
-  background: var(--color-surface-elevated);
+  background: color-mix(in srgb, var(--color-surface-muted) 52%, var(--color-surface-elevated));
   padding-right: 10px;
 }
 
@@ -520,6 +524,10 @@ label.conflict input {
   color: var(--color-text-primary);
   cursor: pointer;
   text-align: left;
+  transition:
+    border-color var(--motion-duration-xs) var(--motion-ease-standard),
+    background var(--motion-duration-xs) var(--motion-ease-standard),
+    transform var(--motion-duration-xs) var(--motion-ease-standard);
 }
 
 .module-options button {
@@ -544,6 +552,16 @@ label.conflict input {
 .module-options button.selected {
   background: color-mix(in srgb, var(--color-brand-primary) 10%, var(--color-surface-elevated));
   color: var(--color-brand-primary);
+}
+
+.plan-options button:hover,
+.module-options button:hover,
+.plan-options button:focus-visible,
+.module-options button:focus-visible {
+  border-color: color-mix(in srgb, var(--color-brand-primary) 42%, var(--color-border-subtle));
+  outline: 2px solid color-mix(in srgb, var(--color-brand-primary) 18%, transparent);
+  outline-offset: 2px;
+  transform: translateY(-1px);
 }
 
 .plan-options strong,
@@ -602,6 +620,11 @@ label.conflict input {
 
 .side-preview {
   align-self: start;
+  position: sticky;
+  top: var(--space-5);
+  border-color: color-mix(in srgb, var(--color-brand-accent) 34%, var(--color-border-subtle));
+  background:
+    linear-gradient(180deg, color-mix(in srgb, var(--color-brand-accent) 9%, var(--color-surface-elevated)), var(--color-surface-elevated));
 }
 
 .side-preview h2,
@@ -631,6 +654,10 @@ label.conflict input {
 @media (max-width: 1080px) {
   .wizard-grid {
     grid-template-columns: 1fr;
+  }
+
+  .side-preview {
+    position: static;
   }
 }
 

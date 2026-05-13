@@ -6,7 +6,7 @@
 //  - Mở drawer detail và cho phép cập nhật trạng thái suspend/activate.
 //  - Hiển thị placeholder cho conflict 409 và CTA mở wizard tạo tenant ở footer page.
 import type { TenantDetail, TenantStatus, TenantSummary } from "@clinic-saas/shared-types";
-import { AppButton, AppCard, EmptyState, KPITile } from "@clinic-saas/ui";
+import { AppButton, AppCard, EmptyState, KPITile, StatePanel } from "@clinic-saas/ui";
 import { computed, onMounted, reactive, ref } from "vue";
 import TenantDetailDrawer from "../components/TenantDetailDrawer.vue";
 import TenantFilterBar, { type TenantFilters } from "../components/TenantFilterBar.vue";
@@ -144,13 +144,14 @@ onMounted(loadTenants);
     </AppCard>
 
     <AppCard :padded="false">
-      <div v-if="error" class="error-state">
-        <span>{{ error }}</span>
-        <AppButton label="Thử lại" variant="secondary" @click="loadTenants" />
-      </div>
+      <StatePanel v-if="error" class="table-state-panel" title="Không tải được danh sách phòng khám" :description="error" tone="danger">
+        <template #action>
+          <AppButton label="Thử lại" variant="secondary" @click="loadTenants" />
+        </template>
+      </StatePanel>
 
       <TenantTable
-        v-if="!isEmpty && !isFilterEmpty"
+        v-else-if="!isEmpty && !isFilterEmpty"
         :loading="loading"
         :selected-tenant-id="selectedTenantId"
         :tenants="filteredTenants"
@@ -225,6 +226,7 @@ onMounted(loadTenants);
 .clinics-page {
   display: grid;
   gap: var(--space-5);
+  min-width: 0;
 }
 
 .page-heading,
@@ -233,6 +235,16 @@ onMounted(loadTenants);
   align-items: center;
   justify-content: space-between;
   gap: var(--space-3);
+}
+
+.page-heading {
+  border: 1px solid color-mix(in srgb, var(--color-border-subtle) 78%, var(--color-brand-primary));
+  border-radius: var(--radius-card);
+  padding: var(--space-5);
+  background:
+    linear-gradient(135deg, color-mix(in srgb, var(--color-brand-accent) 9%, transparent), transparent 44%),
+    var(--color-surface-elevated);
+  box-shadow: var(--shadow-elevation-1);
 }
 
 .page-heading p,
@@ -266,6 +278,7 @@ onMounted(loadTenants);
   min-height: 104px;
   gap: var(--space-1);
   padding: var(--space-4);
+  border-color: color-mix(in srgb, var(--color-border-subtle) 82%, var(--color-brand-primary));
   box-shadow: 0 8px 18px color-mix(in srgb, var(--color-text-primary) 6%, transparent);
 }
 
@@ -291,15 +304,10 @@ onMounted(loadTenants);
   line-height: 16px;
 }
 
-.error-state {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: var(--space-4);
-  border-bottom: 1px solid color-mix(in srgb, var(--color-status-warning) 24%, var(--color-border-subtle));
-  padding: var(--space-4);
-  background: color-mix(in srgb, var(--color-status-warning) 8%, var(--color-surface-elevated));
-  color: var(--color-status-warning);
+.table-state-panel.table-state-panel {
+  border: 0;
+  border-bottom: 1px solid color-mix(in srgb, var(--color-status-danger) 24%, var(--color-border-subtle));
+  border-radius: 0;
 }
 
 .clinics-empty-state {
@@ -337,6 +345,8 @@ onMounted(loadTenants);
 .footer-card {
   display: grid;
   gap: 10px;
+  min-height: 132px;
+  align-content: start;
 }
 
 .footer-card p {
@@ -403,8 +413,7 @@ onMounted(loadTenants);
 
 @media (max-width: 640px) {
   .page-heading,
-  .heading-actions,
-  .error-state {
+  .heading-actions {
     align-items: stretch;
     flex-direction: column;
   }

@@ -6,7 +6,7 @@
 //  - Điều hướng sang trang detail khi tạo thành công.
 import { isApiConflictError } from "@clinic-saas/api-client";
 import type { ApiConflictError, TenantCreateRequest } from "@clinic-saas/shared-types";
-import { AppButton } from "@clinic-saas/ui";
+import { AppButton, StatePanel } from "@clinic-saas/ui";
 import { ref } from "vue";
 import { useRouter } from "vue-router";
 import CreateTenantWizard from "../components/CreateTenantWizard.vue";
@@ -50,10 +50,11 @@ async function createTenant(payload: TenantCreateRequest) {
       </RouterLink>
     </section>
 
-    <div v-if="error" class="error-state">
-      <span>{{ error }}</span>
-      <AppButton label="Bỏ qua" variant="secondary" @click="error = null" />
-    </div>
+    <StatePanel v-if="error" title="Không tạo được phòng khám" :description="error" tone="danger">
+      <template #action>
+        <AppButton label="Bỏ qua" variant="secondary" @click="error = null" />
+      </template>
+    </StatePanel>
 
     <CreateTenantWizard :conflict="conflict" :submitting="submitting" @submit="createTenant" />
   </div>
@@ -71,6 +72,13 @@ async function createTenant(payload: TenantCreateRequest) {
   align-items: center;
   justify-content: space-between;
   gap: 16px;
+  border: 1px solid color-mix(in srgb, var(--color-border-subtle) 78%, var(--color-brand-primary));
+  border-radius: var(--radius-card);
+  padding: var(--space-5);
+  background:
+    linear-gradient(135deg, color-mix(in srgb, var(--color-status-success) 8%, transparent), transparent 44%),
+    var(--color-surface-elevated);
+  box-shadow: var(--shadow-elevation-1);
 }
 
 .page-heading p,
@@ -98,20 +106,8 @@ a {
   text-decoration: none;
 }
 
-.error-state {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 16px;
-  border-radius: 8px;
-  padding: 14px 16px;
-  background: #fff7ed;
-  color: #9a3412;
-}
-
 @media (max-width: 640px) {
-  .page-heading,
-  .error-state {
+  .page-heading {
     align-items: stretch;
     flex-direction: column;
   }

@@ -160,7 +160,9 @@ td {
 
 tbody tr {
   cursor: pointer;
-  transition: background var(--motion-duration-xs) var(--motion-ease-standard);
+  transition:
+    background var(--motion-duration-xs) var(--motion-ease-standard),
+    box-shadow var(--motion-duration-xs) var(--motion-ease-standard);
 }
 
 tbody tr:nth-child(even) {
@@ -171,6 +173,7 @@ tbody tr:hover,
 tbody tr:focus-visible,
 tbody tr.selected {
   background: var(--color-surface-muted);
+  box-shadow: inset 4px 0 0 var(--color-brand-primary);
   outline: none;
 }
 
