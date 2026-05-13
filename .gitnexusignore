@@ -1,0 +1,34 @@
+# GitNexus index scope: giu source/docs active, bo history lanh va artifact nang.
+
+# Local index / package output
+.gitnexus/
+node_modules/
+dist/
+.vite/
+.turbo/
+bin/
+obj/
+
+# Cold storage docs khong doc mac dinh theo AGENTS.md
+docs/archive/
+temp/archive/
+
+# Wrapper/generated agent context khong phai source of truth chinh cho Codex
+.claude/
+ai gen/
+
+# Generated/runtime artifacts
+temp/publish/
+temp/smoke.sh
+*.log
+*.tmp
+
+# Large binary design/reference exports
+*.pdf
+*.fig
+*.jam
+*.png
+*.jpg
+*.jpeg
+*.webp
+*.gif

@@ -58,6 +58,7 @@ Backend Agent triển khai .NET services theo Clean Architecture trong `backend/
 - Không expose stack trace ngoài Development.
 - Không public endpoint throw `NotImplementedException`.
 - Không log secret/token/password/connection string.
+- Dung GitNexus gate trong `docs/codex-setup.md` khi sua endpoint, handler, contract, tenant/security middleware, persistence hoac shared building-blocks.
 
 ## Output
 

@@ -46,6 +46,7 @@ Frontend Agent xây Vue 3/Vite/TypeScript apps cho Public Website, Clinic Admin 
 - Không sửa backend ngoài scope frontend task.
 - Không tạo Figma file mới.
 - Không dùng random color/spacing ngoài design token nếu token đã có.
+- Dung GitNexus gate trong `docs/codex-setup.md` khi sua route, store, API client, shared UI/package, hoac component co kha nang reuse.
 - Với Fast Mode/budget mode, không tự gọi Figma, không tạo screenshot và không mở full visual QA nếu owner/Lead chưa yêu cầu; verify bằng typecheck/build/static/smoke tối thiểu phù hợp.
 
 ## Output

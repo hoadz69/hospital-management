@@ -2,6 +2,10 @@
 
 File nay chi giu setup/tooling cho Codex. Workflow canonical nam trong `AGENTS.md` va `docs/agent-playbook.md`; khong lap lai full workflow tai day.
 
+Phan biet nhanh:
+- `AGENTS.md`: bootstrap rule bat buoc, guardrails, reading policy, lane policy. Doc dau tien trong moi task.
+- `docs/codex-setup.md`: huong dan tool cho Codex nhu GitNexus, MCP, Figma/browser, fallback khi tool loi. Chi doc khi task cham setup/tooling hoac `AGENTS.md` tro toi.
+
 ## File Can Biet
 
 - `AGENTS.md`: bootstrap guardrails va reading policy, doc dau tien.
@@ -16,6 +20,27 @@ File nay chi giu setup/tooling cho Codex. Workflow canonical nam trong `AGENTS.m
 - Browser/Playwright MCP dung cho UI smoke/visual QA khi task yeu cau; khong chup screenshot mac dinh cho task nho.
 - Web research dung khi owner yeu cau research/latest/inspiration hoac thong tin co the thay doi.
 - Khong tao Figma file moi neu owner chua yeu cau ro.
+
+## GitNexus
+
+- Uu tien Codex: source huong dan chinh la `AGENTS.md`, `docs/agent-playbook.md`, `docs/codex-setup.md` va skill/MCP trong user profile Codex. `.claude/**` chi la wrapper phu khi owner thinh thoang dung Claude, khong dua vao default context.
+- Repo da co GitNexus index local trong `.gitnexus/` va MCP global cho Codex/Cursor. MCP server moi co the can mo session Codex moi de thay resources/tools.
+- Kiem tra nhanh: `gitnexus status`, `gitnexus list`.
+- Re-index sau thay doi lon: `gitnexus analyze --skip-agents-md --no-stats --name hospital-management`.
+- Bao ve context custom: khong chay `gitnexus analyze` mac dinh neu khong muon tool cap nhat `AGENTS.md` hoac wrapper phu.
+- Auto-use gate: Codex tu chay GitNexus khi task code co blast radius khong ro, cham API contract, route/store, shared package, backend shared, tenant/security, DB/persistence, refactor/rename, bug chua ro nguon, hoac symbol co kha nang reuse.
+- Duoc bo qua GitNexus voi docs nho, text/CSS cuc bo, file/dong da ro, hoac chi chay verify command.
+- Lenh thuong dung: `gitnexus query "<concept>"`, `gitnexus context <symbol>`, `gitnexus impact <symbol> --include-tests`, `gitnexus detect-changes --scope all`.
+- Truoc review/commit split neu co diff code runtime: chay `gitnexus detect-changes --scope all`.
+- Neu GitNexus fail/unavailable: fallback `rg`/doc source lien quan va report ngan.
+- `.gitnexusignore` loai archive, binary design/reference va generated artifacts de graph tap trung vao source/docs active.
+
+Quy trinh goi nhanh:
+1. Chay `gitnexus status` neu task code co blast radius khong ro.
+2. Dung `gitnexus query` hoac `gitnexus context` de tim symbol/flow lien quan.
+3. Dung `gitnexus impact <symbol> --include-tests` truoc khi sua symbol co kha nang reuse.
+4. Sau khi co diff code runtime hoac truoc commit split, chay `gitnexus detect-changes --scope all`.
+5. Neu index stale va task can graph moi, chay analyze voi `--skip-agents-md --no-stats`.
 
 ## Archive Policy
 

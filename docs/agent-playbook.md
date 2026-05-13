@@ -128,12 +128,13 @@ Minimum action checklist cho mọi short prompt:
 
 1. Chạy `git status --branch --short`.
 2. Chạy `git diff --stat`.
-3. Đọc dashboard/lane current-task/lane plan/handoff liên quan.
-4. Phân lane.
-5. Tự chọn agents tham gia.
-6. Quyết định action: `implement`, `resume`, `verify`, `commit-split` hoặc `plan-only`.
-7. Thực hiện action tương ứng.
-8. Report kết quả.
+3. Áp dụng GitNexus auto-use gate theo `docs/codex-setup.md` nếu task code có blast radius không rõ.
+4. Đọc dashboard/lane current-task/lane plan/handoff liên quan.
+5. Phân lane.
+6. Tự chọn agents tham gia.
+7. Quyết định action: `implement`, `resume`, `verify`, `commit-split` hoặc `plan-only`.
+8. Thực hiện action tương ứng.
+9. Report kết quả.
 
 Plan exists means resumable: nếu `<task>` đã xuất hiện trong lane plan/current-task/handoff/roadmap với scope rõ, allowed files hoặc file areas rõ, và acceptance criteria hoặc verify command rõ, thì xem là resumable/approved scope. Khi owner nói `bắt đầu <task>` hoặc `làm tiếp <task>`, Lead phải implement/resume đúng scope. Chỉ dừng ở approval gate nếu task hoàn toàn mới, scope chưa rõ, cross-lane lớn chưa có plan, có rủi ro destructive/secret/security, hoặc owner nói rõ "chỉ lập plan", "chưa code", "đợi tôi duyệt".
 
@@ -214,6 +215,7 @@ Mỗi agent phải đọc đúng source trước khi làm:
 - Figma/FigJam khi feature có UI.
 - API contract khi feature có FE/BE integration.
 - Server/bootstrap docs khi feature chạm runtime.
+- GitNexus query/context/impact theo `docs/codex-setup.md` khi cần hiểu dependency/flow/blast radius trước khi sửa.
 
 ### Step 3 - Joint Plan
 
@@ -274,6 +276,7 @@ QA/Test Agent chạy checklist tối thiểu:
 - UI route smoke (kể cả deep-link refresh nếu SPA fallback có).
 - Edge states: loading, empty, error, 409 conflict, not-found.
 - Tenant isolation/security checks nếu chạm backend/data.
+- `gitnexus detect-changes --scope all` nếu diff có code runtime hoặc trước commit split.
 - Regression risk lên các lane khác.
 - Acceptance criteria từng item: pass/fail/blocker.
 

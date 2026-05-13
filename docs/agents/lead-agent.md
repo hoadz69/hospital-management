@@ -29,6 +29,7 @@ Short prompt nhu `Lead Agent: bat dau`, `lam tiep`, `verify`, `fix`, `chia commi
 
 Toi thieu khi action prompt:
 - Chay `git status --branch --short` va `git diff --stat`.
+- Ap dung GitNexus auto-use gate theo `docs/codex-setup.md` khi task code co blast radius khong ro.
 - Doc dashboard/lane current-task/lane plan lien quan.
 - Phan lane, chon agents, quyet dinh `implement`/`resume`/`verify`/`commit-split`/`plan-only`.
 - Thuc hien action phu hop va report ngan.

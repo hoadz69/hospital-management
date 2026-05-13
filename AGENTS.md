@@ -24,6 +24,14 @@ File bootstrap bat buoc cho Codex/Claude/coding agents trong repo `hospital-mana
 - Agent details cho Codex: `docs/agents/*.md`.
 - Rules theo scope: `rules/*.md`.
 
+## GitNexus Auto-Use
+
+- Codex tu quyet dinh dung GitNexus theo `docs/codex-setup.md`; owner khong can phan loai task lon/nho.
+- Truoc khi code neu task co blast radius khong ro, cham API/route/store/shared package/backend shared/tenant-security/DB/refactor/bug chua ro nguon: chay `gitnexus status` va query/context/impact phu hop.
+- Khi verify/review diff code runtime hoac truoc commit split: chay `gitnexus detect-changes --scope all` neu GitNexus san sang.
+- Duoc bo qua voi docs nho, text/CSS cuc bo, file/dong da ro, hoac chi chay command verify.
+- Neu GitNexus loi/unavailable: fallback `rg` + source lien quan va report ngan; khong dung blocker chung chung de dung viec.
+
 ## Guardrails Bat Buoc
 
 - Khong commit, push, stage neu owner chua yeu cau ro.
@@ -54,7 +62,7 @@ File bootstrap bat buoc cho Codex/Claude/coding agents trong repo `hospital-mana
 
 - `temp/plan.frontend.md` va `temp/plan.backend.md` la living active plan, khong phai archive log. File nay duoc phep dai vua phai neu can de agent moi resume viec dang lam.
 - Active plan phai co toi thieu: active goal, progress checklist/table, next decision, implementation rules, likely files/areas, acceptance criteria, verify plan, blockers/caveats, archive index.
-- Active plan phải ghi rõ `Current Active Slice`. Nếu chưa có slice implement được duyệt, ghi đúng câu `No active implementation slice approved` và agent chỉ được plan/report/verify theo yêu cầu, không tự code.
+- Toi uu them: active plan phai co `Current Active Slice`, last stopping point va file da cham that; neu chua co slice duoc duyet thi khong tu code.
 - Sau moi luot lam viec, update tai cho active plan; khong append full history, full logs, full smoke transcript, full diff.
 - Khi phase/wave/task lon Done, danh dau phase tong trong `docs/roadmap/clinic-saas-roadmap.md`; trong active plan chi giu Done summary ngan va chuyen sang next active slice.
 - `docs/current-task.*.md` la handoff/dashboard ngan: latest state, verify snapshot, blocker, next. Khong thay the active plan.

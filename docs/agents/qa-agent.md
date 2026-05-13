@@ -26,6 +26,7 @@ QA Agent kiểm tra regression risk, tenant isolation, auth/permission, API/UI s
 - Với UI, verify desktop/mobile, build/typecheck, text overlap nếu có thể.
 - Ghi rõ test gap nếu test project chỉ là placeholder hoặc môi trường thiếu tool.
 - Không tự thêm dependency test lớn (vitest/playwright/cypress/jest) nếu chưa được Lead/owner duyệt; ưu tiên manual smoke checklist + tool có sẵn (HTTP request, Vite transform, source regex check).
+- Dung `gitnexus detect-changes --scope all` theo `docs/codex-setup.md` khi review diff code runtime hoac truoc commit split.
 
 ## Screenshot / Artifact Workflow
 
