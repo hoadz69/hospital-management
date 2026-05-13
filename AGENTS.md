@@ -50,6 +50,18 @@ File bootstrap bat buoc cho Codex/Claude/coding agents trong repo `hospital-mana
 - Frontend chi cap nhat `docs/current-task.frontend.md` va `temp/plan.frontend.md`.
 - Neu khong chac lane, ghi note ngan vao dashboard tong va cho Lead phan loai.
 
+## Plan / Roadmap Data Rule
+
+- `temp/plan.frontend.md` va `temp/plan.backend.md` la living active plan, khong phai archive log. File nay duoc phep dai vua phai neu can de agent moi resume viec dang lam.
+- Active plan phai co toi thieu: active goal, progress checklist/table, next decision, implementation rules, likely files/areas, acceptance criteria, verify plan, blockers/caveats, archive index.
+- Active plan phải ghi rõ `Current Active Slice`. Nếu chưa có slice implement được duyệt, ghi đúng câu `No active implementation slice approved` và agent chỉ được plan/report/verify theo yêu cầu, không tự code.
+- Sau moi luot lam viec, update tai cho active plan; khong append full history, full logs, full smoke transcript, full diff.
+- Khi phase/wave/task lon Done, danh dau phase tong trong `docs/roadmap/clinic-saas-roadmap.md`; trong active plan chi giu Done summary ngan va chuyen sang next active slice.
+- `docs/current-task.*.md` la handoff/dashboard ngan: latest state, verify snapshot, blocker, next. Khong thay the active plan.
+- `docs/current-task.md` chi la dashboard cross-lane ngan va link sang lane; khong nhung plan chi tiet hoac history lane vao day.
+- `docs/archive/**` va `temp/archive/**` chi giu history lanh. Khong copy nguoc toan bo archive vao active plan; chi trich distilled facts can cho active work.
+- `docs/session-continuity.md` chi giu rule resume/checkpoint; khong dung lam noi chua active task data.
+
 ## Token / Budget Rule
 
 - Fast/Budget Mode la mac dinh cho task nho: doc toi thieu theo reading policy, khong goi full subagents/Figma/screenshot neu khong can.

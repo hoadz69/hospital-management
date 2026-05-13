@@ -1,108 +1,109 @@
 # Session Continuity Guide
 
-File này dùng để chống mất ngữ cảnh khi session Codex/Claude bị xóa hoặc hết hạn.
+File nay dung de chong mat ngu canh khi session Codex/Claude bi compact, reset hoac het han. Day la rule resume/checkpoint, khong phai noi chua active task data.
+
+## Reading Policy Khi Resume
+
+Doc theo lane/scope trong `AGENTS.md`, khong doc full repo docs theo mac dinh.
+
+- Frontend nho: `docs/current-task.md`, `docs/current-task.frontend.md`, `temp/plan.frontend.md`, `rules/coding-rules.md`, source lien quan.
+- Backend nho: `docs/current-task.md`, `docs/current-task.backend.md`, `temp/plan.backend.md`, `rules/coding-rules.md`, `rules/backend-coding-rules.md`; them DB/testing rules neu scope can.
+- Docs/workflow/Lead/cross-lane: `docs/agent-playbook.md`, file docs lien quan.
+- Archive chi doc khi owner yeu cau ro, active file tro toi section archive cu the, hoac can bang chung debug cu.
 
 ## Server Test Runtime Rule
 
-Khi resume task backend/FE integration, agent phải kiểm tra xem owner đã cung cấp `DEPLOY_HOST`, `DEPLOY_USER`, `SSH_KEY_PATH` trong shell/session chưa. Nếu có, server test/dev smoke là runtime chính cho PostgreSQL, Tenant Service, API Gateway và API integration smoke; thiếu Docker/.NET local trên Windows không được xem là blocker.
+Khi resume task backend/FE integration, agent kiem tra shell/session co runtime env do owner cung cap hay khong, vi du `DEPLOY_HOST`, `DEPLOY_USER`, `SSH_KEY_PATH`.
 
-Checkpoint/handoff phải ghi:
-- Runtime smoke dùng server test hay local.
-- Gateway thật/tunnel nào để FE proxy tới.
-- API smoke nào PASS/FAIL/blocker.
-- Không ghi private key, token, secret hoặc connection string thật; chỉ ghi tên biến/session và trạng thái.
-- Stub chỉ là fallback cuối cùng, không dùng để đánh dấu E2E Done khi server test có thể chạy API thật.
+Neu env co san va task yeu cau backend/DB/API smoke that:
+- server test/dev smoke la runtime chinh cho PostgreSQL, Tenant Service, API Gateway va API integration smoke;
+- thieu Docker/.NET local tren Windows khong tu dong la blocker;
+- FE real API smoke tro toi API Gateway that tren server test hoac qua tunnel neu can.
 
-### Server Test BE Default Rule
+Checkpoint/handoff chi ghi:
+- runtime smoke dung server test hay local;
+- gateway/tunnel dang dung o muc mo ta, khong ghi IP/server path/private key;
+- API smoke PASS/FAIL/blocker;
+- bien/session nao bi thieu neu bi block.
 
-Khi owner nói "kết nối BE", "chạy BE", "smoke BE thật", "kết nối server BE" hoặc "run backend thật" thì mặc định dùng server test, không hỏi lại owner server nào/key path nào. Trước khi chạy SSH trong PowerShell, tự nạp:
+Khong ghi private key, token, secret, IP server that, SSH key path that, connection string that vao repo/docs/log.
 
-```powershell
-$env:DEPLOY_HOST="116.118.47.78"
-$env:DEPLOY_USER="root"
-$env:SSH_KEY_PATH="C:\Users\Hoadz\.ssh\clinic_prod_ed25519"
-```
+Stub chi la fallback cuoi cung de kiem contract path khi server test khong truy cap duoc; khong dung stub de danh dau E2E Done neu server test co the chay API that.
 
-Local Windows không cần Docker/.NET nếu đang smoke BE thật; ưu tiên server test. Backend runtime, PostgreSQL, Tenant Service và API Gateway smoke chạy trên server test. FE real API smoke trỏ tới API Gateway thật trên server test hoặc qua SSH tunnel. Stub chỉ dùng khi server test không vào được, không được dùng để đánh dấu E2E Done.
+## Phan Biet File Plan / Handoff / Roadmap
 
-## File Cần Đọc Khi Bắt Đầu Session Mới
+- `docs/current-task.md`: dashboard tong cross-lane ngan, chi ghi state tong va link sang lane.
+- `docs/current-task.frontend.md`: handoff ngan cho frontend lane.
+- `docs/current-task.backend.md`: handoff ngan cho Backend/DevOps lane.
+- `temp/plan.frontend.md`: living active plan frontend, du de resume task dang lam.
+- `temp/plan.backend.md`: living active plan Backend/DevOps, du de resume task dang lam.
+- `temp/plan.md`: index tuong thich cu, khong chua plan chi tiet cua lane.
+- `docs/roadmap/clinic-saas-roadmap.md`: phase/wave tracker dai han; danh Done/In Progress/Blocked cho phase lon, khong thay the active plan.
+- `docs/archive/**`, `temp/archive/**`: history lanh, khong doc mac dinh.
 
-1. `AGENTS.md`
-2. `CLAUDE.md` nếu dùng Claude Code
-3. `clinic_saas_report.md`
-4. `architech.txt`
-5. `docs/current-task.md`
-6. `docs/agent-playbook.md`
-7. `rules/*.md` nếu chuẩn bị viết code
-
-## Phân Biệt Các File Plan / Handoff
-
-- `plan.md`: roadmap/kế hoạch tổng của repo. Cập nhật khi hướng triển khai hoặc milestone thay đổi.
-- `temp/plan.md`: plan cụ thể cho task sắp code. Với implementation task, phải tạo/cập nhật file này trước và chờ owner duyệt.
-- `docs/current-task.md`: handoff hiện tại. Cập nhật sau mỗi lượt làm việc hoặc khi dừng giữa chừng.
-- `rules/*.md`: rule kỹ thuật. Chỉ cập nhật khi có convention mới, bug pattern mới, hoặc quyết định kiến trúc mới được owner chốt.
+Active plan được phép dài vừa phải. Nó phải có `Current Active Slice`, điểm dừng gần nhất, progress checklist, next decision, likely files, acceptance criteria, verify plan, blockers và archive index. Nếu chưa có slice implement được duyệt, ghi rõ `No active implementation slice approved`; agent không được tự code từ một plan mơ hồ. Không append full history/log vào active plan.
 
 ## Crash Recovery & Checkpoint Protocol
 
-Mục tiêu: nếu Codex/Claude bị compact, hết context hoặc chết session giữa lúc đang sửa file, session mới vẫn resume được từ worktree mà không cần nhớ lại đoạn chat cũ.
+Muc tieu: session moi resume duoc tu worktree that ma khong can nho chat cu.
 
-### Khi Nào Phải Ghi Checkpoint
+### Khi Nao Ghi Checkpoint
 
-Agent phải ghi checkpoint ngắn vào lane current-task phù hợp khi gặp một trong các điều kiện sau:
+Ghi checkpoint ngan vao lane current-task phu hop khi:
 
-- Task dự kiến kéo dài hơn 30 phút.
-- Task sửa/tạo từ 5 file trở lên.
-- Vừa hoàn tất một wave nhỏ trong task lớn, ví dụ layout/sidebar/topbar hoặc API adapter riêng.
-- Trước khi chạy verify/build/test dài hoặc trước khi chuyển sang bước rủi ro.
-- Khi phát hiện session có thể bị mất context, tool lỗi, MCP quota, hoặc cần dừng giữa chừng.
+- Task du kien keo dai hon 30 phut.
+- Task sua/tao tu 5 file tro len.
+- Vua hoan tat mot wave nho trong task lon.
+- Truoc khi chay verify/build/test dai hoac truoc buoc rui ro.
+- Tool loi, session co nguy co mat context, hoac can dung giua chung.
 
 Lane ghi checkpoint:
 
 - Frontend: `docs/current-task.frontend.md`
 - Backend/DevOps: `docs/current-task.backend.md`
-- DevOps riêng: `temp/plan.devops.md` nếu dashboard đã chỉ rõ lane này
-- Database riêng: `temp/plan.database.md` nếu có lane riêng
-- Cross-lane/Lead: `docs/current-task.md` chỉ ghi dashboard ngắn và trỏ sang lane file, không nhét chi tiết lane vào dashboard.
+- DevOps rieng: `temp/plan.devops.md` neu lane nay dang duoc dung
+- Database rieng: `temp/plan.database.md` neu co lane rieng
+- Cross-lane/Lead: `docs/current-task.md` chi ghi dashboard ngan va tro sang lane file
 
-### Mẫu Checkpoint Bắt Buộc
+### Mau Checkpoint
 
 ```txt
 ## In-progress Checkpoint - YYYY-MM-DD HH:mm
 
-Scope đang làm:
+Scope dang lam:
 - ...
 
-Đã hoàn thành:
+Da hoan thanh:
 - ...
 
-File đã sửa/tạo:
+File da sua/tao:
 - ...
 
-Chưa verify / còn thiếu:
+Chua verify / con thieu:
 - ...
 
-Lệnh đã chạy:
+Lenh da chay:
 - ...
 
-Lệnh cần chạy tiếp:
+Lenh can chay tiep:
 - ...
 
-Bước resume tiếp theo:
-1. Chạy git status --short.
-2. Chạy git diff --stat.
-3. Đọc diff các file trong scope.
-4. Tiếp tục từ ...
+Buoc resume tiep theo:
+1. Chay git status --short.
+2. Chay git diff --stat.
+3. Doc diff cac file trong scope.
+4. Tiep tuc tu ...
 
 Guardrail:
-- Không revert thay đổi chưa rõ chủ sở hữu.
-- Không commit/push nếu owner chưa yêu cầu.
+- Khong revert thay doi chua ro chu so huu.
+- Khong commit/push neu owner chua yeu cau.
 ```
 
-Checkpoint không thay thế report cuối cùng và không được dùng để đánh dấu Done. Nếu verify chưa chạy thì ghi rõ "chưa verify".
+Checkpoint khong thay the report cuoi va khong duoc dung de danh dau Done. Neu verify chua chay thi ghi ro "chua verify".
 
-### Quy Trình Resume Sau Khi Session Chết
+## Quy Trinh Resume Sau Khi Session Chet
 
-Session mới phải ưu tiên trạng thái repo thật:
+Session moi uu tien trang thai repo that:
 
 ```powershell
 git status --short
@@ -110,94 +111,58 @@ git diff --stat
 git diff --check
 ```
 
-Sau đó đọc lane checkpoint gần nhất và diff file trong scope:
+Sau do doc lane current-task/active plan gan nhat va diff file trong scope.
 
-```powershell
-git diff -- frontend/apps/owner-admin frontend/packages/ui
-```
+Nguyen tac resume:
 
-Nguyên tắc resume:
+- Khong revert thay doi dang do neu chua ro la cua ai.
+- Khong tu code tiep chi dua vao doan chat cu; phai doi chieu `git diff` va checkpoint.
+- Neu diff co file ngoai scope, bao owner va bo qua hoac hoi neu no chan task.
+- Neu checkpoint noi da verify nhung repo hien tai khac diff, chay verify lai.
+- Neu khong co checkpoint, tao recovery summary tu `git status` + `git diff --stat` truoc khi lam tiep.
 
-- Không revert thay đổi đang dở nếu chưa rõ là của ai.
-- Không tự code tiếp chỉ dựa vào đoạn chat cũ; phải đối chiếu `git diff` và lane checkpoint.
-- Nếu diff có file ngoài scope, báo owner và bỏ qua hoặc hỏi nếu nó chặn task.
-- Nếu checkpoint nói đã verify nhưng repo hiện tại khác diff, chạy verify lại.
-- Nếu không có checkpoint, tạo "recovery summary" từ `git status` + `git diff --stat` trước khi làm tiếp.
+## Khi Owner Yeu Cau Code That
 
-## Khi Owner Yêu Cầu Code Thật
+Truoc khi code:
 
-Trước khi code:
+1. Doc source of truth va rules theo lane.
+2. Tao/cap nhat active plan lane phu hop (`temp/plan.frontend.md` hoac `temp/plan.backend.md`) neu task chua co plan duyet.
+3. Plan phai co scope, assumptions, file du kien sua/tao, success criteria, verification steps, tenant isolation impact, va Figma/FigJam reference neu lien quan UI/architecture.
+4. Cho owner duyet, tru khi owner noi ro "lam luon/da duyet/bat dau implement/tiep tuc approved scope".
 
-1. Đọc source of truth và rules.
-2. Tạo/cập nhật `temp/plan.md`.
-3. Plan phải có:
-   - scope,
-   - assumptions,
-   - file dự kiến sửa/tạo,
-   - success criteria,
-   - verification steps,
-   - tenant isolation impact,
-   - Figma/FigJam reference nếu liên quan UI/architecture.
-4. Chờ owner duyệt.
+Sau khi owner duyet:
 
-Sau khi owner duyệt:
-
-1. Implement đúng approved scope.
-2. Không refactor ngoài scope.
-3. Dọn unused code do chính thay đổi tạo ra.
+1. Implement dung approved scope.
+2. Khong refactor ngoai scope.
+3. Don unused code do chinh thay doi tao ra.
 4. Verify theo plan.
-5. Ghi checkpoint giữa chừng nếu task dài/sửa nhiều file theo "Crash Recovery & Checkpoint Protocol".
-6. Cập nhật `docs/current-task.md` hoặc lane current-task phù hợp.
-7. Report lại cho owner: đã làm gì, file nào, kiểm tra gì, còn thiếu/bị chặn gì, bước tiếp theo.
+5. Ghi checkpoint giua chung neu task dai/sua nhieu file.
+6. Cap nhat lane current-task va active plan bang summary ngan.
+7. Neu phase/wave lon doi trang thai, cap nhat roadmap.
+8. Report lai cho owner: da lam gi, file nao, verify gi, con thieu/blocker gi, buoc tiep theo.
 
-## Khi Nào Cập Nhật `plan.md`
+## Khi Nao Cap Nhat Roadmap
 
-Cập nhật `plan.md` nếu:
+Cap nhat `docs/roadmap/clinic-saas-roadmap.md` khi:
 
-- roadmap thay đổi,
-- thêm/bớt milestone,
-- chuyển phase,
-- owner đổi ưu tiên,
-- task implementation làm thay đổi hướng triển khai tổng.
+- roadmap thay doi;
+- them/bot milestone;
+- chuyen phase/wave;
+- owner doi uu tien;
+- implementation lam thay doi huong trien khai tong.
 
-Không cập nhật `plan.md` cho thay đổi nhỏ không ảnh hưởng roadmap.
+Khong cap nhat roadmap cho thay doi nho khong anh huong phase/wave.
 
-## Khi Nào Cập Nhật `rules/*.md`
+## Khi Nao Cap Nhat Rules
 
-Không tự sửa `rules/*.md` liên tục trong lúc code.
+Khong tu sua `rules/*.md` lien tuc trong luc code.
 
-Chỉ cập nhật rules khi:
+Chi cap nhat rules khi:
 
-- phát hiện bug pattern có thể lặp lại,
-- owner chốt convention mới,
-- có quyết định kiến trúc mới,
-- tool/test/deploy workflow thay đổi,
-- rule cũ sai hoặc thiếu so với thực tế project.
+- phat hien bug pattern co the lap lai;
+- owner chot convention moi;
+- co quyet dinh kien truc moi;
+- tool/test/deploy workflow thay doi;
+- rule cu sai hoac thieu so voi thuc te project.
 
-Nếu không chắc, đề xuất rule mới trong report trước, chờ owner duyệt rồi mới sửa.
-
-## Prompt Gợi Ý Cho Session Mới
-
-```txt
-Đọc AGENTS.md, clinic_saas_report.md, docs/current-task.md, docs/session-continuity.md và rules/*.md.
-Tạo/cập nhật temp/plan.md cho task này trước, chưa code.
-Nếu thấy plan.md hoặc docs/current-task.md cần cập nhật thì ghi rõ lý do.
-Nếu phát hiện rule code mới cần chuẩn hóa thì đề xuất trước, chưa tự sửa rules/*.md.
-```
-
-Khi duyệt code:
-
-```txt
-Tôi duyệt temp/plan.md. Bắt đầu implement đúng approved scope.
-Nếu task dài hoặc sửa trên 5 file, ghi checkpoint ngắn vào lane current-task sau từng wave nhỏ.
-Sau khi làm xong cập nhật docs/current-task.md hoặc lane current-task phù hợp và report lại file đã sửa, lệnh đã kiểm tra, phần còn thiếu.
-Nếu thay đổi làm lệch roadmap thì cập nhật plan.md.
-```
-
-Khi resume session chết:
-
-```txt
-Session trước chết giữa lúc implement. Đọc AGENTS.md, docs/session-continuity.md, docs/current-task.md và lane current-task liên quan.
-Resume từ git status + git diff, không revert thay đổi đang dở.
-Tóm tắt diff hiện tại, đối chiếu checkpoint gần nhất, chạy verify phù hợp rồi tiếp tục đúng scope.
-```
+Neu khong chac, de xuat rule moi trong report truoc, cho owner duyet roi moi sua.
