@@ -46,7 +46,7 @@ Action Prompt Enforcement Rule:
 
 ## Server Test Runtime Rule
 
-Server test/dev smoke là runtime chính cho backend/DB/API smoke khi local Windows thiếu Docker/.NET hoặc không có daemon/runtime sẵn sàng. Owner cung cấp `DEPLOY_HOST`, `DEPLOY_USER`, `SSH_KEY_PATH` qua shell/session; agent chỉ dùng các biến đó trong lệnh runtime và không ghi private key, token, secret hoặc connection string thật vào repo/docs/log.
+Server test/dev smoke là runtime chính cho backend/DB/API smoke khi local Windows thiếu Docker/.NET hoặc không có daemon/runtime sẵn sàng. Owner cung cấp `DEPLOY_HOST`, `DEPLOY_USER`, `SSH_KEY_PATH` qua shell/session hoặc file local đã ignore như `deploy.local.ps1`; agent chỉ dùng các biến đó trong lệnh runtime và không ghi host/user thật, private key, token, secret hoặc connection string thật vào repo/docs/log.
 
 - Backend Agent/DevOps Agent dùng SSH/SCP lên server test để chạy PostgreSQL, Tenant Service, API Gateway và API integration smoke.
 - Local Windows ưu tiên edit code, đọc repo, chạy frontend `npm run typecheck`/`npm run build` nếu tool sẵn có; thiếu local Docker/.NET phải chuyển sang server test thay vì dừng vô lý.
@@ -56,15 +56,17 @@ Server test/dev smoke là runtime chính cho backend/DB/API smoke khi local Wind
 
 ### Server Test BE Default Rule
 
-Khi owner nói "kết nối BE", "chạy BE", "smoke BE thật", "kết nối server BE" hoặc "run backend thật" thì mặc định dùng server test, không hỏi lại owner server nào/key path nào:
+Khi owner nói "kết nối BE", "chạy BE", "smoke BE thật", "kết nối server BE" hoặc "run backend thật" thì mặc định dùng server test qua cấu hình local đã ignore, không hỏi lại owner server nào/key path nào và không hardcode host/user/key path thật trong repo:
 
 ```powershell
-$env:DEPLOY_HOST="116.118.47.78"
-$env:DEPLOY_USER="root"
-$env:SSH_KEY_PATH="C:\Users\Hoadz\.ssh\clinic_prod_ed25519"
+# deploy.local.ps1 (không commit; mỗi máy tự tạo)
+$env:DEPLOY_HOST="<owner-provided-host>"
+$env:DEPLOY_USER="<owner-provided-user>"
+$env:SSH_KEY_PATH="<local-private-key-path>"
 ```
 
-- Trước khi chạy SSH trong PowerShell, tự nạp ba biến trên.
+- Trước khi chạy SSH trong PowerShell, nếu shell chưa có biến thì tự nạp `deploy.local.ps1` ở repo root nếu file tồn tại: `. .\deploy.local.ps1`.
+- Nếu `deploy.local.ps1` chưa tồn tại hoặc thiếu biến, báo owner điền local file/shell env; không ghi giá trị thật vào docs, plan, log hoặc source.
 - Local Windows không cần Docker/.NET nếu đang smoke BE thật; ưu tiên server test.
 - Backend runtime, PostgreSQL, Tenant Service và API Gateway smoke chạy trên server test.
 - FE real API smoke trỏ tới API Gateway thật trên server test hoặc qua SSH tunnel.

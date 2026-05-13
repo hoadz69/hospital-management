@@ -6,7 +6,7 @@ Không lưu IP server thật, private key, token hoặc secret production trong 
 
 ## Server Test Runtime Rule
 
-Server test/dev smoke do owner cung cấp qua `DEPLOY_HOST`, `DEPLOY_USER`, `SSH_KEY_PATH` là runtime chính cho backend/DB/API smoke khi local Windows thiếu Docker/.NET hoặc Docker daemon không chạy. Agent dùng SSH/SCP để deploy/check code trong phạm vi project, không ghi private key, token, secret hoặc connection string thật vào repo/docs/log.
+Server test/dev smoke do owner cung cấp qua `DEPLOY_HOST`, `DEPLOY_USER`, `SSH_KEY_PATH` trong shell hoặc file local đã ignore như `deploy.local.ps1` là runtime chính cho backend/DB/API smoke khi local Windows thiếu Docker/.NET hoặc Docker daemon không chạy. Agent dùng SSH/SCP để deploy/check code trong phạm vi project, không ghi host/user thật, private key, token, secret hoặc connection string thật vào repo/docs/log.
 
 - PostgreSQL chạy trong Docker network/server nội bộ, không publish `5432` public và không mở DB ra internet.
 - Tenant Service/API Gateway chạy trên server test; FE real API smoke trỏ Vite proxy tới API Gateway thật hoặc SSH tunnel tới gateway server.
@@ -33,12 +33,18 @@ Server
 
 ## Biến Cục Bộ Khi Chạy Từ Máy Dev
 
-Các biến này chỉ đặt trong shell local, không ghi vào file tracked:
+Các biến này chỉ đặt trong shell local hoặc `deploy.local.ps1` đã được gitignore, không ghi giá trị thật vào file tracked:
 
 ```powershell
 $env:DEPLOY_HOST='<owner-provided-host>'
 $env:DEPLOY_USER='<owner-provided-user>'
 $env:SSH_KEY_PATH='<local-private-key-path>'
+```
+
+Nếu dùng file local, tạo `deploy.local.ps1` ở repo root trên từng máy rồi nạp trước khi smoke:
+
+```powershell
+. .\deploy.local.ps1
 ```
 
 ## Kiểm Tra Server

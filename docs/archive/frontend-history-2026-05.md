@@ -448,7 +448,7 @@ Không ghi task backend/devops vào file này. Không overwrite `docs/current-ta
 
 Đang làm: Phase 3 Owner Admin Tenant Slice.
 
-Trạng thái hiện tại: **Mock Functional Smoke PASS - Real API Smoke Pending Wiring** (QA Agent confirm 2026-05-10). Implementation Done + post-smoke fix round 1 + 2 done. QA Agent chạy manual smoke checklist A-F: A/B/C/E/F-mock PASS; D PASS với 1 gap UX nhỏ (wizard step gating - tech-debt Phase 4, không phải data integrity blocker vì HTML5 required ở submit cuối vẫn chặn). F-real API smoke pending vì FE chưa wire env real (Backend Phase 2 đã Done trên server `116.118.47.78`).
+Trạng thái hiện tại: **Mock Functional Smoke PASS - Real API Smoke Pending Wiring** (QA Agent confirm 2026-05-10). Implementation Done + post-smoke fix round 1 + 2 done. QA Agent chạy manual smoke checklist A-F: A/B/C/E/F-mock PASS; D PASS với 1 gap UX nhỏ (wizard step gating - tech-debt Phase 4, không phải data integrity blocker vì HTML5 required ở submit cuối vẫn chặn). F-real API smoke pending vì FE chưa wire env real (Backend Phase 2 đã Done trên server test do owner cung cấp).
 
 UI Redesign V2 đã ready trong Figma source of truth (frame `V2 - Owner Admin Tenant Operations`). Owner đã duyệt plan, frontend đã hoàn thành code Phase 3 và đã xử lý các issue phát sinh từ visual smoke ngày 2026-05-10 trong 2 round.
 
@@ -811,7 +811,7 @@ Một điểm khác nhẹ với Figma: detail panel ở Figma là cột inline p
 
 ```txt
 - QA tech-debt Phase 4 (gap D nhỏ): CreateTenantWizard.vue next() không gate required validation trước khi sang step kế. UX không sạch (cho phép qua step 1->4 dù field rỗng) nhưng submit cuối vẫn bị HTML5 required chặn -> KHÔNG phải data integrity blocker. Fix gợi ý đã ghi trong docs/testing/owner-admin-tenant-slice-smoke.md section 6.
-- FE chưa wire env real (VITE_API_BASE_URL + VITE_TENANT_API_MODE=real) -> chưa smoke GET/POST/GET-by-id/PATCH thật. Backend Phase 2 đã Done trên server 116.118.47.78 -> sẵn sàng wiring khi Lead/owner cấp env.
+- FE chưa wire env real (VITE_API_BASE_URL + VITE_TENANT_API_MODE=real) -> chưa smoke GET/POST/GET-by-id/PATCH thật. Backend Phase 2 đã Done trên server test do owner cung cấp -> sẵn sàng wiring khi Lead/owner cấp env.
 - Lead/QA env hiện tại không có headless browser tool -> không thể assert pixel/DOM render cho từng route. HTTP + Vite transform + source regex smoke đã PASS thay thế. Visual pixel-perfect owner đã smoke 2 round 2026-05-10.
 - Lint script chưa được khai báo trong workspace; nếu owner muốn enforce, cần thêm cấu hình ESLint sau.
 - Domain operations (verify DNS, SSL automation, publish gateway) là backend domain-service, ngoài scope Phase 3 frontend.

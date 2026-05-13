@@ -13,6 +13,7 @@ obj/
 .env
 .env.local
 .env.*.local
+*.local.ps1
 
 # Generated artifacts (dotnet publish output, smoke runtime)
 temp/publish/

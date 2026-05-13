@@ -76,7 +76,7 @@ $env:SSH_KEY_PATH='<local-private-key-path>'
 
 Sau đó rerun DevOps/Backend smoke thật, không dùng stub để đánh dấu Done.
 
-Trạng thái: ✅ Phase 2 API Runtime Smoke Gate PASS đủ 5 case trên server `116.118.47.78` sau hai vòng fix (Dapper type handler + reorder positional record `TenantListRow`). Lane sẵn sàng cho Lead Agent đồng bộ dashboard + roadmap để chuyển Phase 2 sang Done.
+Trạng thái: ✅ Phase 2 API Runtime Smoke Gate PASS đủ 5 case trên server test do owner cung cấp sau hai vòng fix (Dapper type handler + reorder positional record `TenantListRow`). Lane sẵn sàng cho Lead Agent đồng bộ dashboard + roadmap để chuyển Phase 2 sang Done.
 
 Chế độ thực hiện: Backend/DevOps lane riêng. Không sửa frontend, không sửa Figma, không commit, không push, không ghi secret/IP/private key vào repo.
 
@@ -95,9 +95,9 @@ Server test/dev smoke do owner cấp qua `DEPLOY_HOST`, `DEPLOY_USER`, `SSH_KEY_
 Khi owner nói "kết nối BE", "chạy BE", "smoke BE thật", "kết nối server BE" hoặc "run backend thật" thì mặc định dùng server test, không hỏi lại owner server nào/key path nào. Trước khi chạy SSH trong PowerShell, tự nạp:
 
 ```powershell
-$env:DEPLOY_HOST="116.118.47.78"
+$env:DEPLOY_HOST="<owner-provided-host>"
 $env:DEPLOY_USER="root"
-$env:SSH_KEY_PATH="C:\Users\Hoadz\.ssh\clinic_prod_ed25519"
+$env:SSH_KEY_PATH="<local-private-key-path>"
 ```
 
 Local Windows không cần Docker/.NET nếu đang smoke BE thật; ưu tiên server test. Backend runtime, PostgreSQL, Tenant Service và API Gateway smoke chạy trên server test. FE real API smoke trỏ tới API Gateway thật trên server test hoặc qua SSH tunnel. Stub chỉ dùng khi server test không vào được, không được dùng để đánh dấu E2E Done.
@@ -438,7 +438,7 @@ dotnet test backend/ClinicSaaS.Backend.sln --no-build --nologo: không pickup te
 
 ```txt
 dotnet publish ... -o temp/publish/tenant-service: pass
-scp -r ... root@116.118.47.78:/opt/clinic-saas/runtime-smoke/tenant-service-new/: pass
+scp -r ... <owner-provided-user>@<owner-provided-host>:/opt/clinic-saas/runtime-smoke/tenant-service-new/: pass
 docker stop clinic-saas-tenant-service-smoke: pass
 mv tenant-service tenant-service.bak.20260509T191905Z: pass
 mv tenant-service-new tenant-service: pass
@@ -658,7 +658,7 @@ dotnet run --project backend/services/tenant-service/src/TenantService.Api
 # expect /swagger 404, /openapi/v1.json 404
 ```
 
-Smoke server `116.118.47.78`: container hiện đang chạy ASPNETCORE_ENVIRONMENT theo cấu hình deploy cũ. Nếu env không phải Development, sau khi rebuild image, `/swagger` sẽ trả 404 trên server. Phase 2 smoke 5 case không phụ thuộc Swagger UI nên không break. Documentation Agent cần ghi note này trong `docs/deployment/server-bootstrap.md` khi cập nhật.
+Smoke server test do owner cung cấp: container hiện đang chạy ASPNETCORE_ENVIRONMENT theo cấu hình deploy cũ. Nếu env không phải Development, sau khi rebuild image, `/swagger` sẽ trả 404 trên server. Phase 2 smoke 5 case không phụ thuộc Swagger UI nên không break. Documentation Agent cần ghi note này trong `docs/deployment/server-bootstrap.md` khi cập nhật.
 
 Commit Split (Step 9): cách A (2 commit nhỏ) hoặc cách B (1 commit lane backend) — owner chọn:
 

@@ -6,7 +6,7 @@ Phụ trách smoke: QA Agent (manual smoke, không có vitest/playwright/cypress
 
 ## 1. Bối Cảnh
 
-Frontend Phase 3 (`/dashboard`, `/clinics`, `/clinics/create`, `/clinics/:tenantId`) đã code xong. Backend Phase 2 đã PASS 5 smoke trên server `116.118.47.78` nhưng FE chưa set `VITE_API_BASE_URL` + `VITE_TENANT_API_MODE=real`, nên smoke FE hiện tại chỉ dùng mock fallback.
+Frontend Phase 3 (`/dashboard`, `/clinics`, `/clinics/create`, `/clinics/:tenantId`) đã code xong. Backend Phase 2 đã PASS 5 smoke trên server test do owner cung cấp nhưng FE chưa set `VITE_API_BASE_URL` + `VITE_TENANT_API_MODE=real`, nên smoke FE hiện tại chỉ dùng mock fallback.
 
 Workspace KHÔNG có test framework (vitest/playwright/cypress/jest/testing-library). Smoke phải chạy bằng tool có sẵn:
 
@@ -182,7 +182,7 @@ cd frontend && npm run lint         -> SCRIPT NOT FOUND (skip theo guard)
   - mode='real' với baseUrl → http client + optional fallback
 - [x] `normalizeConflict(error)` đảm bảo HTTP 409 từ backend chuẩn hóa thành `ApiConflictError` để wizard UI bắt và hiển thị `ConflictState`.
 - [x] Mock client serve qua Vite alias `@id/@clinic-saas/api-client` → re-export `mockTenantClient.ts`. Source 16023B chứa 3 tenant + `createConflict` + `conflictFields.push("slug" | "defaultDomainName" | "contactEmail")`.
-- [x] Real API smoke (GET /api/tenants, POST /api/tenants, GET /api/tenants/{id}, PATCH /api/tenants/{id}/status, duplicate slug 409): PASS theo HTTP layer (5/5 status code đúng) qua chain `localhost:5175` (Vite proxy) → `127.0.0.1:5005` (SSH tunnel) → gateway `116.118.47.78`. Round 1 phát hiện 2 contract mismatch — Round 2 sau khi Frontend Agent áp dụng adapter layer thì cả HTTP lẫn contract đều PASS 5/5. Xem section "F-real Round 2 Smoke 2026-05-10".
+- [x] Real API smoke (GET /api/tenants, POST /api/tenants, GET /api/tenants/{id}, PATCH /api/tenants/{id}/status, duplicate slug 409): PASS theo HTTP layer (5/5 status code đúng) qua chain `localhost:5175` (Vite proxy) → `127.0.0.1:5005` (SSH tunnel) → gateway server test do owner cung cấp. Round 1 phát hiện 2 contract mismatch — Round 2 sau khi Frontend Agent áp dụng adapter layer thì cả HTTP lẫn contract đều PASS 5/5. Xem section "F-real Round 2 Smoke 2026-05-10".
 
 ### F-real Smoke 2026-05-10
 
@@ -235,7 +235,7 @@ QA chỉ report; không tự sửa source theo hard rule.
 
 Round 2 chạy sau khi Frontend Agent đã apply adapter layer (`tenantAdapter.ts` mới + `tenantClient.ts` cập nhật `normalizeConflict` + `shared-types/src/tenant.ts` đặt `ownerName?` optional + UI component fallback). KHÔNG sửa backend, KHÔNG sửa Figma.
 
-Base URL smoke: `http://localhost:5175` (Vite dev proxy → SSH tunnel `127.0.0.1:5005` → gateway `116.118.47.78`). HMR đã apply adapter trước khi chạy lại smoke.
+Base URL smoke: `http://localhost:5175` (Vite dev proxy → SSH tunnel `127.0.0.1:5005` → gateway server test do owner cung cấp). HMR đã apply adapter trước khi chạy lại smoke.
 
 | Case | Method + Path | Status | Wire shape check | Result |
 |---|---|---|---|---|

@@ -13,7 +13,13 @@ Doc theo lane/scope trong `AGENTS.md`, khong doc full repo docs theo mac dinh.
 
 ## Server Test Runtime Rule
 
-Khi resume task backend/FE integration, agent kiem tra shell/session co runtime env do owner cung cap hay khong, vi du `DEPLOY_HOST`, `DEPLOY_USER`, `SSH_KEY_PATH`.
+Khi resume task backend/FE integration, agent kiem tra shell/session hoac `deploy.local.ps1` da ignore co runtime env do owner cung cap hay khong, vi du `DEPLOY_HOST`, `DEPLOY_USER`, `SSH_KEY_PATH`.
+
+Neu shell chua co env va `deploy.local.ps1` ton tai o repo root, agent co the nap file local truoc khi preflight:
+
+```powershell
+. .\deploy.local.ps1
+```
 
 Neu env co san va task yeu cau backend/DB/API smoke that:
 - server test/dev smoke la runtime chinh cho PostgreSQL, Tenant Service, API Gateway va API integration smoke;

@@ -25,7 +25,7 @@ Kết quả ngắn:
 - Backend API smoke/Tenant API smoke/FE real API smoke: **không chạy**, không dùng stub để đánh dấu PASS.
 - Frontend static verify: `cd frontend && npm run typecheck` PASS, `cd frontend && npm run build` PASS.
 
-Next: owner cần cung cấp lại `DEPLOY_HOST`, `DEPLOY_USER`, `SSH_KEY_PATH` vào shell/session hiện tại, sau đó rerun server test smoke thật qua API Gateway.
+Next: owner cần điền `DEPLOY_HOST`, `DEPLOY_USER`, `SSH_KEY_PATH` trong shell/session hiện tại hoặc `deploy.local.ps1` đã ignore ở repo root, sau đó rerun server test smoke thật qua API Gateway.
 
 File này là dashboard điều phối project. Không ghi plan chi tiết của một lane vào đây.
 Lead Agent chỉ dùng file này để tóm tắt trạng thái tổng quan và trỏ sang task/plan lane riêng.
@@ -53,7 +53,7 @@ Mọi feature mới phải chạy theo "Feature Team Execution Workflow" (Step 0
 
 ## Server Test Runtime Rule
 
-- Runtime chính cho backend/DB/API smoke là server test/dev smoke do owner cung cấp qua `DEPLOY_HOST`, `DEPLOY_USER`, `SSH_KEY_PATH` trong shell/session hiện tại.
+- Runtime chính cho backend/DB/API smoke là server test/dev smoke do owner cung cấp qua `DEPLOY_HOST`, `DEPLOY_USER`, `SSH_KEY_PATH` trong shell/session hiện tại hoặc `deploy.local.ps1` đã ignore ở repo root.
 - Nếu local Windows thiếu Docker/.NET hoặc Docker daemon không chạy, không coi đó là blocker backend; Lead/DevOps chuyển sang SSH/SCP và chạy PostgreSQL, Tenant Service, API Gateway, API smoke trên server test.
 - FE real API smoke trỏ Vite proxy tới API Gateway thật trên server test hoặc qua SSH tunnel. Stub chỉ dùng fallback cuối cùng cho contract path, không dùng để đánh dấu E2E Done khi server test chạy được API thật.
 - Không ghi private key, token, secret hoặc connection string thật vào repo/docs/log; PostgreSQL giữ trong Docker network/server nội bộ, không publish `5432` public.

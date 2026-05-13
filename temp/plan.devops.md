@@ -80,7 +80,7 @@ Figma
 
 - P1.4: nếu sau này ai đó deploy thẳng `nginx/default.conf` lên prod, SPA fallback không có upstream → trả 404 cho mọi route. Cần ghi rõ comment file là placeholder dev/staging, Phase 4 deployment phải override với hostname thật + SSL + upstream api-gateway. Không thay vai trò của Phase 4 deployment.
 - P1.8: bind `127.0.0.1` chỉ cho phép truy cập từ máy host. Nếu owner có WSL/devcontainer chạy ở máy khác hoặc test từ device LAN, sẽ break. Theo session hiện tại owner dev trên Windows host, container chạy local Docker Desktop ⇒ `127.0.0.1` an toàn. Có thể document trong comment file: nếu cần expose, đổi sang `0.0.0.0` tạm thời, không commit.
-- Backward compat: smoke trên server `116.118.47.78` (Phase 2) đã dùng container không qua published port, nên P1.8 không ảnh hưởng. P1.4 chỉ là placeholder, không impact runtime smoke đã pass.
+- Backward compat: smoke trên server test do owner cung cấp (Phase 2) đã dùng container không qua published port, nên P1.8 không ảnh hưởng. P1.4 chỉ là placeholder, không impact runtime smoke đã pass.
 
 ## 6. Verify Command
 

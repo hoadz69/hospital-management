@@ -85,14 +85,14 @@ Guardrail runtime:
 Khi owner nói "kết nối BE", "chạy BE", "smoke BE thật", "kết nối server BE" hoặc "run backend thật" thì Backend/DevOps mặc định dùng server test, không hỏi lại owner server nào/key path nào. Trước khi chạy SSH trong PowerShell, tự nạp:
 
 ```powershell
-$env:DEPLOY_HOST="116.118.47.78"
-$env:DEPLOY_USER="root"
-$env:SSH_KEY_PATH="C:\Users\Hoadz\.ssh\clinic_prod_ed25519"
+$env:DEPLOY_HOST="<owner-provided-host>"
+$env:DEPLOY_USER="<owner-provided-user>"
+$env:SSH_KEY_PATH="<local-private-key-path>"
 ```
 
 Local Windows không cần Docker/.NET nếu đang smoke BE thật; ưu tiên server test. Backend runtime, PostgreSQL, Tenant Service và API Gateway smoke chạy trên server test. FE real API smoke trỏ tới API Gateway thật trên server test hoặc qua SSH tunnel. Stub chỉ dùng khi server test không vào được, không được dùng để đánh dấu E2E Done.
 
-Phase 2 API Runtime Smoke Gate ✅ ĐÃ PASS đủ 5 smoke trên server `116.118.47.78` (run 2026-05-10):
+Phase 2 API Runtime Smoke Gate ✅ ĐÃ PASS đủ 5 smoke trên server test do owner cung cấp (run 2026-05-10):
 
 ```txt
 POST /api/tenants -> 201
