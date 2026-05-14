@@ -27,6 +27,8 @@ File này là queue để runner tự chọn task `READY` và chạy bằng Code
 - Nếu Codex/provider lỗi websocket/handshake/rate-limit/quota/model capacity thì mark `BLOCKED` và dừng.
 - Nếu verify fail thì mark `BLOCKED` và dừng.
 - Nếu session chết, lần sau runner resume từ queue + git diff + checkpoint.
+- `executor: codex` là mặc định và sẽ gọi `codex exec`.
+- `executor: verify_only` bỏ qua `codex exec`, chỉ chạy verify whitelist; chỉ dùng cho smoke/env recheck an toàn, không dùng cho implementation.
 
 ## Task Schema
 
@@ -40,6 +42,7 @@ lane: backend|frontend|docs|devops|database|fullstack
 status: READY|IN_PROGRESS|BLOCKED|DONE|SKIPPED
 priority: 10
 title: Short title
+executor: codex|verify_only
 prompt_file: docs/prompts/<file>.md
 depends_on: []
 blocker_type: none|owner_required|env_missing|contract_missing|verify_failed|provider_failed|auto_recheck
@@ -60,16 +63,49 @@ checkpoint_file: docs/current-task.md
 
 ## Tasks
 
-Hiện chưa có task thủ công. Dùng runner V2 với `-AutoPlan` để planner tự tạo task tiếp theo từ dashboard/plan active.
+Queue active chỉ giữ task gần nhất. Các marker smoke/worker cũ đã `DONE` hoặc artifact smoke lỗi đã được dọn khỏi queue; xem checkpoint trong `docs/current-task.md` và lane dashboard nếu cần lịch sử.
+
+<!-- task:start BE-DOMAIN-0003-RUNTIME-SMOKE -->
+```yaml
+id: BE-DOMAIN-0003-RUNTIME-SMOKE
+lane: backend
+status: BLOCKED
+priority: 10
+title: Domain DNS/SSL runtime smoke after migration 0003
+executor: codex
+prompt_file: docs/prompts/BE-DOMAIN-0003-RUNTIME-SMOKE.md
+depends_on: []
+blocker_type: owner_required
+auto_retry: false
+attempts: 0
+max_attempts: 1
+allowed_paths:
+  - docs/current-task.backend.md
+  - temp/plan.backend.md
+  - docs/current-task.md
+verify:
+  - git diff --check
+  - runtime smoke via API Gateway for Domain DNS/SSL endpoints
+stop_conditions:
+  - owner/env missing
+  - migration 0003 not applied
+  - codex exec failed
+  - verify failed
+checkpoint_file: docs/current-task.backend.md
+```
+<!-- task:end -->
+
 <!-- task:start AUTO-RUNNER-V2-SMOKE -->
 ```yaml
 id: AUTO-RUNNER-V2-SMOKE
 lane: docs
-status: DONE
-finished_at: "2026-05-14T16:49:26+07:00"
-result: "DONE"
+status: BLOCKED
+finished_at: "2026-05-14T23:00:08+07:00"
+result: "BLOCKED"
+blocked_reason: "Worker output indicates blocker in Skipped/blocker report."
 priority: 1
 title: Agent Runner V2 generated smoke task
+executor: codex
 prompt_file: docs/prompts/AUTO-RUNNER-V2-SMOKE.md
 depends_on: []
 blocker_type: none
@@ -87,17 +123,44 @@ stop_conditions:
 checkpoint_file: docs/current-task.md
 ```
 <!-- task:end -->
-
-<!-- task:start FE-OWNER-ADMIN-UI-SMOKE -->
+<!-- task:start AUTO-RUNNER-SELF-CHECK -->
 ```yaml
-id: FE-OWNER-ADMIN-UI-SMOKE
+id: AUTO-RUNNER-SELF-CHECK
+lane: docs
+status: DONE
+finished_at: "2026-05-14T23:00:49+07:00"
+result: "DONE"
+priority: 2
+title: Agent Runner verify-only self check
+executor: verify_only
+prompt_file: ""
+depends_on: []
+blocker_type: none
+auto_retry: false
+attempts: 1
+max_attempts: 1
+allowed_paths:
+  - docs/agent-queue.md
+  - docs/current-task.md
+  - scripts/agent-runner.ps1
+verify:
+  - git diff --check
+stop_conditions:
+  - verify failed
+checkpoint_file: docs/current-task.md
+```
+<!-- task:end -->
+<!-- task:start FE-DIRTY-VERIFY -->
+```yaml
+id: FE-DIRTY-VERIFY
 lane: frontend
 status: DONE
-finished_at: "2026-05-14T17:27:48+07:00"
+finished_at: "2026-05-14T23:06:22+07:00"
 result: "DONE"
-priority: 1
-title: Owner Admin UI route smoke through Vite
-prompt_file: docs/prompts/FE-OWNER-ADMIN-UI-SMOKE.md
+priority: 3
+title: Verify current dirty frontend changes
+executor: verify_only
+prompt_file: ""
 depends_on: []
 blocker_type: none
 auto_retry: false
@@ -105,18 +168,15 @@ attempts: 1
 max_attempts: 1
 allowed_paths:
   - frontend/**
-  - docs/agent-queue.md
   - docs/current-task.frontend.md
-  - temp/agent-runner/**
+  - temp/plan.frontend.md
 verify:
   - git diff --check
   - cd frontend && npm run typecheck
   - cd frontend && npm run build
-  - frontend owner-admin route smoke
+  - gitnexus detect-changes --scope all
 stop_conditions:
-  - codex exec failed
   - verify failed
-  - vite dev server failed
 checkpoint_file: docs/current-task.frontend.md
 ```
 <!-- task:end -->

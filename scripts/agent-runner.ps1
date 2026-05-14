@@ -6,7 +6,10 @@ param(
     [switch]$PlanOnly,
     [switch]$Continuous,
     [int]$MaxCycles = 1,
-    [int]$SleepSeconds = 0
+    [int]$SleepSeconds = 0,
+    [int]$PlannerTimeoutSeconds = 300,
+    [int]$WorkerTimeoutSeconds = 900,
+    [int]$VerifyTimeoutSeconds = 1800
 )
 
 Set-StrictMode -Version Latest
@@ -98,7 +101,55 @@ function Get-QueueText {
 
 function Save-QueueText {
     param([string]$Text)
-    Set-Content -Path $QueuePath -Value $Text -Encoding UTF8
+
+    $normalized = $Text.TrimEnd() + [Environment]::NewLine
+    [System.IO.File]::WriteAllText($QueuePath, $normalized, [System.Text.Encoding]::UTF8)
+}
+
+function Stop-ProcessTree {
+    param([int]$RootProcessId)
+
+    $children = @(
+        Get-CimInstance Win32_Process -ErrorAction SilentlyContinue |
+            Where-Object { $_.ParentProcessId -eq $RootProcessId }
+    )
+
+    foreach ($child in $children) {
+        Stop-ProcessTree -RootProcessId ([int]$child.ProcessId)
+    }
+
+    $process = Get-Process -Id $RootProcessId -ErrorAction SilentlyContinue
+    if ($process) {
+        Stop-Process -Id $RootProcessId -Force -ErrorAction SilentlyContinue
+    }
+}
+
+function Invoke-ProcessWithTimeout {
+    param(
+        [string]$FilePath,
+        [string[]]$ArgumentList,
+        [int]$TimeoutSeconds
+    )
+
+    if ($TimeoutSeconds -lt 1) {
+        throw "TimeoutSeconds phai >= 1."
+    }
+
+    $process = Start-Process -FilePath $FilePath -ArgumentList $ArgumentList -PassThru -WindowStyle Hidden
+    $completed = $process.WaitForExit($TimeoutSeconds * 1000)
+
+    if (-not $completed) {
+        Stop-ProcessTree -RootProcessId $process.Id
+        return [pscustomobject]@{
+            ExitCode = 124
+            TimedOut = $true
+        }
+    }
+
+    return [pscustomobject]@{
+        ExitCode = [int]$process.ExitCode
+        TimedOut = $false
+    }
 }
 
 function Trim-YamlValue {
@@ -232,6 +283,7 @@ function Get-AgentTasks {
             Status = (Get-YamlScalar $yaml "status").ToUpperInvariant()
             Priority = Get-YamlInt $yaml "priority" 100
             Title = Get-YamlScalar $yaml "title"
+            Executor = (Get-YamlScalar $yaml "executor").ToLowerInvariant()
             PromptFile = Get-YamlScalar $yaml "prompt_file"
             DependsOn = @(Get-YamlList $yaml "depends_on")
             Verify = @(Get-YamlList $yaml "verify")
@@ -457,7 +509,7 @@ function Invoke-CodexTask {
     Write-Info "Running codex exec for $($Task.Id)."
     Write-Info "Log: $(ConvertTo-RepoRelative $logPath)"
 
-    $process = Start-Process -FilePath "cmd.exe" -ArgumentList @("/d", "/c", $cmd) -Wait -PassThru -WindowStyle Hidden
+    $process = Invoke-ProcessWithTimeout -FilePath "cmd.exe" -ArgumentList @("/d", "/c", $cmd) -TimeoutSeconds $WorkerTimeoutSeconds
 
     $combinedOutput = ""
     $finalOutput = ""
@@ -470,12 +522,13 @@ function Invoke-CodexTask {
     }
 
     $providerError = Test-ProviderError $finalOutput
-    if ($process.ExitCode -ne 0 -and [string]::IsNullOrWhiteSpace($providerError)) {
+    if (-not $process.TimedOut -and $process.ExitCode -ne 0 -and [string]::IsNullOrWhiteSpace($providerError)) {
         $providerError = Test-ProviderError $combinedOutput
     }
     $workerBlocker = Test-WorkerBlocker $finalOutput
     return [pscustomobject]@{
         ExitCode = $process.ExitCode
+        TimedOut = $process.TimedOut
         LogPath = $logPath
         LastMessagePath = $lastMessagePath
         ProviderError = $providerError
@@ -499,7 +552,7 @@ function Invoke-AutoPlanner {
     Write-Info "Running auto planner."
     Write-Info "Log: $(ConvertTo-RepoRelative $logPath)"
 
-    $process = Start-Process -FilePath "cmd.exe" -ArgumentList @("/d", "/c", $cmd) -Wait -PassThru -WindowStyle Hidden
+    $process = Invoke-ProcessWithTimeout -FilePath "cmd.exe" -ArgumentList @("/d", "/c", $cmd) -TimeoutSeconds $PlannerTimeoutSeconds
 
     $combinedOutput = ""
     $finalOutput = ""
@@ -512,13 +565,14 @@ function Invoke-AutoPlanner {
     }
 
     $providerError = Test-ProviderError $finalOutput
-    if ($process.ExitCode -ne 0 -and [string]::IsNullOrWhiteSpace($providerError)) {
+    if (-not $process.TimedOut -and $process.ExitCode -ne 0 -and [string]::IsNullOrWhiteSpace($providerError)) {
         $providerError = Test-ProviderError $combinedOutput
     }
 
     $afterQueue = Get-QueueText
     return [pscustomobject]@{
         ExitCode = $process.ExitCode
+        TimedOut = $process.TimedOut
         LogPath = $logPath
         LastMessagePath = $lastMessagePath
         ProviderError = $providerError
@@ -635,6 +689,299 @@ checkpoint_file: docs/current-task.md
     return $true
 }
 
+function Add-FallbackSelfCheckTask {
+    $queueText = Get-QueueText
+    if ($queueText.Contains("<!-- task:start AUTO-RUNNER-SELF-CHECK -->")) {
+        $tasks = @(Get-AgentTasks $queueText)
+        $task = $tasks | Where-Object { $_.Id -eq "AUTO-RUNNER-SELF-CHECK" } | Select-Object -First 1
+        if ($task -and $task.Status -eq "READY") {
+            Write-Info "Fallback self-check task already READY."
+            return $true
+        }
+
+        $queueText = Set-TaskStatus -QueueText $queueText -TaskId "AUTO-RUNNER-SELF-CHECK" -Status "READY"
+        $queueText = Set-TaskScalar -QueueText $queueText -TaskId "AUTO-RUNNER-SELF-CHECK" -Key "attempts" -Value "0"
+        Save-QueueText $queueText
+        Write-Info "Fallback self-check task reactivated."
+        return $true
+    }
+
+    $taskBlock = @'
+
+<!-- task:start AUTO-RUNNER-SELF-CHECK -->
+```yaml
+id: AUTO-RUNNER-SELF-CHECK
+lane: docs
+status: READY
+priority: 2
+title: Agent Runner verify-only self check
+executor: verify_only
+prompt_file: ""
+depends_on: []
+blocker_type: none
+auto_retry: false
+attempts: 0
+max_attempts: 1
+allowed_paths:
+  - docs/agent-queue.md
+  - docs/current-task.md
+  - scripts/agent-runner.ps1
+verify:
+  - git diff --check
+stop_conditions:
+  - verify failed
+checkpoint_file: docs/current-task.md
+```
+<!-- task:end -->
+'@
+
+    $updatedQueue = $queueText.TrimEnd() + "`r`n" + $taskBlock.TrimStart() + "`r`n"
+    Save-QueueText $updatedQueue
+    Write-Info "Fallback self-check task added to queue."
+    return $true
+}
+
+function Test-FileContainsText {
+    param(
+        [string]$RelativePath,
+        [string]$Needle
+    )
+
+    $path = Join-Path $RepoRoot $RelativePath
+    if (-not (Test-Path $path)) {
+        return $false
+    }
+
+    $content = Get-Content -Raw -Encoding UTF8 $path
+    return $content.Contains($Needle)
+}
+
+function Add-DeterministicLifecycleApiWiringTask {
+    $taskId = "FE-TENANT-LIFECYCLE-API-WIRING"
+    $queueText = Get-QueueText
+
+    if ($queueText.Contains("<!-- task:start $taskId -->")) {
+        $tasks = @(Get-AgentTasks $queueText)
+        $task = $tasks | Where-Object { $_.Id -eq $taskId } | Select-Object -First 1
+        if ($task -and $task.Status -eq "READY") {
+            Write-Info "Deterministic task already READY: $taskId."
+            return $true
+        }
+
+        Write-Info "Deterministic task already exists with status $($task.Status): $taskId."
+        return $false
+    }
+
+    $hasMockLifecycle = (Test-FileContainsText -RelativePath "frontend\apps\owner-admin\src\pages\ClinicDetailPage.vue" -Needle "lifecycleTimer = window.setTimeout") -and
+        (Test-FileContainsText -RelativePath "frontend\apps\owner-admin\src\pages\ClinicDetailPage.vue" -Needle "mock-local")
+    $hasFrontendClient = (Test-FileContainsText -RelativePath "frontend\packages\api-client\src\tenantClient.ts" -Needle "updateTenantStatus(tenantId") -and
+        (Test-FileContainsText -RelativePath "frontend\packages\api-client\src\tenantClient.ts" -Needle "/api/tenants/`${tenantId}/status")
+    $hasBackendStatusRoute = (Test-FileContainsText -RelativePath "backend\services\api-gateway\src\ApiGateway.Api\Endpoints\TenantEndpoints.cs" -Needle 'MapPatch("/{tenantId:guid}/status"') -or
+        (Test-FileContainsText -RelativePath "backend\services\tenant-service\src\TenantService.Api\Endpoints\TenantEndpoints.cs" -Needle 'MapPatch("/{tenantId:guid}/status"')
+
+    if (-not ($hasMockLifecycle -and $hasFrontendClient -and $hasBackendStatusRoute)) {
+        Write-Info "Deterministic lifecycle task not applicable. mock=$hasMockLifecycle client=$hasFrontendClient backend=$hasBackendStatusRoute"
+        return $false
+    }
+
+    $promptPath = Join-Path $RepoRoot "docs\prompts\$taskId.md"
+    $prompt = @'
+# FE-TENANT-LIFECYCLE-API-WIRING
+
+Lead Agent: implement frontend-only tenant lifecycle API wiring cho Owner Admin.
+
+## Mode
+
+- Lane frontend.
+- Khong commit, push, stage.
+- Khong sua backend, database, infrastructure, Figma, screenshot, hoac generated artifact.
+- Chi lam trong Allowed Files.
+
+## Read
+
+- `AGENTS.md`
+- `docs/current-task.md`
+- `docs/current-task.frontend.md`
+- `temp/plan.frontend.md`
+- `rules/coding-rules.md`
+- Source frontend lien quan trong Allowed Files.
+
+## Context
+
+`/clinics/:tenantId` da co `TenantLifecycleConfirmModal`, nhung `ClinicDetailPage.vue` van dung `lifecycleTimer = window.setTimeout(...)`, local status mutation, va audit metadata `mock-local`. Shared API client da co `tenantClient.updateTenantStatus(tenantId, { status })`, backend/gateway da co `PATCH /api/tenants/{tenantId}/status`.
+
+## Scope
+
+1. Sua `frontend/apps/owner-admin/src/pages/ClinicDetailPage.vue` de `confirmLifecycle(action, reason)` goi `tenantClient.updateTenantStatus(tenant.value.id, { status })` thay cho local timer/mock status mutation.
+2. Giu behavior modal: loading, success, error, tu dong dong sau success, reason text trong audit event local.
+3. Dung `TenantDetail` tra ve tu `updateTenantStatus` lam source of truth cho `tenant.value`.
+4. Doi copy va audit metadata trong lifecycle path tu mock/local sang API-first. Khong gui reason len backend vi contract hien tai chi ho tro `{ status }`.
+5. Chi xoa lifecycle timer cleanup neu no thanh dead code. Khong dong vao audit/domain timers neu khong can cho typecheck.
+6. Sua copy trong `TenantLifecycleConfirmModal.vue` neu con noi "mock lifecycle" hoac "Khong goi API lifecycle moi", de phu hop hanh vi status update qua API ma khong claim audit persistence.
+7. Neu verify pass, cap nhat ngan `docs/current-task.frontend.md` va `temp/plan.frontend.md`.
+
+## Allowed Files
+
+- `frontend/apps/owner-admin/src/pages/ClinicDetailPage.vue`
+- `frontend/apps/owner-admin/src/components/TenantLifecycleConfirmModal.vue`
+- `docs/current-task.frontend.md`
+- `temp/plan.frontend.md`
+
+## Verify
+
+Outer runner se chay:
+
+```txt
+git diff --check
+cd frontend && npm run typecheck
+cd frontend && npm run build
+```
+
+## Stop If
+
+- `tenantClient.updateTenantStatus` thieu hoac khong goi `/api/tenants/{tenantId}/status`.
+- Backend status route khong ton tai.
+- Scope bat buoc persist lifecycle reason server-side. Scope hien tai chi la status API wiring.
+- Can sua backend/API contract.
+
+## Report
+
+```txt
+Lane:
+Action:
+Files changed:
+Verify:
+Skipped/blocker:
+Dirty:
+Next:
+```
+'@
+
+    [System.IO.File]::WriteAllText($promptPath, $prompt, [System.Text.Encoding]::UTF8)
+
+    $taskBlock = @'
+
+<!-- task:start FE-TENANT-LIFECYCLE-API-WIRING -->
+```yaml
+id: FE-TENANT-LIFECYCLE-API-WIRING
+lane: frontend
+status: READY
+priority: 1
+title: Owner Admin tenant lifecycle API wiring
+executor: codex
+prompt_file: docs/prompts/FE-TENANT-LIFECYCLE-API-WIRING.md
+depends_on: []
+blocker_type: none
+auto_retry: false
+attempts: 0
+max_attempts: 1
+allowed_paths:
+  - frontend/apps/owner-admin/src/pages/ClinicDetailPage.vue
+  - frontend/apps/owner-admin/src/components/TenantLifecycleConfirmModal.vue
+  - docs/current-task.frontend.md
+  - temp/plan.frontend.md
+verify:
+  - git diff --check
+  - cd frontend && npm run typecheck
+  - cd frontend && npm run build
+stop_conditions:
+  - codex exec failed
+  - codex exec timeout
+  - verify failed
+  - backend contract missing
+checkpoint_file: docs/current-task.frontend.md
+```
+<!-- task:end -->
+'@
+
+    $updatedQueue = $queueText.TrimEnd() + "`r`n" + $taskBlock.TrimStart() + "`r`n"
+    Save-QueueText $updatedQueue
+    Write-Info "Deterministic product task added to queue: $taskId."
+    return $true
+}
+
+function Add-DeterministicProductTask {
+    if (Add-DeterministicLifecycleApiWiringTask) {
+        return $true
+    }
+
+    return $false
+}
+
+function Add-DeterministicFrontendDirtyVerifyTask {
+    $taskId = "FE-DIRTY-VERIFY"
+    $queueText = Get-QueueText
+
+    if ($queueText.Contains("<!-- task:start $taskId -->")) {
+        $tasks = @(Get-AgentTasks $queueText)
+        $task = $tasks | Where-Object { $_.Id -eq $taskId } | Select-Object -First 1
+        if ($task -and $task.Status -eq "READY") {
+            Write-Info "Deterministic verify task already READY: $taskId."
+            return $true
+        }
+
+        if ($task -and $task.Status -eq "DONE") {
+            Write-Info "Deterministic verify task already DONE: $taskId."
+            return $false
+        }
+    }
+
+    $dirty = @(& git status --short -- frontend)
+    if (-not $dirty -or $dirty.Count -eq 0) {
+        Write-Info "No frontend dirty files for deterministic verify task."
+        return $false
+    }
+
+    $taskBlock = @'
+
+<!-- task:start FE-DIRTY-VERIFY -->
+```yaml
+id: FE-DIRTY-VERIFY
+lane: frontend
+status: READY
+priority: 3
+title: Verify current dirty frontend changes
+executor: verify_only
+prompt_file: ""
+depends_on: []
+blocker_type: none
+auto_retry: false
+attempts: 0
+max_attempts: 1
+allowed_paths:
+  - frontend/**
+  - docs/current-task.frontend.md
+  - temp/plan.frontend.md
+verify:
+  - git diff --check
+  - cd frontend && npm run typecheck
+  - cd frontend && npm run build
+  - gitnexus detect-changes --scope all
+stop_conditions:
+  - verify failed
+checkpoint_file: docs/current-task.frontend.md
+```
+<!-- task:end -->
+'@
+
+    $updatedQueue = $queueText.TrimEnd() + "`r`n" + $taskBlock.TrimStart() + "`r`n"
+    Save-QueueText $updatedQueue
+    Write-Info "Deterministic frontend verify task added to queue: $taskId."
+    return $true
+}
+
+function Add-DeterministicNextTask {
+    if (Add-DeterministicProductTask) {
+        return $true
+    }
+
+    if (Add-DeterministicFrontendDirtyVerifyTask) {
+        return $true
+    }
+
+    return $false
+}
+
 function Invoke-ExternalCommand {
     param(
         [string]$Command,
@@ -705,7 +1052,11 @@ function Invoke-ExternalCommand {
     }
 
     $fullCmd = 'cd /d "' + $RepoRoot + '" && ' + $cmdLine + ' > "' + $OutputPath + '" 2>&1'
-    $process = Start-Process -FilePath "cmd.exe" -ArgumentList @("/d", "/c", $fullCmd) -Wait -PassThru -WindowStyle Hidden
+    $process = Invoke-ProcessWithTimeout -FilePath "cmd.exe" -ArgumentList @("/d", "/c", $fullCmd) -TimeoutSeconds $VerifyTimeoutSeconds
+    if ($process.TimedOut) {
+        "Verify command timed out after $VerifyTimeoutSeconds seconds: $Command" | Add-Content -Path $OutputPath -Encoding UTF8
+    }
+
     return [int]$process.ExitCode
 }
 
@@ -845,6 +1196,10 @@ function Main {
         Fail-Runner "SleepSeconds phai >= 0."
     }
 
+    if ($PlannerTimeoutSeconds -lt 1 -or $WorkerTimeoutSeconds -lt 1 -or $VerifyTimeoutSeconds -lt 1) {
+        Fail-Runner "PlannerTimeoutSeconds, WorkerTimeoutSeconds va VerifyTimeoutSeconds phai >= 1."
+    }
+
     Assert-RepoRoot
 
     $initialStatus = (& git status --short)
@@ -891,15 +1246,61 @@ function Main {
                     $plannerResult = Invoke-AutoPlanner
                     $plannerRuns++
 
+                    if ($plannerResult.TimedOut) {
+                        $reason = "auto planner timed out after $PlannerTimeoutSeconds seconds."
+                        Write-Warn $reason
+                        $fallbackAdded = Add-DeterministicNextTask
+                        if (-not $fallbackAdded) {
+                            $fallbackAdded = Add-FallbackSelfCheckTask
+                        }
+                        if ($fallbackAdded) {
+                            $summary.Add("AUTO-PLAN deterministic fallback: $reason")
+                            if ($PlanOnly) {
+                                break
+                            }
+
+                            continue
+                        }
+
+                        $summary.Add("BLOCKED auto-plan: $reason")
+                        break
+                    }
+
                     if ($plannerResult.ExitCode -ne 0) {
                         $reason = "auto planner failed with exit code $($plannerResult.ExitCode)."
                         Write-Warn $reason
+                        $fallbackAdded = Add-DeterministicNextTask
+                        if (-not $fallbackAdded) {
+                            $fallbackAdded = Add-FallbackSelfCheckTask
+                        }
+                        if ($fallbackAdded) {
+                            $summary.Add("AUTO-PLAN deterministic fallback: $reason")
+                            if ($PlanOnly) {
+                                break
+                            }
+
+                            continue
+                        }
+
                         $summary.Add("BLOCKED auto-plan: $reason")
                         break
                     }
 
                     if (-not [string]::IsNullOrWhiteSpace($plannerResult.ProviderError)) {
                         Write-Warn $plannerResult.ProviderError
+                        $fallbackAdded = Add-DeterministicNextTask
+                        if (-not $fallbackAdded) {
+                            $fallbackAdded = Add-FallbackSelfCheckTask
+                        }
+                        if ($fallbackAdded) {
+                            $summary.Add("AUTO-PLAN deterministic fallback: $($plannerResult.ProviderError)")
+                            if ($PlanOnly) {
+                                break
+                            }
+
+                            continue
+                        }
+
                         $summary.Add("BLOCKED auto-plan: $($plannerResult.ProviderError)")
                         break
                     }
@@ -909,9 +1310,9 @@ function Main {
                     }
                     else {
                         Write-Warn "Auto planner completed but queue did not change."
-                        $fallbackAdded = Add-FallbackSmokeTask
+                        $fallbackAdded = Add-DeterministicNextTask
                         if ($fallbackAdded) {
-                            Write-Info "Deterministic fallback planner created a safe smoke task."
+                            Write-Info "Deterministic fallback planner created a next task."
                         }
                     }
 
@@ -940,6 +1341,10 @@ function Main {
         }
 
         $task = $selection.Task
+        if ([string]::IsNullOrWhiteSpace($task.Executor)) {
+            $task.Executor = "codex"
+        }
+
         Write-Info "Selected task: $($task.Id) [$($task.Lane)] $($task.Title)"
 
         if ($DryRun) {
@@ -964,19 +1369,28 @@ function Main {
         $verifySummary = "not run"
 
         try {
-            $codexResult = Invoke-CodexTask -Task $task
-            $logPath = $codexResult.LogPath
-
-            if ($codexResult.ExitCode -ne 0) {
-                $reason = "codex exec failed with exit code $($codexResult.ExitCode)."
-            }
-            elseif (-not [string]::IsNullOrWhiteSpace($codexResult.ProviderError)) {
-                $reason = $codexResult.ProviderError
-            }
-            elseif (-not [string]::IsNullOrWhiteSpace($codexResult.WorkerBlocker)) {
-                $reason = $codexResult.WorkerBlocker
+            if ($task.Executor -eq "verify_only") {
+                Write-Info "Executor verify_only: skip codex exec for $($task.Id)."
             }
             else {
+                $codexResult = Invoke-CodexTask -Task $task
+                $logPath = $codexResult.LogPath
+
+                if ($codexResult.TimedOut) {
+                    $reason = "codex exec timed out after $WorkerTimeoutSeconds seconds."
+                }
+                elseif ($codexResult.ExitCode -ne 0) {
+                    $reason = "codex exec failed with exit code $($codexResult.ExitCode)."
+                }
+                elseif (-not [string]::IsNullOrWhiteSpace($codexResult.ProviderError)) {
+                    $reason = $codexResult.ProviderError
+                }
+                elseif (-not [string]::IsNullOrWhiteSpace($codexResult.WorkerBlocker)) {
+                    $reason = $codexResult.WorkerBlocker
+                }
+            }
+
+            if ([string]::IsNullOrWhiteSpace($reason)) {
                 $verifyResult = Invoke-VerifyCommands -Task $task
                 $verifySummary = $verifyResult.Summary
 

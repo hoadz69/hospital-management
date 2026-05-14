@@ -17,7 +17,7 @@ Owner khong can mot script chi sua markdown. Owner can co che:
 
 ## 2. Trang Thai That Hien Tai
 
-Da co prototype runner, nhung **chua dat day du muc "tu dong lam moi thu"**.
+Da co runner chay duoc queue task va da harden them ngay 2026-05-14, nhung **chua dat day du muc "tu dong lam moi thu product end-to-end"**.
 
 Da dat:
 
@@ -28,15 +28,120 @@ Da dat:
 - Co task UI smoke that `FE-OWNER-ADMIN-UI-SMOKE`.
 - Da tach UI route smoke ra `scripts/verify-owner-admin-ui-smoke.ps1` de runner bot nhiem task-specific logic.
 - Da chay UI smoke that qua Vite dev server Owner Admin va PASS.
+- Runner co timeout chong treo:
+  - `-PlannerTimeoutSeconds` mac dinh `300`.
+  - `-WorkerTimeoutSeconds` mac dinh `900`.
+  - `-VerifyTimeoutSeconds` mac dinh `1800`.
+- Runner co `executor: verify_only` de chay smoke/env recheck khong can `codex exec`.
+- Da chay task `AUTO-RUNNER-SELF-CHECK` bang `verify_only`; runner skip worker, verify `git diff --check` PASS, queue mark `DONE`, checkpoint ghi vao `docs/current-task.md`.
+- Da test `-AutoPlan -Once -PlannerTimeoutSeconds 1`: planner timeout, runner tu reactivate fallback `AUTO-RUNNER-SELF-CHECK`, chay verify-only, mark `DONE`; khong treo vo han.
+- Da test worker path that: task `AUTO-RUNNER-CODEX-WORKER-SMOKE` chay qua `codex exec` trong khoang 79 giay, worker them checkpoint vao `docs/current-task.md`, outer verify `git diff --check` PASS, queue mark `DONE`.
+- Da them deterministic product planner trong runner: khi AI planner timeout/fail/khong sua queue, runner doc source de phat hien `/clinics/:tenantId` lifecycle con mock/local timer, FE client co `updateTenantStatus`, backend/gateway co status endpoint, roi tao task `FE-TENANT-LIFECYCLE-API-WIRING`.
+- Da chay runner that cho task `FE-TENANT-LIFECYCLE-API-WIRING`: worker goi `codex exec`, sua lifecycle modal sang Tenant status API, outer verify `git diff --check`, `npm run typecheck`, `npm run build` PASS, queue mark `DONE`.
+- Da them deterministic verify planner: khi khong con product rule an toan nhung `frontend/` dang dirty, runner tao `FE-DIRTY-VERIFY` dang `verify_only` va chay `git diff --check`, frontend `typecheck`, frontend `build`, `gitnexus detect-changes`.
 
 Chua dat:
 
 - Planner AI ben trong `codex exec` van gap loi shell sandbox `CreateProcessWithLogonW failed: 1326`, nen chua tu doc file/tac nghiep product on dinh.
-- Chua co task product implement that nao duoc runner tu sinh tu backlog/plan va tu lam end-to-end.
+- Worker Codex co the ket thuc thao tac file nhung khong thoat kip; runner da co timeout/kill tree de mark `BLOCKED` thay vi treo vo han.
+- Da co mot task product frontend nho duoc runner deterministic planner tu sinh va worker lam xong. Chua phai he thong auto lam moi loai product task end-to-end; moi co 1 rule deterministic cu the cho Tenant lifecycle API wiring.
+- Khi het product task an toan, runner se chay verify deterministic thay vi tiep tuc smoke docs cu; day la behavior dung de khong nhin nhu chet im nhung cung khong invent task ngoai scope.
 - Chua co browser click/DOM visual test that bang Playwright/Cypress. Hien moi HTTP route smoke qua Vite dev server.
-- Runner dang bi nhiem task-specific verify command `frontend owner-admin route smoke`; ve thiet ke nen tach ra script rieng de runner loi co dinh.
+- Runner van dung verify whitelist; muon chay task moi phai them command verify vao whitelist hoac script rieng.
 
 ## 3. Verify That Da Chay
+
+Task: `AUTO-RUNNER-SELF-CHECK`
+
+Command runner:
+
+```powershell
+powershell -NoProfile -ExecutionPolicy Bypass -File scripts\agent-runner.ps1 -Once
+```
+
+Ket qua:
+
+```txt
+executor verify_only: skip codex exec
+git diff --check PASS
+queue mark DONE
+checkpoint ghi docs/current-task.md
+```
+
+Task: `AUTO-RUNNER-SELF-CHECK` qua fallback planner timeout
+
+Command runner:
+
+```powershell
+powershell -NoProfile -ExecutionPolicy Bypass -File scripts\agent-runner.ps1 -AutoPlan -Once -PlannerTimeoutSeconds 1
+```
+
+Ket qua:
+
+```txt
+auto planner timed out after 1 seconds
+fallback self-check task reactivated
+executor verify_only: skip codex exec
+git diff --check PASS
+queue mark DONE
+```
+
+Task: `AUTO-RUNNER-CODEX-WORKER-SMOKE`
+
+Command runner:
+
+```powershell
+powershell -NoProfile -ExecutionPolicy Bypass -File scripts\agent-runner.ps1 -Once -WorkerTimeoutSeconds 240
+```
+
+Ket qua:
+
+```txt
+codex exec ran for about 79 seconds
+worker edited docs/current-task.md
+git diff --check PASS
+queue mark DONE
+```
+
+Task: `FE-TENANT-LIFECYCLE-API-WIRING`
+
+Command runner:
+
+```powershell
+powershell -NoProfile -ExecutionPolicy Bypass -File scripts\agent-runner.ps1 -AutoPlan -PlanOnly -PlannerTimeoutSeconds 1
+powershell -NoProfile -ExecutionPolicy Bypass -File scripts\agent-runner.ps1 -Once -WorkerTimeoutSeconds 420 -VerifyTimeoutSeconds 1800
+```
+
+Ket qua:
+
+```txt
+planner timeout -> deterministic product task created
+codex worker edited frontend lifecycle files
+git diff --check PASS
+cd frontend && npm run typecheck PASS
+cd frontend && npm run build PASS
+queue mark DONE
+```
+
+Task: `FE-DIRTY-VERIFY`
+
+Command runner:
+
+```powershell
+powershell -NoProfile -ExecutionPolicy Bypass -File scripts\agent-runner.ps1 -AutoPlan -PlanOnly -PlannerTimeoutSeconds 1
+powershell -NoProfile -ExecutionPolicy Bypass -File scripts\agent-runner.ps1 -Once -VerifyTimeoutSeconds 1800
+```
+
+Ket qua:
+
+```txt
+planner timeout -> deterministic frontend verify task created
+git diff --check PASS
+cd frontend && npm run typecheck PASS
+cd frontend && npm run build PASS
+gitnexus detect-changes --scope all PASS/report medium risk
+queue mark DONE
+```
 
 Task: `FE-OWNER-ADMIN-UI-SMOKE`
 
@@ -124,7 +229,7 @@ Nen lam theo thu tu:
 
 1. Cleanup thiet ke runner:
    - Review `scripts/agent-runner.ps1` core.
-   - Runner hien chi whitelist command goi script smoke, khong con embed script smoke dai trong switch.
+   - Runner da co timeout/kill tree, `verify_only`, va deterministic product fallback cho lifecycle API wiring; tiep tuc giu verify command o script rieng khi co task-specific logic.
    - Cleanup queue chi giu active task.
 
 2. Fix Codex planner shell issue:

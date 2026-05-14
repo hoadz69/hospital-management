@@ -1,5 +1,13 @@
 # Codex Agent Runner
 
+## Runner Timeout / Executor
+
+- `-PlannerTimeoutSeconds` mac dinh `300`.
+- `-WorkerTimeoutSeconds` mac dinh `900`.
+- `-VerifyTimeoutSeconds` mac dinh `1800`.
+- Queue task co the dung `executor: verify_only` de bo qua `codex exec` va chi chay verify whitelist. Chi dung cho smoke/env recheck an toan; implementation task van dung mac dinh `executor: codex`.
+- Neu auto planner loi/timeout/provider fail hoac khong sua queue, runner se thu deterministic task truoc. Hien co rule sinh `FE-TENANT-LIFECYCLE-API-WIRING` khi source con lifecycle mock/local timer va FE/BE da co Tenant status API. Neu khong co product task nhung `frontend/` dang dirty, runner sinh `FE-DIRTY-VERIFY` de chay `git diff --check`, `typecheck`, `build`, `gitnexus detect-changes`. Neu khong co task an toan, runner moi fallback ve `AUTO-RUNNER-SELF-CHECK`; khong dung smoke docs cu lam fallback mac dinh.
+
 ## Mục Tiêu
 
 Runner giúp owner không phải hỏi ChatGPT từng prompt nhỏ. Runner tự lấy task `READY` trong `docs/agent-queue.md`, gọi `codex exec`, chạy verify, cập nhật queue và ghi checkpoint.
