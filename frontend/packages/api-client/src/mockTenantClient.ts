@@ -2,9 +2,11 @@ import type {
   ApiConflictError,
   TenantCreateRequest,
   TenantDetail,
+  TenantDomainStatus,
   TenantStatusUpdateRequest,
   TenantSummary
 } from "@clinic-saas/shared-types";
+import type { DomainDnsStatus, DomainSslStatus, TenantDomainDnsSslState } from "./tenantDomainOperations";
 
 const mockTenants: TenantDetail[] = [
   {
@@ -114,6 +116,66 @@ function findMockTenant(tenantKey: string) {
   return mockTenants.find((item) => item.id === tenantKey || item.slug === tenantKey);
 }
 
+function dnsStatusFromDomain(status: TenantDomainStatus): DomainDnsStatus {
+  if (status === "verified") {
+    return "verified";
+  }
+
+  if (status === "failed") {
+    return "failed";
+  }
+
+  return "propagating";
+}
+
+function sslStatusFromDomain(status: TenantDomainStatus): DomainSslStatus {
+  if (status === "verified") {
+    return "issued";
+  }
+
+  if (status === "failed") {
+    return "failed";
+  }
+
+  return "pending";
+}
+
+function buildMockDomainOperationState(tenant: TenantDetail, domainId: string): TenantDomainDnsSslState {
+  const domain = tenant.domains.find((item) => item.id === domainId);
+  if (!domain) {
+    throw new Error("Domain not found.");
+  }
+
+  const dnsStatus = dnsStatusFromDomain(domain.status);
+  const now = new Date().toISOString();
+  return {
+    domainId: domain.id,
+    domainName: domain.domainName,
+    dnsStatus,
+    dnsRecords: [
+      {
+        recordType: domain.isPrimary ? "CNAME" : "TXT",
+        host: domain.isPrimary ? domain.domainName : `_clinicos.${domain.domainName}`,
+        expectedValue: domain.isPrimary ? "cname.owner-gateway.clinicos.vn" : `clinicos-tenant-verify=${tenant.slug}`,
+        actualValue: dnsStatus === "failed" ? "legacy-gateway.clinicos.vn" : undefined,
+        status: dnsStatus,
+        message: dnsStatus === "verified" ? "DNS verified." : dnsStatus === "failed" ? "Record mismatch." : "Propagation pending."
+      }
+    ],
+    lastCheckedAt: now,
+    retryCount: dnsStatus === "verified" ? 0 : 1,
+    nextRetryAt: new Date(Date.now() + 90 * 1000).toISOString(),
+    sslStatus: sslStatusFromDomain(domain.status),
+    sslIssuer: domain.status === "verified" ? "Mock CA" : undefined,
+    expiresAt: domain.status === "verified" ? new Date(Date.now() + 90 * 24 * 60 * 60 * 1000).toISOString() : undefined,
+    message: domain.status === "verified" ? "Domain is ready." : "Mock domain operation state."
+  };
+}
+
+function buildMockDomainOperationStates(tenant: TenantDetail): TenantDomainDnsSslState[] {
+  return tenant.domains.map((domain) => buildMockDomainOperationState(tenant, domain.id));
+}
+
 export function createMockTenantClient() {
   return {
     async listTenants(): Promise<TenantSummary[]> {
@@ -178,6 +240,38 @@ export function createMockTenantClient() {
 
       tenant.status = payload.status;
       return delay({ ...tenant, domains: tenant.domains.map((domain) => ({ ...domain })) });
+    },
+
+    async listTenantDomainDnsSslStates(tenantId: string): Promise<TenantDomainDnsSslState[]> {
+      const tenant = findMockTenant(tenantId);
+      if (!tenant) {
+        throw new Error("Tenant not found.");
+      }
+
+      return delay(buildMockDomainOperationStates(tenant));
+    },
+
+    async retryTenantDomainDns(tenantId: string, domainId: string): Promise<TenantDomainDnsSslState> {
+      const tenant = findMockTenant(tenantId);
+      if (!tenant) {
+        throw new Error("Tenant not found.");
+      }
+
+      return delay({
+        ...buildMockDomainOperationState(tenant, domainId),
+        retryCount: 2,
+        lastCheckedAt: new Date().toISOString(),
+        message: "Mock DNS retry accepted."
+      });
+    },
+
+    async getTenantDomainSslStatus(tenantId: string, domainId: string): Promise<TenantDomainDnsSslState> {
+      const tenant = findMockTenant(tenantId);
+      if (!tenant) {
+        throw new Error("Tenant not found.");
+      }
+
+      return delay(buildMockDomainOperationState(tenant, domainId));
     }
   };
 }

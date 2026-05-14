@@ -1,6 +1,6 @@
 # Current Task Frontend - Active Dashboard
 
-Ngay cap nhat: 2026-05-13
+Ngay cap nhat: 2026-05-14
 
 ## Vai tro file
 
@@ -14,16 +14,20 @@ Archive la cold storage: khong doc trong task thuong ngay, khong dua vao default
 - FE real API smoke qua server test: PASS co caveat owner-plan API hien van la contract-stub backend implementation.
 - Tenant slices da smoke qua Tenant API persistence that tren PostgreSQL.
 - Phase 4 Wave A / Owner Admin V3 foundation: FE A5-A9 Done/Verified; FE A7 state surfaces Done/Verified; FE A6 Owner Admin V3 visual polish Done/Verified ngay 2026-05-13.
-- Owner Admin Domain DNS Retry + SSL Pending UI mock-first: Done/Verified ngay 2026-05-13 tren `/clinics/:tenantId`.
-- Owner Admin Tenant Lifecycle Confirm Modal mock-first: Done/Verified ngay 2026-05-13 tren `/clinics/:tenantId`.
+- Owner Admin Domain DNS Retry + SSL Pending API wiring: Done/Verified ngay 2026-05-14 tren `/clinics/:tenantId`; FE goi 3 endpoint Domain DNS/SSL qua `tenantClient`, co mock fallback cung contract.
+- Owner Admin Tenant Lifecycle status API wiring: Done/Verified ngay 2026-05-14 tren `/clinics/:tenantId`; FE goi `tenantClient.updateTenantStatus(tenantId, { status })`, dung `TenantDetail` response lam source of truth, reason chi ghi audit UI local.
 - Owner Admin Audit Log Drawer mock-first: Done/Verified ngay 2026-05-13 tren `/clinics/:tenantId`.
 - Khong commit/stage/push neu owner chua yeu cau ro.
 
 ## Latest Verify Snapshot
 
-- `git diff --check`: PASS ngay 2026-05-13 cho Audit Log Drawer, chi co canh bao LF/CRLF cua git tren Windows va dirty ngoai scope.
-- `cd frontend && npm run typecheck`: PASS ngay 2026-05-13 cho Audit Log Drawer.
-- `cd frontend && npm run build`: PASS ngay 2026-05-13 cho Audit Log Drawer.
+- `git diff --check`: PASS ngay 2026-05-14 cho Domain DNS/SSL API wiring, chi co canh bao LF/CRLF cua git tren Windows va dirty ngoai scope.
+- `cd frontend && npm run typecheck`: PASS ngay 2026-05-14 cho Domain DNS/SSL API wiring.
+- `cd frontend && npm run build`: PASS ngay 2026-05-14 cho Domain DNS/SSL API wiring.
+- `git diff --check`: PASS ngay 2026-05-14 cho Tenant Lifecycle status API wiring, chi co canh bao LF/CRLF cua git tren Windows va dirty ngoai scope.
+- `cd frontend && npm run typecheck`: PASS ngay 2026-05-14 cho Tenant Lifecycle status API wiring.
+- `cd frontend && npm run build`: PASS ngay 2026-05-14 cho Tenant Lifecycle status API wiring.
+- Route smoke moi nhat: Vite owner-admin mock override `http://127.0.0.1:5194/clinics/tenant-river-eye` render Domain operations `API-first`, DNS Retry count 1, SSL Pending count 1; Playwright click `Retry verify selected (1)` -> success `Mock DNS retry accepted.`, click SSL Pending -> render pipeline, click `Retry verify` -> status poll path PASS. Dev server/artifacts cleaned.
 - Route smoke moi nhat: Vite owner-admin mock mode `http://127.0.0.1:5187/clinics/tenant-aurora-dental` HTTP 200; Playwright mo Audit log drawer, render 4 mock events lifecycle/domain/plan/mock, filter `Domain` con 1 event. Console chi co favicon 404 khong lien quan.
 - Route smoke truoc do: Vite owner-admin mock mode `http://127.0.0.1:5186/clinics/tenant-aurora-dental` HTTP 200; Playwright mo modal Suspend, confirm disabled khi thieu reason, nhap reason, confirm thanh cong va status doi local sang Suspended. Console chi co favicon 404 khong lien quan.
 - Route smoke truoc do: Vite owner-admin mock mode `http://127.0.0.1:5185/clinics/tenant-river-eye` HTTP 200; Playwright render DNS retry queue, click Retry chuyen success state, click SSL Pending render SSL pipeline. Console chi co favicon 404 khong lien quan.
@@ -35,8 +39,12 @@ Archive la cold storage: khong doc trong task thuong ngay, khong dua vao default
 - Owner-plan endpoints chay qua gateway/backend that nhung implementation hien tai van la contract stub theo BE A.2/A.3, chua persistence DB that.
 - Neu can ket luan E2E that cho owner-plan persistence, phai doi backend persistence/schema plan-module duoc duyet rieng.
 - Khong dung mock/stub de danh dau E2E Done khi server test co the chay API that.
-- Domain DNS Retry + SSL Pending hien la UI mock-first local state, khong co backend/server/API contract that.
-- Tenant Lifecycle Confirm Modal hien update status bang local UI state cho lifecycle action, khong goi backend lifecycle API moi.
+- Domain DNS Retry + SSL Pending FE da noi API contract that:
+  - `GET /api/tenants/{tenantId}/domains`
+  - `POST /api/tenants/{tenantId}/domains/{domainId}/dns-retry`
+  - `GET /api/tenants/{tenantId}/domains/{domainId}/ssl-status`
+  Runtime real smoke qua gateway van pending den khi backend/server env bat va migration 0003 apply.
+- Tenant Lifecycle Confirm Modal da goi Tenant status API that; reason van chi la audit UI local vi backend contract hien chi nhan `{ status }`.
 - Audit Log Drawer hien dung mock events/local UI state, khong goi backend audit API moi.
 
 ## Next Step
@@ -58,4 +66,24 @@ Archive la cold storage: khong doc trong task thuong ngay, khong dua vao default
 - Reason: none
 - Verify: `git diff --check` PASS; `cd frontend && npm run typecheck` PASS; `cd frontend && npm run build` PASS; Owner Admin Vite route smoke PASS for `/dashboard`, `/clinics`, `/clinics/create`, `/clinics/tenant-aurora-dental`.
 - Log: artifact reviewed then cleaned from `temp/agent-runner/`.
+- Guardrail: runner khong commit/push/stage.
+
+## Agent Runner Checkpoint - 2026-05-14 22:47
+
+- Task id: `FE-TENANT-LIFECYCLE-API-WIRING`
+- Lane: `frontend`
+- Result: `DONE`
+- Reason: none
+- Log: `temp/agent-runner/FE-TENANT-LIFECYCLE-API-WIRING.jsonl`
+- Verify: PASS
+- Guardrail: runner khong commit/push/stage.
+
+## Agent Runner Checkpoint - 2026-05-14 23:06
+
+- Task id: `FE-DIRTY-VERIFY`
+- Lane: `frontend`
+- Result: `DONE`
+- Reason: none
+- Log: `n/a`
+- Verify: PASS
 - Guardrail: runner khong commit/push/stage.

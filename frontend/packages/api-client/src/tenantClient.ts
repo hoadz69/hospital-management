@@ -16,6 +16,11 @@ import {
   type BackendTenantListResponse,
   type BackendTenantSummary
 } from "./tenantAdapter";
+import {
+  adaptTenantDomainDnsSslListResponse,
+  adaptTenantDomainDnsSslState,
+  type TenantDomainDnsSslState
+} from "./tenantDomainOperations";
 
 export type TenantClientMode = "auto" | "real" | "mock";
 
@@ -32,6 +37,9 @@ export type TenantClient = {
   getTenant(tenantId: string): Promise<TenantDetail>;
   createTenant(payload: TenantCreateRequest): Promise<TenantDetail>;
   updateTenantStatus(tenantId: string, payload: TenantStatusUpdateRequest): Promise<TenantDetail>;
+  listTenantDomainDnsSslStates(tenantId: string): Promise<TenantDomainDnsSslState[]>;
+  retryTenantDomainDns(tenantId: string, domainId: string): Promise<TenantDomainDnsSslState>;
+  getTenantDomainSslStatus(tenantId: string, domainId: string): Promise<TenantDomainDnsSslState>;
 };
 
 /**
@@ -241,6 +249,55 @@ export function createTenantClient(options: TenantClientOptions = {}): TenantCli
           return adaptTenantDetail(raw);
         },
         () => mockClient.updateTenantStatus(tenantId, payload)
+      );
+    },
+
+    listTenantDomainDnsSslStates(tenantId: string) {
+      return withFallback(
+        async () => {
+          const raw = await http.request<unknown>(`/api/tenants/${tenantId}/domains`, {
+            headers: {
+              "X-Tenant-Id": tenantId
+            }
+          });
+          return adaptTenantDomainDnsSslListResponse(raw);
+        },
+        () => mockClient.listTenantDomainDnsSslStates(tenantId)
+      );
+    },
+
+    retryTenantDomainDns(tenantId: string, domainId: string) {
+      return withFallback(
+        async () => {
+          const raw = await http.request<unknown>(
+            `/api/tenants/${tenantId}/domains/${domainId}/dns-retry`,
+            {
+              method: "POST",
+              headers: {
+                "X-Tenant-Id": tenantId
+              }
+            }
+          );
+          return adaptTenantDomainDnsSslState(raw);
+        },
+        () => mockClient.retryTenantDomainDns(tenantId, domainId)
+      );
+    },
+
+    getTenantDomainSslStatus(tenantId: string, domainId: string) {
+      return withFallback(
+        async () => {
+          const raw = await http.request<unknown>(
+            `/api/tenants/${tenantId}/domains/${domainId}/ssl-status`,
+            {
+              headers: {
+                "X-Tenant-Id": tenantId
+              }
+            }
+          );
+          return adaptTenantDomainDnsSslState(raw);
+        },
+        () => mockClient.getTenantDomainSslStatus(tenantId, domainId)
       );
     }
   };

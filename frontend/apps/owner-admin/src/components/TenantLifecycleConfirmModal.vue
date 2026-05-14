@@ -41,13 +41,13 @@ const actionConfig = computed(() => {
       tone: "success",
       icon: "AC",
       title: "Kích hoạt tenant?",
-      description: "Tenant draft sẽ chuyển sang Active bằng mock lifecycle action. DNS/SSL vẫn giữ trạng thái hiện tại.",
+      description: "Tenant draft sẽ chuyển sang Active qua Tenant API. DNS/SSL vẫn giữ trạng thái hiện tại.",
       confirmLabel: "Xác nhận kích hoạt",
       reasonLabel: "",
       reasonPlaceholder: "",
       warning: "",
       preview: "Tenant chuyển Active và Owner Admin có thể tiếp tục vận hành cấu hình.",
-      effects: ["Tenant status thành Active", "Clinic admin được phép đăng nhập", "Public site dùng domain state hiện có", "Không gọi API lifecycle mới"]
+      effects: ["Tenant status thành Active", "Clinic admin được phép đăng nhập", "Public site dùng domain state hiện có", "Audit reason chỉ hiển thị trong UI hiện tại"]
     };
   }
 
@@ -57,17 +57,17 @@ const actionConfig = computed(() => {
       icon: "AR",
       title: "Lưu trữ tenant?",
       description:
-        "Hành động này khóa tenant khỏi vận hành và đưa vào hàng đợi lưu trữ. Dữ liệu chỉ được xử lý tiếp khi backend lifecycle contract sẵn sàng.",
+        "Hành động này gửi cập nhật status lưu trữ qua Tenant API. Dữ liệu vận hành sâu hơn phụ thuộc policy backend hiện có.",
       confirmLabel: "Xác nhận lưu trữ",
       reasonLabel: "Lý do lưu trữ *",
       reasonPlaceholder: "Vd: Tenant ngừng hợp đồng hoặc cần khóa dữ liệu...",
       warning: "Archive là hành động rủi ro cao: public site bị dừng, admin tenant bị khóa, và domain release chỉ nên làm khi đã có quyết định vận hành rõ ràng.",
-      preview: "Tenant sẽ chuyển sang trạng thái lưu trữ và subdomain bị đóng băng.",
+      preview: "Tenant sẽ chuyển sang trạng thái lưu trữ theo Tenant API.",
       effects: [
-        "Tenant chuyển archived state",
-        "Subdomain freeze",
-        "Custom domain release sau 30 ngày",
-        "Backup retain 90 ngày theo chính sách platform"
+        "Tenant status thành Archived",
+        "Clinic admin dùng trạng thái mới theo policy backend",
+        "Domain state giữ theo dữ liệu hiện có",
+        "Audit reason chỉ hiển thị trong UI hiện tại"
       ]
     };
   }
@@ -83,12 +83,12 @@ const actionConfig = computed(() => {
       reasonLabel: "",
       reasonPlaceholder: "",
       warning: "",
-      preview: "Tenant active trở lại, DNS recheck được đưa vào hàng đợi.",
+      preview: "Tenant chuyển Active trở lại theo Tenant API.",
       effects: [
-        "Tenant active trở lại",
-        "DNS recheck triggered",
-        "Clinic admin email notify",
-        "Plan trở lại trạng thái cũ"
+        "Tenant status thành Active",
+        "Clinic admin dùng trạng thái mới theo policy backend",
+        "Domain state giữ theo dữ liệu hiện có",
+        "Audit reason chỉ hiển thị trong UI hiện tại"
       ]
     };
   }
@@ -103,12 +103,12 @@ const actionConfig = computed(() => {
     reasonLabel: "Lý do tạm ngừng *",
     reasonPlaceholder: "Vd: Tenant không thanh toán plan...",
     warning: "Suspend sẽ chặn clinic admin và đưa public site về fallback page. Chỉ dùng khi có lý do vận hành rõ ràng.",
-    preview: "Tạm ngừng vận hành - vui lòng liên hệ chủ phòng khám.",
+    preview: "Tenant chuyển Suspended theo Tenant API.",
     effects: [
-      "Public site chuyển sang maintenance page",
-      "Clinic admin login bị block",
-      "Các webhook tenant bị disable",
-      "Booking flow auto-decline lịch mới"
+      "Tenant status thành Suspended",
+      "Clinic admin dùng trạng thái mới theo policy backend",
+      "Public site dùng trạng thái tenant mới khi backend áp dụng",
+      "Audit reason chỉ hiển thị trong UI hiện tại"
     ]
   };
 });

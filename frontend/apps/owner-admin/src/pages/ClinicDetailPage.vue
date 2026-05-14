@@ -2,6 +2,7 @@
 // Trang chi tiết tenant tương ứng route `/clinics/:tenantId`.
 // Page này có cùng dữ liệu nguồn với drawer ở `/clinics`, nhưng được trình bày dạng full-page
 // để Owner Admin có thể bookmark/chia sẻ link riêng từng tenant.
+import type { TenantDomainDnsSslState } from "@clinic-saas/api-client";
 import type { TenantDetail, TenantDomain, TenantDomainStatus, TenantStatus } from "@clinic-saas/shared-types";
 import { AppButton, AppCard, DomainStateRow, ModuleChips, PlanBadge, StatePanel, StatusPill } from "@clinic-saas/ui";
 import { computed, onMounted, onUnmounted, ref, watch } from "vue";
@@ -36,6 +37,7 @@ const localAuditEvents = ref<TenantAuditEvent[]>([]);
 const activeDomainSurface = ref<DomainSurface>("dns");
 const domainOperationState = ref<DomainOperationState>("ready");
 const domainOperationMessage = ref<string | undefined>();
+const domainOperationStates = ref<TenantDomainDnsSslState[]>([]);
 let retryTimer: ReturnType<typeof window.setTimeout> | undefined;
 let lifecycleTimer: ReturnType<typeof window.setTimeout> | undefined;
 let auditTimer: ReturnType<typeof window.setTimeout> | undefined;
@@ -77,8 +79,26 @@ const domainCards = computed<TenantDomain[]>(() => {
     return [];
   }
 
+  if (tenant.value.domains.length === 0 && domainOperationStates.value.length > 0) {
+    return domainOperationStates.value.map((domainState, index) => ({
+      id: domainState.domainId,
+      domainName: domainState.domainName,
+      isPrimary: index === 0,
+      status: domainStatusFromDns(domainState.dnsStatus)
+    }));
+  }
+
   if (tenant.value.domains.length > 0) {
-    return tenant.value.domains;
+    return tenant.value.domains.map((domain) => {
+      const domainState = domainOperationStates.value.find((item) => item.domainId === domain.id);
+      return domainState
+        ? {
+            ...domain,
+            domainName: domainState.domainName || domain.domainName,
+            status: domainStatusFromDns(domainState.dnsStatus)
+          }
+        : domain;
+    });
   }
 
   return [
@@ -91,11 +111,33 @@ const domainCards = computed<TenantDomain[]>(() => {
   ];
 });
 
-const dnsRetryRows = computed(() =>
-  domainCards.value
+const dnsRetryRows = computed(() => {
+  if (domainOperationStates.value.length > 0) {
+    return domainOperationStates.value
+      .filter((domainState) => domainState.dnsStatus !== "verified")
+      .map((domainState) => {
+        const record = domainState.dnsRecords[0];
+        return {
+          id: domainState.domainId,
+          domainName: domainState.domainName,
+          tenantSlug: tenant.value?.slug ?? "tenant",
+          recordType: dnsRecordType(record?.recordType),
+          host: record?.host || domainState.domainName,
+          issue: record?.message || domainState.message || dnsIssue(domainState.dnsStatus),
+          lastCheck: formatDomainTimestamp(domainState.lastCheckedAt),
+          status: domainState.dnsStatus,
+          selected: domainState.dnsStatus !== "verified",
+          expanded: domainState.dnsStatus === "failed",
+          expected: record?.expectedValue || "cname.owner-gateway.clinicos.vn",
+          actual: record?.actualValue || (domainState.dnsStatus === "failed" ? "Chưa đọc được record hợp lệ" : "Đang chờ resolver")
+        };
+      });
+  }
+
+  return domainCards.value
     .filter((domain) => domain.status !== "verified")
     .map((domain) => ({
-      id: `dns-${domain.id}`,
+      id: domain.id,
       domainName: domain.domainName,
       tenantSlug: tenant.value?.slug ?? "tenant",
       recordType: domain.isPrimary ? ("CNAME" as const) : ("TXT" as const),
@@ -107,22 +149,36 @@ const dnsRetryRows = computed(() =>
       expanded: domain.status === "failed",
       expected: domain.isPrimary ? "cname.owner-gateway.clinicos.vn" : `clinicos-tenant-verify=${tenant.value?.slug ?? "tenant"}`,
       actual: domain.status === "failed" ? "legacy-gateway.clinicos.vn" : "Đang chờ resolver"
-    }))
-);
+    }));
+});
 
-const sslPendingRows = computed(() =>
-  domainCards.value
+const sslPendingRows = computed(() => {
+  if (domainOperationStates.value.length > 0) {
+    return domainOperationStates.value
+      .filter((domainState) => domainState.sslStatus === "pending" || domainState.sslStatus === "failed")
+      .map((domainState, index) => ({
+        id: domainState.domainId,
+        domainName: domainState.domainName,
+        tenantSlug: tenant.value?.slug ?? "tenant",
+        orderId: `be-domain-${domainState.domainId}`,
+        status: domainState.sslStatus === "failed" ? domainState.message || "SSL issuing failed" : domainState.message || "Waiting for certificate issuance",
+        eta: domainState.nextRetryAt ? `Poll ${formatDomainTimestamp(domainState.nextRetryAt)}` : "ETA pending",
+        progress: domainState.sslStatus === "failed" ? 18 : Math.min(88, 40 + index * 14)
+      }));
+  }
+
+  return domainCards.value
     .filter((domain) => domain.status === "pending")
     .map((domain, index) => ({
-      id: `ssl-${domain.id}`,
+      id: domain.id,
       domainName: domain.domainName,
       tenantSlug: tenant.value?.slug ?? "tenant",
       orderId: `mock-acme-${tenant.value?.slug ?? "tenant"}-${index + 1}`,
       status: index % 2 === 0 ? "Verifying ACME challenge" : "Submitting CSR",
       eta: index % 2 === 0 ? "ETA 45s" : "ETA 2m",
       progress: index % 2 === 0 ? 68 : 34
-    }))
-);
+    }));
+});
 
 const dnsSurfaceState = computed<DomainOperationState>(() => {
   if (activeDomainSurface.value === "dns" && domainOperationState.value !== "ready") {
@@ -176,6 +232,62 @@ function domainTone(status: TenantDomainStatus) {
   }
 
   return "info";
+}
+
+function domainStatusFromDns(status: TenantDomainDnsSslState["dnsStatus"]): TenantDomainStatus {
+  if (status === "verified") {
+    return "verified";
+  }
+
+  if (status === "failed") {
+    return "failed";
+  }
+
+  return "pending";
+}
+
+function dnsRecordType(recordType: string | undefined): "CNAME" | "TXT" {
+  return recordType?.toUpperCase() === "TXT" ? "TXT" : "CNAME";
+}
+
+function dnsIssue(status: TenantDomainDnsSslState["dnsStatus"]) {
+  if (status === "failed") {
+    return "Record mismatch";
+  }
+
+  if (status === "propagating") {
+    return "Propagation pending";
+  }
+
+  return "Resolver pending";
+}
+
+function formatDomainTimestamp(value: string | undefined) {
+  if (!value) {
+    return "Chưa có lần kiểm tra";
+  }
+
+  const timestamp = new Date(value).getTime();
+  if (Number.isNaN(timestamp)) {
+    return value;
+  }
+
+  const diffMs = Date.now() - timestamp;
+  const absMs = Math.abs(diffMs);
+  const minute = 60 * 1000;
+  const hour = 60 * minute;
+
+  if (absMs < minute) {
+    return diffMs >= 0 ? "vừa xong" : "sắp tới";
+  }
+
+  if (absMs < hour) {
+    const minutes = Math.round(absMs / minute);
+    return diffMs >= 0 ? `${minutes} phút trước` : `sau ${minutes} phút`;
+  }
+
+  const hours = Math.round(absMs / hour);
+  return diffMs >= 0 ? `${hours} giờ trước` : `sau ${hours} giờ`;
 }
 
 function domainHelper(domain: TenantDetail["domains"][number]) {
@@ -341,9 +453,12 @@ async function loadTenant() {
   auditLoading.value = false;
   auditError.value = undefined;
   localAuditEvents.value = [];
+  domainOperationStates.value = [];
 
   try {
-    tenant.value = await tenantClient.getTenant(props.tenantId);
+    const loadedTenant = await tenantClient.getTenant(props.tenantId);
+    tenant.value = loadedTenant;
+    await refreshDomainOperations(loadedTenant.id);
   } catch (loadError) {
     if (loadError instanceof Error && loadError.message === "Tenant not found.") {
       error.value = "Không tìm thấy phòng khám.";
@@ -365,6 +480,7 @@ function openLifecycleModal(action: LifecycleAction) {
     return;
   }
 
+  clearLifecycleTimer();
   lifecycleAction.value = action;
   lifecycleState.value = "idle";
   lifecycleMessage.value = undefined;
@@ -376,6 +492,7 @@ function closeLifecycleModal() {
     return;
   }
 
+  clearLifecycleTimer();
   lifecycleModalOpen.value = false;
   lifecycleState.value = "idle";
   lifecycleMessage.value = undefined;
@@ -397,48 +514,49 @@ function refreshAuditLog() {
   }, 420);
 }
 
-function confirmLifecycle(action: LifecycleAction, reason: string) {
+async function confirmLifecycle(action: LifecycleAction, reason: string) {
   if (!tenant.value) {
     lifecycleState.value = "error";
-    lifecycleMessage.value = "Không tìm thấy tenant trong UI state hiện tại.";
+    lifecycleMessage.value = "Không tìm thấy tenant hiện tại để cập nhật status.";
     return;
   }
 
   clearLifecycleTimer();
+  const status = targetStatusForAction(action);
   lifecycleState.value = "loading";
   lifecycleMessage.value = reason
-    ? `Đang áp dụng ${lifecycleActionLabel(action).toLowerCase()} với lý do: ${reason}`
-    : `Đang áp dụng ${lifecycleActionLabel(action).toLowerCase()} bằng mock local state.`;
+    ? `Đang gửi yêu cầu cập nhật status sang ${status}. Lý do được giữ trong audit UI local: ${reason}`
+    : `Đang gửi yêu cầu cập nhật status sang ${status}.`;
 
-  lifecycleTimer = window.setTimeout(() => {
-    if (!tenant.value) {
-      lifecycleState.value = "error";
-      lifecycleMessage.value = "Tenant đã rời khỏi trang trước khi mock lifecycle hoàn tất.";
-      lifecycleTimer = undefined;
-      return;
-    }
-
-    const status = targetStatusForAction(action);
-    tenant.value = { ...tenant.value, status };
+  try {
+    const updatedTenant = await tenantClient.updateTenantStatus(tenant.value.id, { status });
+    const updatedStatus = updatedTenant.status;
+    tenant.value = updatedTenant;
     localAuditEvents.value.unshift({
       id: `audit-${action}-${Date.now()}`,
       type: "lifecycle",
       title: `${lifecycleActionLabel(action)} đã xác nhận`,
-      detail: reason ? `Owner Super Admin xác nhận với lý do: ${reason}` : "Owner Super Admin xác nhận bằng local lifecycle state.",
+      detail: reason
+        ? `Owner Super Admin xác nhận với lý do local: ${reason}. Status đã cập nhật qua Tenant API.`
+        : "Owner Super Admin xác nhận cập nhật status qua Tenant API.",
       actor: "Owner Super Admin",
       occurredAt: new Date().toISOString(),
-      outcome: status === "Active" ? "success" : "warning",
-      metadata: [status, "mock-local"]
+      outcome: updatedStatus === "Active" ? "success" : "warning",
+      metadata: reason ? [updatedStatus, "api-status-update", "reason-local-only"] : [updatedStatus, "api-status-update"]
     });
     lifecycleState.value = "success";
-    lifecycleMessage.value = `${tenant.value.displayName} đã chuyển sang ${status} trong local UI state.`;
+    lifecycleMessage.value = `${updatedTenant.displayName} đã chuyển sang ${updatedStatus} từ Tenant API.`;
     lifecycleTimer = window.setTimeout(() => {
       lifecycleModalOpen.value = false;
       lifecycleState.value = "idle";
       lifecycleMessage.value = undefined;
       lifecycleTimer = undefined;
     }, 760);
-  }, 720);
+  } catch (lifecycleError) {
+    lifecycleState.value = "error";
+    lifecycleMessage.value =
+      lifecycleError instanceof Error ? lifecycleError.message : "Không cập nhật được tenant status qua Tenant API.";
+  }
 }
 
 function handleDomainAction(status: TenantDomainStatus, key: string) {
@@ -449,6 +567,22 @@ function handleDomainAction(status: TenantDomainStatus, key: string) {
 
   if (status === "pending" || key === "Recheck") {
     selectDomainSurface("ssl");
+  }
+}
+
+async function refreshDomainOperations(tenantId: string) {
+  domainOperationState.value = "loading";
+  domainOperationMessage.value = "Đang tải DNS/SSL state từ Domain API.";
+
+  try {
+    domainOperationStates.value = await tenantClient.listTenantDomainDnsSslStates(tenantId);
+    domainOperationState.value = "ready";
+    domainOperationMessage.value = undefined;
+  } catch (operationError) {
+    domainOperationStates.value = [];
+    domainOperationState.value = "error";
+    domainOperationMessage.value =
+      operationError instanceof Error ? operationError.message : "Không tải được DNS/SSL state từ Domain API.";
   }
 }
 
@@ -479,33 +613,69 @@ function selectDomainSurface(surface: DomainSurface) {
   domainOperationMessage.value = undefined;
 }
 
-function runMockRetry(label: string) {
-  clearRetryTimer();
-  domainOperationState.value = "loading";
-  domainOperationMessage.value = `${label} đang chạy mock verify trong Owner Admin.`;
+function upsertDomainOperationState(nextState: TenantDomainDnsSslState) {
+  const index = domainOperationStates.value.findIndex((item) => item.domainId === nextState.domainId);
+  if (index === -1) {
+    domainOperationStates.value = [...domainOperationStates.value, nextState];
+    return;
+  }
 
-  retryTimer = window.setTimeout(() => {
-    domainOperationState.value = "success";
-    domainOperationMessage.value = `${label} đã nhận lệnh retry verify ở UI local.`;
-    retryTimer = undefined;
-  }, 700);
+  domainOperationStates.value = domainOperationStates.value.map((item, itemIndex) =>
+    itemIndex === index ? nextState : item
+  );
 }
 
 function runMockDiagnostic(rowId: string) {
   domainOperationState.value = "error";
-  domainOperationMessage.value = `Diagnostic mock cho ${rowId} phát hiện record chưa khớp expected value.`;
+  domainOperationMessage.value = `Diagnostic cho ${rowId} phát hiện record chưa khớp expected value.`;
 }
 
-function retryDnsRow(rowId: string) {
-  runMockRetry(`DNS record ${rowId}`);
+async function retryDnsRow(domainId: string) {
+  if (!tenant.value) {
+    return;
+  }
+
+  clearRetryTimer();
+  domainOperationState.value = "loading";
+  domainOperationMessage.value = `Đang gửi DNS retry cho domain ${domainId}.`;
+
+  try {
+    const nextState = await tenantClient.retryTenantDomainDns(tenant.value.id, domainId);
+    upsertDomainOperationState(nextState);
+    domainOperationState.value = "success";
+    domainOperationMessage.value = nextState.message || `Domain ${nextState.domainName} đã nhận lệnh DNS retry.`;
+  } catch (operationError) {
+    domainOperationState.value = "error";
+    domainOperationMessage.value =
+      operationError instanceof Error ? operationError.message : "Không gửi được DNS retry.";
+  }
 }
 
-function retryDnsRows(rowIds: string[]) {
-  runMockRetry(`${rowIds.length} DNS record`);
+async function retryDnsRows(domainIds: string[]) {
+  for (const domainId of domainIds) {
+    await retryDnsRow(domainId);
+  }
 }
 
-function retrySslRow(rowId: string) {
-  runMockRetry(`SSL order ${rowId}`);
+async function retrySslRow(domainId: string) {
+  if (!tenant.value) {
+    return;
+  }
+
+  clearRetryTimer();
+  domainOperationState.value = "loading";
+  domainOperationMessage.value = `Đang poll SSL status cho domain ${domainId}.`;
+
+  try {
+    const nextState = await tenantClient.getTenantDomainSslStatus(tenant.value.id, domainId);
+    upsertDomainOperationState(nextState);
+    domainOperationState.value = "success";
+    domainOperationMessage.value = nextState.message || `SSL status của ${nextState.domainName} đã được cập nhật.`;
+  } catch (operationError) {
+    domainOperationState.value = "error";
+    domainOperationMessage.value =
+      operationError instanceof Error ? operationError.message : "Không tải được SSL status.";
+  }
 }
 
 onMounted(loadTenant);
@@ -631,7 +801,7 @@ watch(() => props.tenantId, loadTenant);
             <p class="eyebrow">Domain operations</p>
             <h3>{{ activeDomainSurface === "dns" ? "DNS retry state" : "SSL pending state" }}</h3>
           </div>
-          <span class="mock-badge">Mock-first</span>
+          <span class="mock-badge">API-first</span>
         </div>
 
         <div class="operation-switch" aria-label="Chọn domain operation">

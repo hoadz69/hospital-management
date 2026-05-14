@@ -6,3 +6,4 @@ export * from "./ownerPlanCatalogClient";
 export * from "./public";
 export * from "./tenantAdapter";
 export * from "./tenantClient";
+export * from "./tenantDomainOperations";
