@@ -35,6 +35,25 @@ Khi nhận các prompt này, Lead Agent phải tự phân lane, tự đọc plan
 
 Short prompt là action trigger thật. Lead Agent không được chỉ acknowledge, không được chỉ nói đã đọc `AGENTS.md`, không được chỉ tóm tắt guardrail rồi dừng. Trừ khi có blocker rõ, trong cùng lượt Lead phải chạy action thực tế.
 
+## Auto Queue / Auto Next
+
+Khi owner nói `auto queue`, `auto-next`, `runner`, `chạy tự động`, hoặc `tự next`, Lead Agent dùng cơ chế queue trong repo:
+
+- Queue chính: `docs/agent-queue.md`.
+- Prompt theo task: `docs/prompts/`.
+- Runner local: `scripts/agent-runner.ps1`.
+- Hướng dẫn dùng: `docs/agent-runner.md`.
+
+Quy tắc vận hành:
+
+- Codex session đơn lẻ chỉ nên chạy 1 task hoặc 1 batch nhỏ.
+- Script runner mới là vòng lặp nhiều task; Lead Agent không tự loop vô hạn trong chat.
+- `-DryRun` phải chạy trước task thật để kiểm tra task READY/dependency/verify.
+- Runner chỉ chạy task `READY` có dependency `DONE`.
+- Runner mark `BLOCKED` khi gặp provider limit, verify fail, contract chưa rõ, runtime env thiếu, hoặc owner decision required.
+- Runner không commit/push/stage và không gọi screenshot mặc định.
+- Nếu session chết hoặc provider dừng giữa chừng, resume từ `docs/agent-queue.md` + checkpoint + `git status` + `git diff`.
+
 Action Prompt Enforcement Rule:
 
 - Nếu owner prompt có động từ hành động như `chạy`, `làm`, `implement`, `verify`, `review`, `chia commit`, `fix`, `tiếp tục`, `hoàn tất`, agent bắt buộc phải chạy action thật trong cùng lượt.

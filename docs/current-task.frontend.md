@@ -49,3 +49,13 @@ Archive la cold storage: khong doc trong task thuong ngay, khong dua vao default
 
 - Full frontend current-task history truoc cleanup: `docs/archive/frontend-history-2026-05.md`.
 - Full frontend plan history truoc cleanup: `temp/archive/plan.frontend.history.md`.
+
+## Agent Runner UI Smoke - 2026-05-14
+
+- Task id: `FE-OWNER-ADMIN-UI-SMOKE`
+- Lane: `frontend`
+- Result: `DONE`
+- Reason: none
+- Verify: `git diff --check` PASS; `cd frontend && npm run typecheck` PASS; `cd frontend && npm run build` PASS; Owner Admin Vite route smoke PASS for `/dashboard`, `/clinics`, `/clinics/create`, `/clinics/tenant-aurora-dental`.
+- Log: artifact reviewed then cleaned from `temp/agent-runner/`.
+- Guardrail: runner khong commit/push/stage.

@@ -21,6 +21,21 @@ Phan biet nhanh:
 - Web research dung khi owner yeu cau research/latest/inspiration hoac thong tin co the thay doi.
 - Khong tao Figma file moi neu owner chua yeu cau ro.
 
+## Agent Queue / Auto Runner
+
+- Codex non-interactive dung qua `codex exec`.
+- Runner file: `scripts/agent-runner.ps1`.
+- Queue file: `docs/agent-queue.md`.
+- Prompt folder: `docs/prompts/`.
+- Runner docs: `docs/agent-runner.md`.
+- Log folder: `temp/agent-runner/`; day la artifact, co the xoa sau khi doc ket qua va khong stage/commit mac dinh.
+- Chay dry-run truoc: `powershell -ExecutionPolicy Bypass -File scripts/agent-runner.ps1 -DryRun`.
+- Chay 1 task: `powershell -ExecutionPolicy Bypass -File scripts/agent-runner.ps1 -Once`.
+- Chay batch nho: `powershell -ExecutionPolicy Bypass -File scripts/agent-runner.ps1 -MaxTasks 3`.
+- Neu output co websocket/handshake/rate-limit/quota/model capacity/provider error thi runner mark `BLOCKED` va dung.
+- Khong dung runner de commit/push/stage.
+- Khong dua feature runtime vao queue neu chua co contract, verify va stop condition ro.
+
 ## GitNexus
 
 - Uu tien Codex: source huong dan chinh la `AGENTS.md`, `docs/agent-playbook.md`, `docs/codex-setup.md` va skill/MCP trong user profile Codex. `.claude/**` chi la wrapper phu khi owner thinh thoang dung Claude, khong dua vao default context.

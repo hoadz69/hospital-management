@@ -43,6 +43,20 @@ Ket qua ngan:
 | DevOps | `temp/plan.devops.md` | `temp/plan.devops.md` | Server test/dev smoke la runtime chinh cho backend/DB/API smoke khi local Docker offline | Dung `deploy.local.ps1`/env local, khong ghi secret/IP/key vao repo/docs |
 | Database | `docs/current-task.backend.md` | `temp/plan.backend.md` | Tenant Service PostgreSQL 0001 + owner-plan 0002 da apply server test; domain 0003 code ready, apply pending | Migration tiep theo phai idempotent, SQL-first, Dapper/Npgsql, khong EF migrations |
 
+## Agent Queue / Auto Runner V2 - 2026-05-14
+
+Trang thai: **Implemented + auto-plan smoke PASS**.
+
+Ket qua ngan:
+- Tao queue `docs/agent-queue.md`, prompt templates `docs/prompts/`, runner docs `docs/agent-runner.md`.
+- Tao PowerShell runner `scripts/agent-runner.ps1` co `-DryRun`, `-Once`, `-MaxTasks`, `-AutoPlan`, `-PlanOnly`, `-Continuous`, `-MaxCycles`.
+- Runner V2 co planner prompt `docs/prompts/AUTO-PLANNER.md` va fallback deterministic smoke task khi Codex planner bi sandbox/shell loi.
+- Runner da chay `codex exec` that cho 2 task docs-only tam thoi; ca 2 task tu update queue/checkpoint va verify `git diff --check` PASS.
+- Auto-plan test mot lenh: `powershell -NoProfile -ExecutionPolicy Bypass -File scripts/agent-runner.ps1 -AutoPlan -Once` PASS; runner goi planner, fallback tao `AUTO-RUNNER-V2-SMOKE`, worker chay task, outer verify `git diff --check` PASS, queue mark `DONE`.
+- UI smoke thật: task `FE-OWNER-ADMIN-UI-SMOKE` chạy qua runner, `npm run typecheck` PASS, `npm run build` PASS, Vite Owner Admin route smoke PASS cho `/dashboard`, `/clinics`, `/clinics/create`, `/clinics/tenant-aurora-dental`.
+- Task BE-DOMAIN-0003-RUNTIME-SMOKE bi mark `DONE` sai da duoc go khoi queue; log runtime smoke cu chi la artifact va khong con dung lam trang thai.
+- Queue hien khong co product implement task READY; task runtime/backend/frontend tiep theo phai do planner sinh tu dashboard/plan hoac owner them vao queue.
+
 ## Server Test Runtime Rule
 
 - Runtime chinh cho backend/DB/API smoke la server test/dev smoke do owner cung cap qua `DEPLOY_HOST`, `DEPLOY_USER`, `SSH_KEY_PATH` trong shell/session hoac `deploy.local.ps1` da ignore.
@@ -51,6 +65,12 @@ Ket qua ngan:
 - Stub chi dung fallback cuoi cung cho contract path; khong dung de danh dau E2E Done khi server test chay duoc API that.
 - Khong ghi private key, token, secret, IP server that hoac connection string that vao repo/docs/log.
 
+## Agent Runner V2 Smoke - 2026-05-14
+
+- Result: generated queue task executed by runner.
+- Scope: docs-only smoke, no source runtime changes.
+- Guardrail: no commit/push/stage.
+
 ## Guardrail Chung
 
 - Khong sua source code neu task chi la docs/task management.
@@ -58,3 +78,13 @@ Ket qua ngan:
 - Khong commit/stage/push neu owner chua yeu cau ro.
 - Khong stage/commit screenshot/log/generated artifacts.
 - Dashboard chi ghi tong quan; chi tiet active nam trong lane files.
+
+## Agent Runner Checkpoint - 2026-05-14 16:49
+
+- Task id: `AUTO-RUNNER-V2-SMOKE`
+- Lane: `docs`
+- Result: `DONE`
+- Reason: none
+- Log: artifact reviewed and cleaned from `temp/agent-runner/`
+- Verify: PASS
+- Guardrail: runner khong commit/push/stage.
